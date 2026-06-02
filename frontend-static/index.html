@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>금천 데이터플랫폼 MVP</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main" aria-label="금천 데이터플랫폼 홈">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span>
+          <strong>금천 데이터플랫폼</strong>
+          <small>Geumcheon Data Platform</small>
+        </span>
+      </a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="#main">상황판</a>
+        <a href="#life-map">생활지도</a>
+        <a href="#commercial">상권분석</a>
+        <a href="#geo">집계구</a>
+        <a href="#admin">관리자</a>
+      </nav>
+    </header>
+
+    <main id="main" class="shell">
+      <section class="overview" aria-label="금천 데이터 상황판">
+        <div class="overview-copy">
+          <p class="eyebrow">2026.06.01 16:00 기준 · Mock 데이터</p>
+          <h1>금천구 도시·생활 데이터 상황판</h1>
+          <p>생활시설, 교통, 대기, 상권 지표를 한 화면에서 확인하고 지도 기반 분석으로 이어지는 구민용 데이터 서비스 초안입니다.</p>
+        </div>
+        <div class="overview-status" aria-label="서비스 상태">
+          <div>
+            <span>데이터 소스</span>
+            <strong>12종</strong>
+          </div>
+          <div>
+            <span>수집 상태</span>
+            <strong class="ok">정상</strong>
+          </div>
+          <div>
+            <span>API 전환</span>
+            <strong>준비중</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="주요 지표" id="metrics"></section>
+
+      <section class="portal-grid" aria-label="주요 분석 화면">
+        <section id="life-map" class="workbench">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">생활지도</p>
+              <h2>시설 위치와 행정동 현황</h2>
+            </div>
+            <div class="segmented" role="group" aria-label="시설 분류">
+              <button class="segment is-active" type="button" data-category="전체">전체</button>
+              <button class="segment" type="button" data-category="병원">병원</button>
+              <button class="segment" type="button" data-category="약국">약국</button>
+              <button class="segment" type="button" data-category="주차장">주차장</button>
+              <button class="segment" type="button" data-category="안전">안전</button>
+            </div>
+          </div>
+
+          <div class="map-layout">
+            <div class="map-panel" aria-label="금천구 지도">
+              <div class="map-toolbar" aria-hidden="true">
+                <span>행정동</span>
+                <span>생활시설</span>
+                <span>접근성</span>
+              </div>
+              <svg class="district-map" viewBox="0 0 760 560" role="img" aria-labelledby="map-title map-desc">
+                <title id="map-title">금천구 생활지도</title>
+                <desc id="map-desc">가산동, 독산동, 시흥동 권역과 주요 시설 위치를 표시한 지도형 화면입니다.</desc>
+                <path class="river" d="M42 64 C120 144 118 218 84 300 C55 370 60 462 136 528"></path>
+                <g class="districts">
+                  <path class="dong dong-gasan" d="M230 56 L458 76 L546 168 L514 264 L338 248 L204 174 Z"></path>
+                  <path class="dong dong-doksan" d="M204 188 L340 262 L516 280 L560 394 L392 488 L220 420 L150 292 Z"></path>
+                  <path class="dong dong-siheung" d="M360 104 L622 124 L694 242 L660 388 L560 394 L516 280 L546 168 Z"></path>
+                  <path class="dong dong-siheung2" d="M220 434 L392 502 L560 408 L640 474 L514 542 L286 530 Z"></path>
+                </g>
+                <g class="labels">
+                  <text x="345" y="156">가산동</text>
+                  <text x="324" y="352">독산동</text>
+                  <text x="594" y="260">시흥동</text>
+                  <text x="412" y="512">시흥 생활권</text>
+                </g>
+                <g id="mapMarkers"></g>
+              </svg>
+            </div>
+
+            <aside class="list-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="eyebrow">선택 시설</p>
+                  <h3>시설 목록</h3>
+                </div>
+                <span id="facilityCount">0개</span>
+              </div>
+              <div id="facilityList" class="facility-list" aria-live="polite"></div>
+            </aside>
+          </div>
+        </section>
+
+        <aside class="insight-rail" aria-label="데이터 운영 요약">
+          <section class="rail-panel">
+            <p class="eyebrow">수집 현황</p>
+            <h2>무료 공공데이터 기반</h2>
+            <dl class="source-list">
+              <div><dt>공공데이터포털</dt><dd>상가·안전·시설</dd></div>
+              <div><dt>서울 열린데이터</dt><dd>대기·교통·생활</dd></div>
+              <div><dt>금천 열린데이터</dt><dd>지역 시설 CSV</dd></div>
+              <div><dt>SGIS/통계청</dt><dd>집계구·인구</dd></div>
+            </dl>
+          </section>
+          <section class="rail-panel accent">
+            <p class="eyebrow">다음 연결</p>
+            <h2>백엔드 Mock API</h2>
+            <p>8080 포트 API가 켜지면 시설 목록과 데이터셋 현황을 자동으로 우선 사용합니다.</p>
+          </section>
+        </aside>
+      </section>
+
+      <section class="split-section">
+        <div id="commercial" class="analysis-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">상권분석</p>
+              <h2>업종별 경쟁 밀도</h2>
+            </div>
+            <label class="select-label">
+              <span>업종</span>
+              <select id="industrySelect">
+                <option value="카페">카페</option>
+                <option value="음식점">음식점</option>
+                <option value="편의점">편의점</option>
+                <option value="학원">학원</option>
+              </select>
+            </label>
+          </div>
+          <div id="commercialStats" class="stat-stack"></div>
+          <div class="bar-chart" id="barChart" aria-label="행정동별 점포 수"></div>
+        </div>
+
+        <div id="geo" class="analysis-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">집계구 분석</p>
+              <h2>생활 접근성 지표</h2>
+            </div>
+          </div>
+          <div class="access-grid" id="accessGrid"></div>
+        </div>
+      </section>
+
+      <section id="admin" class="admin-workflow">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">관리자 준비</p>
+            <h2>데이터셋 관리와 CSV 업로드</h2>
+          </div>
+          <div class="admin-steps">
+            <span>데이터셋 관리</span>
+            <span>CSV 미리보기</span>
+            <span>컬럼 매핑</span>
+            <span>로그 기록</span>
+          </div>
+        </div>
+
+        <div class="dataset-manager" id="datasetManager">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">데이터셋</p>
+              <h3>목록/출처/갱신주기 관리</h3>
+            </div>
+            <span class="dataset-note">Mock 저장</span>
+          </div>
+          <div class="dataset-manager-layout">
+            <div class="dataset-list" id="adminDatasetList"></div>
+            <form class="dataset-editor" id="datasetEditor">
+              <label>
+                <span>데이터셋 키</span>
+                <input id="datasetKeyField" type="text" readonly>
+              </label>
+              <label>
+                <span>데이터명</span>
+                <input id="datasetNameField" type="text" required>
+              </label>
+              <label>
+                <span>분야</span>
+                <input id="datasetDomainField" type="text">
+              </label>
+              <label>
+                <span>출처</span>
+                <input id="datasetSourceField" type="text">
+              </label>
+              <label>
+                <span>갱신주기</span>
+                <input id="datasetRefreshField" type="text">
+              </label>
+              <label>
+                <span>업로드 방식</span>
+                <select id="datasetUploadModeField">
+                  <option value="CSV">CSV</option>
+                  <option value="API">API</option>
+                  <option value="API/CSV">API/CSV</option>
+                </select>
+              </label>
+              <label class="dataset-check">
+                <input id="datasetMappingField" type="checkbox">
+                <span>업로드 시 컬럼 매핑 필요</span>
+              </label>
+              <label class="dataset-check">
+                <input id="datasetPublicField" type="checkbox">
+                <span>화면 공개</span>
+              </label>
+              <div class="dataset-actions">
+                <button class="commit-button" type="submit">저장</button>
+                <button class="sample-link" id="resetDataset" type="button">초기값 복원</button>
+              </div>
+              <div class="dataset-editor-status" id="datasetEditorStatus"></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="upload-layout">
+          <form class="upload-panel" id="uploadForm">
+            <label class="field-label">
+              <span>데이터셋</span>
+              <select id="datasetSelect">
+                <option value="facilities">생활시설 통합</option>
+                <option value="stores">상가업소 정보</option>
+                <option value="air-quality">대기 현황</option>
+                <option value="population">인구 통계</option>
+              </select>
+            </label>
+
+            <label class="file-drop">
+              <span>CSV/Excel 파일 선택</span>
+              <strong>CSV는 첫 5행을 미리 보고, Excel은 변환 안내를 표시합니다.</strong>
+              <input id="csvFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+            </label>
+
+            <div class="upload-summary" id="csvSummary">
+              <span>선택된 파일 없음</span>
+            </div>
+
+            <button class="commit-button" id="commitUpload" type="button" disabled>업로드 확정</button>
+            <a class="sample-link" href="./assets/data/sample-facilities.csv" download>시설 샘플 CSV 다운로드</a>
+          </form>
+
+          <div class="preview-panel">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">미리보기</p>
+                <h3>CSV/Excel 컬럼 확인</h3>
+              </div>
+            </div>
+            <div id="columnMapping" class="column-mapping empty">CSV 파일을 선택하면 표준 필드 매핑이 표시됩니다.</div>
+            <div id="csvPreview" class="csv-preview empty">CSV 파일을 선택하면 컬럼과 샘플 행이 표시됩니다.</div>
+          </div>
+
+          <div class="log-panel">
+            <div class="panel-title">
+              <div>
+                <p class="eyebrow">수집 로그</p>
+                <h3>최근 업로드</h3>
+              </div>
+            </div>
+            <div id="uploadLogs" class="upload-logs"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

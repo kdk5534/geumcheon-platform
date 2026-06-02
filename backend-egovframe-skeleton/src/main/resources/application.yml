@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: geumcheon-data-platform
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:geumcheon_data}
+    username: ${DB_USERNAME:geumcheon}
+    password: ${DB_PASSWORD:change-me}
+  security:
+    user:
+      name: ${ADMIN_INITIAL_LOGIN_ID:admin}
+      password: ${ADMIN_INITIAL_PASSWORD:admin1234}
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_SIZE_MB:50}MB
+      max-request-size: ${MAX_UPLOAD_SIZE_MB:50}MB
+
+geumcheon:
+  api-keys:
+    data-go-kr: ${DATA_GO_KR_API_KEY:}
+    seoul-open-api: ${SEOUL_OPEN_API_KEY:}
+    vworld: ${VWORLD_API_KEY:}
+    sgis: ${SGIS_API_KEY:}
+    kosis: ${KOSIS_API_KEY:}
+    worknet: ${WORKNET_API_KEY:}
+  collector:
+    enabled: ${COLLECTOR_ENABLED:false}
+    default-timeout-seconds: ${COLLECTOR_DEFAULT_TIMEOUT_SECONDS:20}
+    retry-count: ${COLLECTOR_RETRY_COUNT:3}
+  upload:
+    base-path: ${UPLOAD_BASE_PATH:./uploads}

@@ -16,6 +16,7 @@
 - 시설 반영: `facilities` 데이터셋은 preview에서 발급된 `uploadId`로 CSV 행을 찾아 `facility` 테이블에 적재
 - 원본 보관: 일반 프로파일에서는 CSV 원본을 `UPLOAD_BASE_PATH/admin-csv/{datasetKey}/{yyyyMMdd}/{fileId}-{fileName}`에 저장
 - 로그 표시: 성공/실패/로컬 저장 상태를 관리자 최근 업로드 로그에서 구분 표시
+- API 로그: 최근 수집 실행 내역을 mock 데이터로 필터/검색 가능하게 표시
 - 확정 후 갱신: 시설 데이터셋 업로드 확정 성공 시 생활시설 목록과 지도를 다시 불러옴
 - 오류 안내: 백엔드 검증 실패, 인증 실패, 로컬 미리보기를 구분해 화면에 표시
 - 샘플 파일: `frontend-static/assets/data/sample-facilities.csv`

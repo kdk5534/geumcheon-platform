@@ -20,6 +20,8 @@
         <a href="#life-map">생활지도</a>
         <a href="#commercial">상권분석</a>
         <a href="#geo">집계구</a>
+        <a href="#api-status">API 상태</a>
+        <a href="#api-logs">API 로그</a>
         <a href="#admin">관리자</a>
       </nav>
     </header>
@@ -154,6 +156,48 @@
           </div>
           <div class="access-grid" id="accessGrid"></div>
         </div>
+      </section>
+
+      <section id="api-status" class="api-status-workflow">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">API 수집 상태</p>
+            <h2>공공데이터 연결 준비 현황</h2>
+          </div>
+          <div class="api-summary" id="apiStatusSummary"></div>
+        </div>
+        <div class="api-filter-row" role="tablist" aria-label="API 수집 상태 필터">
+          <button class="segment is-active" type="button" data-api-filter="전체">전체</button>
+          <button class="segment" type="button" data-api-filter="준비됨">준비됨</button>
+          <button class="segment" type="button" data-api-filter="Mock">Mock</button>
+          <button class="segment" type="button" data-api-filter="키 필요">키 필요</button>
+          <button class="segment" type="button" data-api-filter="확인 필요">확인 필요</button>
+        </div>
+        <div id="apiSourceGrid" class="api-source-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="api-logs" class="api-log-workflow">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">API 수집 로그</p>
+            <h2>최근 수집 실행 내역</h2>
+          </div>
+          <div class="api-log-summary" id="apiLogSummary"></div>
+        </div>
+        <div class="api-log-toolbar">
+          <div class="api-filter-row" role="tablist" aria-label="API 수집 로그 필터">
+            <button class="segment is-active" type="button" data-api-log-filter="전체">전체</button>
+            <button class="segment" type="button" data-api-log-filter="성공">성공</button>
+            <button class="segment" type="button" data-api-log-filter="실패">실패</button>
+            <button class="segment" type="button" data-api-log-filter="대기">대기</button>
+            <button class="segment" type="button" data-api-log-filter="수동">수동</button>
+          </div>
+          <label class="api-log-search" for="apiLogSearch">
+            <span>검색</span>
+            <input id="apiLogSearch" type="search" placeholder="소스명, 대상 화면, 설명">
+          </label>
+        </div>
+        <div id="apiLogGrid" class="api-log-grid" aria-live="polite"></div>
       </section>
 
       <section id="admin" class="admin-workflow">

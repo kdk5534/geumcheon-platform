@@ -90,6 +90,8 @@ cd C:\Users\Administrator\Documents\geumcheon-platform
 - 업로드 로그
 - 데이터셋 목록/상세 mock 관리 화면
 - 공개/숨김, 업로드 방식, 컬럼 매핑 필요 여부의 mock 반영
+- API 수집 상태 mock 화면
+- API 수집 로그 mock 화면
 - DB 저장용 스키마와 코드 준비
 - Excel 파일 선택 시 깨진 미리보기가 나오지 않도록 안내 처리
 
@@ -99,7 +101,7 @@ cd C:\Users\Administrator\Documents\geumcheon-platform
 - 실제 Excel 파싱
 - 외부 공공데이터 API 자동 수집
 
-지금의 다음 우선순위는 `docs/project-roadmap.md`의 P3 실제 DB 모드 전환입니다. 단, PostgreSQL/PostGIS 설치 전까지는 mock 모드에서 수집 로그/API 상태 화면을 이어서 만들 수 있습니다.
+지금의 다음 우선순위는 `docs/project-roadmap.md`의 P4 API 수집 로그 mock 화면입니다. P3 실제 DB 모드 전환은 PostgreSQL/PostGIS 설치 전까지 계속 보류합니다.
 
 ## Important Files
 

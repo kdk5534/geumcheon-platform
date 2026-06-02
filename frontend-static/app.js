@@ -8,7 +8,12 @@ const state = {
   adminDatasets: [],
   adminDatasetBase: [],
   selectedDatasetKey: "facilities",
-  selectedUploadDatasetKey: "facilities"
+  selectedUploadDatasetKey: "facilities",
+  apiSources: [],
+  apiSourceFilter: "전체",
+  apiLogs: [],
+  apiLogFilter: "전체",
+  apiLogSearch: ""
 };
 
 const BACKEND_API_BASE = "http://localhost:8080";
@@ -117,18 +122,43 @@ async function loadData() {
   state.adminDatasets = mergeDatasetEdits(state.adminDatasetBase);
   renderDatasetManager();
   renderDatasetSelect();
+  state.apiSources = mergeApiSources(await loadApiSources());
+  renderApiStatus();
+  state.apiLogs = await loadApiLogs();
+  renderApiLogs();
   renderUploadLogs();
   bindEvents();
   await loadAdminDatasets();
   state.data = await loadBackendData(localData);
   renderMetrics();
   renderFacilities();
+  renderApiStatus();
   await loadBackendUploadLogs();
 }
 
 async function loadLocalData() {
   const response = await fetch("./assets/data/mock-data.json");
   return response.json();
+}
+
+async function loadApiSources() {
+  try {
+    const response = await fetch("./assets/data/api-sources.json");
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+async function loadApiLogs() {
+  try {
+    const response = await fetch("./assets/data/api-logs.json");
+    const data = await response.json();
+    return Array.isArray(data) ? data : defaultApiLogs();
+  } catch {
+    return defaultApiLogs();
+  }
 }
 
 async function loadBackendData(localData) {
@@ -287,6 +317,313 @@ function renderAccess() {
       <p>${item.note}</p>
     </article>
   `).join("");
+}
+
+function mergeApiSources(sources = []) {
+  const baseSources = defaultApiSources();
+  const sourceMap = new Map(sources.map((source) => [source.datasetKey || source.name, source]));
+  return baseSources.map((source) => ({
+    ...source,
+    ...(sourceMap.get(source.datasetKey || source.name) || {})
+  }));
+}
+
+function defaultApiSources() {
+  return [
+    {
+      datasetKey: "weather",
+      name: "기상 현황",
+      domain: "실시간",
+      status: "mock",
+      refreshCycle: "10분",
+      targetScreen: "메인 대시보드",
+      envVar: "DATA_GO_KR_API_KEY",
+      source: "기상청",
+      lastSynced: "2026.06.02 16:00",
+      note: "금천구 대표 좌표 기준 Mock 응답"
+    },
+    {
+      datasetKey: "dust",
+      name: "미세먼지/초미세먼지",
+      domain: "실시간",
+      status: "key-needed",
+      refreshCycle: "시간",
+      targetScreen: "대기 현황",
+      envVar: "SEOUL_OPEN_API_KEY",
+      source: "서울 열린데이터광장",
+      lastSynced: "대기중",
+      note: "측정소 기준시각 표기 필요"
+    },
+    {
+      datasetKey: "traffic",
+      name: "교통 알림",
+      domain: "실시간",
+      status: "check-required",
+      refreshCycle: "실시간",
+      targetScreen: "상황판",
+      envVar: "SEOUL_OPEN_API_KEY",
+      source: "서울 TOPIS",
+      lastSynced: "점검 필요",
+      note: "공사·통제·사고 이벤트 우선"
+    },
+    {
+      datasetKey: "stores",
+      name: "상가업소 정보",
+      domain: "상권",
+      status: "ready",
+      refreshCycle: "수시",
+      targetScreen: "상권분석",
+      envVar: "DATA_GO_KR_API_KEY",
+      source: "소상공인시장진흥공단",
+      lastSynced: "2026.06.02 15:40",
+      note: "업종 분류와 좌표가 있어 핵심 데이터"
+    },
+    {
+      datasetKey: "parking",
+      name: "공영주차장",
+      domain: "생활",
+      status: "mock",
+      refreshCycle: "수시",
+      targetScreen: "생활지도",
+      envVar: "SEOUL_OPEN_API_KEY",
+      source: "서울/금천 열린데이터",
+      lastSynced: "2026.06.02 14:50",
+      note: "정적 주차장 목록으로 개발 중"
+    },
+    {
+      datasetKey: "population",
+      name: "주민등록 인구",
+      domain: "인구",
+      status: "key-needed",
+      refreshCycle: "월",
+      targetScreen: "인구 대시보드",
+      envVar: "SEOUL_OPEN_API_KEY",
+      source: "행안부/서울 열린데이터",
+      lastSynced: "대기중",
+      note: "행정동 기준 우선"
+    }
+  ];
+}
+
+function apiStatusLabel(status) {
+  const labels = {
+    ready: "준비됨",
+    mock: "Mock",
+    "key-needed": "키 필요",
+    "check-required": "확인 필요"
+  };
+  return labels[status] || "확인 필요";
+}
+
+function apiStatusClass(status) {
+  const classes = {
+    ready: "is-ready",
+    mock: "is-mock",
+    "key-needed": "is-key",
+    "check-required": "is-check"
+  };
+  return classes[status] || "is-check";
+}
+
+function renderApiStatus() {
+  const summary = document.querySelector("#apiStatusSummary");
+  const grid = document.querySelector("#apiSourceGrid");
+  if (!summary || !grid) {
+    return;
+  }
+
+  const filtered = state.apiSources.filter((source) => {
+    if (state.apiSourceFilter === "전체") {
+      return true;
+    }
+    return apiStatusLabel(source.status) === state.apiSourceFilter;
+  });
+
+  const counts = state.apiSources.reduce((acc, source) => {
+    const key = source.status || "check-required";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  summary.innerHTML = `
+    <div><span>준비됨</span><strong>${counts.ready || 0}</strong></div>
+    <div><span>Mock</span><strong>${counts.mock || 0}</strong></div>
+    <div><span>키 필요</span><strong>${counts["key-needed"] || 0}</strong></div>
+    <div><span>확인 필요</span><strong>${counts["check-required"] || 0}</strong></div>
+  `;
+
+  grid.innerHTML = filtered.map((source) => `
+    <article class="api-source-card ${apiStatusClass(source.status)}">
+      <div class="api-source-head">
+        <div>
+          <p>${escapeHtml(source.domain)}</p>
+          <strong>${escapeHtml(source.name)}</strong>
+        </div>
+        <span class="api-source-status">${escapeHtml(apiStatusLabel(source.status))}</span>
+      </div>
+      <dl>
+        <div><dt>연동 화면</dt><dd>${escapeHtml(source.targetScreen)}</dd></div>
+        <div><dt>갱신 주기</dt><dd>${escapeHtml(source.refreshCycle)}</dd></div>
+        <div><dt>마지막 상태</dt><dd>${escapeHtml(source.lastSynced)}</dd></div>
+        <div><dt>환경변수</dt><dd>${escapeHtml(source.envVar || "-")}</dd></div>
+      </dl>
+      <p>${escapeHtml(source.note || "")}</p>
+    </article>
+  `).join("");
+}
+
+function defaultApiLogs() {
+  return [
+    {
+      id: "weather-20260602-1600",
+      sourceName: "기상 현황",
+      domain: "도시환경",
+      status: "success",
+      collectedAt: "2026.06.02 16:00",
+      duration: "18초",
+      rows: 1280,
+      targetScreen: "메인 대시보드",
+      nextRun: "16:10",
+      note: "정상 수집 완료. 최신 기상 지표를 갱신했습니다."
+    },
+    {
+      id: "stores-20260602-1540",
+      sourceName: "상권/업소 정보",
+      domain: "상권",
+      status: "success",
+      collectedAt: "2026.06.02 15:40",
+      duration: "31초",
+      rows: 842,
+      targetScreen: "상권 분석",
+      nextRun: "16:40",
+      note: "업소명 중복 정제 규칙 적용 후 반영했습니다."
+    },
+    {
+      id: "dust-20260602-1500",
+      sourceName: "미세먼지",
+      domain: "도시환경",
+      status: "queued",
+      collectedAt: "2026.06.02 15:00",
+      duration: "-",
+      rows: 0,
+      targetScreen: "대기 현황",
+      nextRun: "15:10",
+      note: "다음 예약 수집 대기 중입니다."
+    },
+    {
+      id: "parking-20260602-1450",
+      sourceName: "공영주차장",
+      domain: "생활",
+      status: "manual",
+      collectedAt: "2026.06.02 14:50",
+      duration: "수동",
+      rows: 214,
+      targetScreen: "생활지도",
+      nextRun: "수동",
+      note: "지도 좌표 보정 확인이 필요합니다."
+    },
+    {
+      id: "traffic-20260602-1405",
+      sourceName: "교통 혼잡",
+      domain: "교통",
+      status: "fail",
+      collectedAt: "2026.06.02 14:05",
+      duration: "9초",
+      rows: 0,
+      targetScreen: "교통 현황",
+      nextRun: "14:15",
+      note: "API 응답 코드 403. 키 또는 호출 제한을 다시 확인해야 합니다."
+    },
+    {
+      id: "population-20260602-1320",
+      sourceName: "인구 통계",
+      domain: "행정",
+      status: "success",
+      collectedAt: "2026.06.02 13:20",
+      duration: "22초",
+      rows: 156,
+      targetScreen: "인구 분석",
+      nextRun: "다음 날 08:00",
+      note: "행정동 단위 집계가 정상 반영되었습니다."
+    }
+  ];
+}
+
+function apiLogStatusLabel(status) {
+  const labels = {
+    success: "성공",
+    fail: "실패",
+    queued: "대기",
+    manual: "수동"
+  };
+  return labels[status] || "대기";
+}
+
+function apiLogStatusClass(status) {
+  const classes = {
+    success: "is-success",
+    fail: "is-failed",
+    queued: "is-queued",
+    manual: "is-manual"
+  };
+  return classes[status] || "is-queued";
+}
+
+function renderApiLogs() {
+  const summary = document.querySelector("#apiLogSummary");
+  const grid = document.querySelector("#apiLogGrid");
+  if (!summary || !grid) {
+    return;
+  }
+
+  const query = state.apiLogSearch.trim().toLowerCase();
+  const filtered = state.apiLogs.filter((log) => {
+    const matchesStatus = state.apiLogFilter === "전체" || apiLogStatusLabel(log.status) === state.apiLogFilter;
+    const searchable = [
+      log.sourceName,
+      log.domain,
+      log.targetScreen,
+      log.note,
+      log.collectedAt
+    ].join(" ").toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
+
+  const counts = state.apiLogs.reduce((acc, log) => {
+    const key = log.status || "queued";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  summary.innerHTML = `
+    <div><span>성공</span><strong>${counts.success || 0}</strong></div>
+    <div><span>실패</span><strong>${counts.fail || 0}</strong></div>
+    <div><span>대기</span><strong>${counts.queued || 0}</strong></div>
+    <div><span>수동</span><strong>${counts.manual || 0}</strong></div>
+  `;
+
+  grid.innerHTML = filtered.length === 0
+    ? `<div class="api-log-empty">조건에 맞는 수집 로그가 없습니다.</div>`
+    : filtered.map((log) => `
+      <article class="api-log-card ${apiLogStatusClass(log.status)}">
+        <div class="api-log-head">
+          <div>
+            <p>${escapeHtml(log.domain)}</p>
+            <strong>${escapeHtml(log.sourceName)}</strong>
+          </div>
+          <span class="api-log-status">${escapeHtml(apiLogStatusLabel(log.status))}</span>
+        </div>
+        <dl class="api-log-kpis">
+          <div><dt>수집 시각</dt><dd>${escapeHtml(log.collectedAt || "-")}</dd></div>
+          <div><dt>대상 화면</dt><dd>${escapeHtml(log.targetScreen || "-")}</dd></div>
+          <div><dt>소요 시간</dt><dd>${escapeHtml(log.duration || "-")}</dd></div>
+          <div><dt>건수</dt><dd>${Number(log.rows || 0).toLocaleString()}건</dd></div>
+          <div><dt>다음 실행</dt><dd>${escapeHtml(log.nextRun || "-")}</dd></div>
+          <div><dt>로그 ID</dt><dd>${escapeHtml(log.id || "-")}</dd></div>
+        </dl>
+        <p>${escapeHtml(log.note || "")}</p>
+      </article>
+    `).join("");
 }
 
 async function loadAdminDatasets() {
@@ -519,9 +856,9 @@ async function loadBackendUploadLogs() {
 }
 
 function bindEvents() {
-  document.querySelectorAll(".segment").forEach((button) => {
+  document.querySelectorAll("#life-map .segment").forEach((button) => {
     button.addEventListener("click", () => {
-      document.querySelectorAll(".segment").forEach((item) => item.classList.remove("is-active"));
+      document.querySelectorAll("#life-map .segment").forEach((item) => item.classList.remove("is-active"));
       button.classList.add("is-active");
       state.category = button.dataset.category;
       renderFacilities();
@@ -540,6 +877,13 @@ function bindEvents() {
   document.querySelector("#adminDatasetList")?.addEventListener("click", handleDatasetListClick);
   document.querySelector("#datasetEditor")?.addEventListener("submit", handleDatasetEditorSubmit);
   document.querySelector("#resetDataset")?.addEventListener("click", resetCurrentDataset);
+  document.querySelectorAll("[data-api-filter]").forEach((button) => {
+    button.addEventListener("click", handleApiFilterChange);
+  });
+  document.querySelectorAll("[data-api-log-filter]").forEach((button) => {
+    button.addEventListener("click", handleApiLogFilterChange);
+  });
+  document.querySelector("#apiLogSearch")?.addEventListener("input", handleApiLogSearchChange);
 
   document.querySelector("#mapMarkers").addEventListener("click", focusFacility);
   document.querySelector("#mapMarkers").addEventListener("keydown", (event) => {
@@ -579,6 +923,35 @@ function handleDatasetListClick(event) {
   }
   renderDatasetManager();
   renderDatasetSelect();
+}
+
+function handleApiFilterChange(event) {
+  const button = event.target.closest("[data-api-filter]");
+  if (!button) {
+    return;
+  }
+
+  state.apiSourceFilter = button.dataset.apiFilter;
+  document.querySelectorAll("[data-api-filter]").forEach((item) => item.classList.remove("is-active"));
+  button.classList.add("is-active");
+  renderApiStatus();
+}
+
+function handleApiLogFilterChange(event) {
+  const button = event.target.closest("[data-api-log-filter]");
+  if (!button) {
+    return;
+  }
+
+  state.apiLogFilter = button.dataset.apiLogFilter;
+  document.querySelectorAll("[data-api-log-filter]").forEach((item) => item.classList.remove("is-active"));
+  button.classList.add("is-active");
+  renderApiLogs();
+}
+
+function handleApiLogSearchChange(event) {
+  state.apiLogSearch = event.target.value || "";
+  renderApiLogs();
 }
 
 function handleDatasetEditorSubmit(event) {

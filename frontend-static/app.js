@@ -9,6 +9,7 @@ const state = {
   adminDatasetBase: [],
   selectedDatasetKey: "facilities",
   selectedUploadDatasetKey: "facilities",
+  mapBoundary: "행정동",
   geoMetric: "생활",
   geoDistrict: "가산동",
   apiSources: [],
@@ -119,6 +120,7 @@ async function loadData() {
   state.data = localData;
   renderMetrics();
   renderFacilities();
+  renderMapBoundary();
   renderCommercial();
   renderAccess();
   renderGeoSummary();
@@ -139,6 +141,7 @@ async function loadData() {
   state.data = await loadBackendData(localData);
   renderMetrics();
   renderFacilities();
+  renderMapBoundary();
   renderGeoSummary();
   renderGeoSpotlight();
   renderGeoRadius();
@@ -282,6 +285,49 @@ function renderFacilities() {
   `).join("");
 
   count.textContent = `${facilities.length}개`;
+}
+
+function renderMapBoundary() {
+  const overlay = document.querySelector("#boundaryOverlay");
+  const summary = document.querySelector("#mapBoundarySummary");
+  if (!overlay || !summary) {
+    return;
+  }
+
+  const boundaries = Array.isArray(state.data.boundaries) ? state.data.boundaries : [];
+  const boundary = boundaries.find((item) => item.key === state.mapBoundary) || boundaries[0];
+  if (!boundary) {
+    overlay.innerHTML = "";
+    summary.innerHTML = `<div class="map-boundary-empty">경계 데이터가 없습니다.</div>`;
+    return;
+  }
+
+  overlay.innerHTML = `
+    ${boundary.paths.map((path, index) => `
+      <path class="boundary-path ${boundary.layerClass || ""}" d="${path.d}" />
+      ${path.label ? `<text x="${path.x}" y="${path.y}" class="boundary-label ${boundary.labelClass || ""}">${escapeHtml(path.label)}</text>` : ""}
+    `).join("")}
+  `;
+
+  summary.innerHTML = `
+    <article class="map-boundary-card ${boundary.cardClass || ""}">
+      <div class="map-boundary-head">
+        <div>
+          <p class="eyebrow">경계 레이어</p>
+          <h3>${escapeHtml(boundary.title)}</h3>
+        </div>
+        <span>${escapeHtml(boundary.key)}</span>
+      </div>
+      <p>${escapeHtml(boundary.summary)}</p>
+      <div class="map-boundary-tags">
+        ${Array.isArray(boundary.legend) ? boundary.legend.map((item) => `<span>${escapeHtml(item)}</span>`).join("") : ""}
+      </div>
+    </article>
+  `;
+
+  document.querySelectorAll("[data-map-layer]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.mapLayer === boundary.key);
+  });
 }
 
 function renderCommercial() {
@@ -1118,6 +1164,9 @@ function bindEvents() {
     state.industry = event.target.value;
     renderCommercial();
   });
+  document.querySelectorAll("[data-map-layer]").forEach((button) => {
+    button.addEventListener("click", handleMapLayerChange);
+  });
   document.querySelector("#geoMetricSelect")?.addEventListener("change", handleGeoMetricChange);
   document.querySelector("#districtList")?.addEventListener("click", handleGeoDistrictSelect);
 
@@ -1212,6 +1261,16 @@ function handleGeoMetricChange(event) {
   renderGeoSpotlight();
   renderGeoRadius();
   renderGeoDistricts();
+}
+
+function handleMapLayerChange(event) {
+  const button = event.target.closest("[data-map-layer]");
+  if (!button) {
+    return;
+  }
+
+  state.mapBoundary = button.dataset.mapLayer;
+  renderMapBoundary();
 }
 
 function handleGeoDistrictSelect(event) {

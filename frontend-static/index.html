@@ -74,6 +74,11 @@
                 <span>생활시설</span>
                 <span>접근성</span>
               </div>
+              <div class="map-layer-row" role="tablist" aria-label="지도 경계 레이어">
+                <button class="segment is-active" type="button" data-map-layer="행정동">행정동</button>
+                <button class="segment" type="button" data-map-layer="집계구">집계구</button>
+                <button class="segment" type="button" data-map-layer="상권">상권</button>
+              </div>
               <svg class="district-map" viewBox="0 0 760 560" role="img" aria-labelledby="map-title map-desc">
                 <title id="map-title">금천구 생활지도</title>
                 <desc id="map-desc">가산동, 독산동, 시흥동 권역과 주요 시설 위치를 표시한 지도형 화면입니다.</desc>
@@ -90,8 +95,10 @@
                   <text x="594" y="260">시흥동</text>
                   <text x="412" y="512">시흥 생활권</text>
                 </g>
+                <g id="boundaryOverlay" class="boundary-overlay"></g>
                 <g id="mapMarkers"></g>
               </svg>
+              <div id="mapBoundarySummary" class="map-boundary-summary"></div>
             </div>
 
             <aside class="list-panel">

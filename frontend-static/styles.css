@@ -364,6 +364,17 @@ h3 {
   font-weight: 800;
 }
 
+.map-layer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.map-layer-row .segment {
+  min-width: 70px;
+}
+
 .district-map {
   display: block;
   width: 100%;
@@ -375,6 +386,128 @@ h3 {
   background-size: 44px 44px;
   border: 1px solid var(--line-strong);
   border-radius: 6px;
+}
+
+.boundary-overlay {
+  pointer-events: none;
+}
+
+.boundary-path {
+  fill: none;
+  stroke: #1d6c4f;
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.boundary-path.is-compact {
+  stroke: #4d6cab;
+  stroke-dasharray: 10 8;
+}
+
+.boundary-path.is-commerce {
+  stroke: #b46d16;
+  stroke-dasharray: 12 8;
+}
+
+.boundary-label {
+  fill: #1f342c;
+  font-size: 16px;
+  font-weight: 900;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 4px;
+}
+
+.boundary-label.is-compact {
+  fill: #2f4d73;
+}
+
+.boundary-label.is-commerce {
+  fill: #8b5207;
+}
+
+.map-boundary-summary {
+  margin-top: 10px;
+}
+
+.map-boundary-card {
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.map-boundary-card.is-admin {
+  border-left: 4px solid var(--green);
+}
+
+.map-boundary-card.is-compact {
+  border-left: 4px solid var(--blue);
+}
+
+.map-boundary-card.is-commerce {
+  border-left: 4px solid var(--amber);
+}
+
+.map-boundary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.map-boundary-head p {
+  margin-bottom: 4px;
+}
+
+.map-boundary-head h3 {
+  margin-bottom: 0;
+  font-size: 18px;
+}
+
+.map-boundary-head span {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  color: #253832;
+  background: #eef4f1;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.map-boundary-card > p {
+  margin-bottom: 10px;
+  color: #4b5a55;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.map-boundary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.map-boundary-tags span {
+  padding: 4px 8px;
+  color: #274137;
+  background: #eef5f1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.map-boundary-empty {
+  padding: 10px 12px;
+  color: var(--muted);
+  background: #f8faf9;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  font-size: 13px;
 }
 
 .river {

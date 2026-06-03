@@ -153,8 +153,38 @@
               <p class="eyebrow">집계구 분석</p>
               <h2>생활 접근성 지표</h2>
             </div>
+            <label class="select-label">
+              <span>비교 기준</span>
+              <select id="geoMetricSelect">
+                <option value="생활">생활</option>
+                <option value="교통">교통</option>
+                <option value="안전">안전</option>
+              </select>
+            </label>
           </div>
-          <div class="access-grid" id="accessGrid"></div>
+          <div class="geo-summary" id="geoSummary"></div>
+          <div class="geo-workflow">
+            <div class="geo-access-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="eyebrow">접근성 카드</p>
+                  <h3>생활권 지표</h3>
+                </div>
+                <span>Mock 산정</span>
+              </div>
+              <div class="access-grid" id="accessGrid"></div>
+            </div>
+            <aside class="geo-district-panel">
+              <div class="panel-title">
+                <div>
+                  <p class="eyebrow">지도 대체 목록</p>
+                  <h3>행정동 비교</h3>
+                </div>
+                <span id="districtMetricLabel">생활 기준</span>
+              </div>
+              <div id="districtList" class="district-list"></div>
+            </aside>
+          </div>
         </div>
       </section>
 

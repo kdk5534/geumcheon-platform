@@ -9,6 +9,7 @@ const state = {
   adminDatasetBase: [],
   selectedDatasetKey: "facilities",
   selectedUploadDatasetKey: "facilities",
+  geoMetric: "생활",
   apiSources: [],
   apiSourceFilter: "전체",
   apiLogs: [],
@@ -119,6 +120,8 @@ async function loadData() {
   renderFacilities();
   renderCommercial();
   renderAccess();
+  renderGeoSummary();
+  renderGeoDistricts();
   state.adminDatasetBase = defaultAdminDatasets();
   state.adminDatasets = mergeDatasetEdits(state.adminDatasetBase);
   renderDatasetManager();
@@ -133,6 +136,8 @@ async function loadData() {
   state.data = await loadBackendData(localData);
   renderMetrics();
   renderFacilities();
+  renderGeoSummary();
+  renderGeoDistricts();
   renderApiStatus();
   await loadBackendUploadLogs();
 }
@@ -318,6 +323,91 @@ function renderAccess() {
       <p>${item.note}</p>
     </article>
   `).join("");
+}
+
+function renderGeoSummary() {
+  const summary = document.querySelector("#geoSummary");
+  if (!summary) {
+    return;
+  }
+
+  const districts = Array.isArray(state.data.districts) ? state.data.districts : [];
+  if (districts.length === 0) {
+    summary.innerHTML = `<div class="geo-summary-empty">집계구 비교 데이터가 없습니다.</div>`;
+    return;
+  }
+
+  const bestDistrict = districts.reduce((best, current) => {
+    const currentScore = Number(current.scores?.[state.geoMetric] || 0);
+    const bestScore = Number(best?.scores?.[state.geoMetric] || 0);
+    return currentScore > bestScore ? current : best;
+  }, districts[0]);
+
+  const averageScore = Math.round(
+    districts.reduce((sum, district) => sum + Number(district.scores?.[state.geoMetric] || 0), 0) / districts.length
+  );
+
+  summary.innerHTML = `
+    <div>
+      <span>비교 기준</span>
+      <strong>${escapeHtml(state.geoMetric)}</strong>
+    </div>
+    <div>
+      <span>평균 점수</span>
+      <strong>${averageScore}점</strong>
+    </div>
+    <div>
+      <span>최고 권역</span>
+      <strong>${escapeHtml(bestDistrict?.name || "-")}</strong>
+    </div>
+  `;
+
+  const metricSelect = document.querySelector("#geoMetricSelect");
+  if (metricSelect) {
+    metricSelect.value = state.geoMetric;
+  }
+
+  const metricLabel = document.querySelector("#districtMetricLabel");
+  if (metricLabel) {
+    metricLabel.textContent = `${state.geoMetric} 기준`;
+  }
+}
+
+function renderGeoDistricts() {
+  const grid = document.querySelector("#districtList");
+  if (!grid) {
+    return;
+  }
+
+  const districts = Array.isArray(state.data.districts) ? state.data.districts : [];
+  const metric = state.geoMetric;
+  const ranked = [...districts].sort((a, b) => Number(b.scores?.[metric] || 0) - Number(a.scores?.[metric] || 0));
+  const topScore = Math.max(...ranked.map((district) => Number(district.scores?.[metric] || 0)), 1);
+
+  grid.innerHTML = ranked.map((district, index) => {
+    const score = Number(district.scores?.[metric] || 0);
+    const width = Math.max(8, Math.round((score / topScore) * 100));
+    return `
+      <article class="district-card ${index === 0 ? "is-leading" : ""}">
+        <div class="district-head">
+          <div>
+            <p>${escapeHtml(district.zone || district.name)}</p>
+            <strong>${escapeHtml(district.name)}</strong>
+          </div>
+          <span>${score}점</span>
+        </div>
+        <div class="district-bar" aria-hidden="true">
+          <div class="district-bar-fill" style="width: ${width}%"></div>
+        </div>
+        <dl class="district-meta">
+          <div><dt>생활시설</dt><dd>${escapeHtml(district.facilities)}</dd></div>
+          <div><dt>교통</dt><dd>${escapeHtml(district.transit)}</dd></div>
+          <div><dt>안전</dt><dd>${escapeHtml(district.safety)}</dd></div>
+        </dl>
+        <p>${escapeHtml(district.note)}</p>
+      </article>
+    `;
+  }).join("");
 }
 
 function mergeApiSources(sources = []) {
@@ -899,6 +989,7 @@ function bindEvents() {
     state.industry = event.target.value;
     renderCommercial();
   });
+  document.querySelector("#geoMetricSelect")?.addEventListener("change", handleGeoMetricChange);
 
   document.querySelector("#datasetSelect")?.addEventListener("change", handleDatasetChange);
   document.querySelector("#csvFile")?.addEventListener("change", handleCsvUpload);
@@ -983,6 +1074,12 @@ function handleApiLogFilterChange(event) {
 function handleApiLogSearchChange(event) {
   state.apiLogSearch = event.target.value || "";
   renderApiLogs();
+}
+
+function handleGeoMetricChange(event) {
+  state.geoMetric = event.target.value || "생활";
+  renderGeoSummary();
+  renderGeoDistricts();
 }
 
 function handleApiLogRetry(event) {

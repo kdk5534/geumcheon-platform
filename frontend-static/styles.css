@@ -971,6 +971,156 @@ select {
   gap: 12px;
 }
 
+.geo-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.geo-summary div {
+  padding: 12px 14px;
+  background: #f6faf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.geo-summary span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.geo-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: #233b34;
+  font-size: 18px;
+}
+
+.geo-workflow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  align-items: start;
+}
+
+.geo-access-panel,
+.geo-district-panel {
+  min-width: 0;
+}
+
+.geo-district-panel {
+  padding: 16px;
+  background: #f9fbfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.district-list {
+  display: grid;
+  gap: 10px;
+}
+
+.district-card {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: 8px;
+}
+
+.district-card.is-leading {
+  border-left-color: var(--green);
+}
+
+.district-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.district-head p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.district-head strong {
+  color: #213832;
+  font-size: 16px;
+}
+
+.district-head span {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  color: #233b34;
+  background: #edf4f1;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.district-bar {
+  height: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: #edf3ef;
+  border-radius: 999px;
+}
+
+.district-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--green));
+  border-radius: 999px;
+}
+
+.district-meta {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.district-meta div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.district-meta dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.district-meta dd {
+  margin: 0;
+  color: #243933;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.district-card > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.geo-summary-empty {
+  min-height: 82px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: #f8faf9;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+}
+
 .access-card {
   min-height: 126px;
   padding: 14px;
@@ -1537,6 +1687,8 @@ select {
   .overview,
   .portal-grid,
   .map-layout,
+  .geo-summary,
+  .geo-workflow,
   .api-summary,
   .api-log-summary,
   .api-source-grid,
@@ -1582,6 +1734,8 @@ select {
   .overview-status,
   .metric-grid,
   .split-section,
+  .geo-summary,
+  .geo-workflow,
   .api-summary,
   .api-log-summary,
   .api-source-grid,

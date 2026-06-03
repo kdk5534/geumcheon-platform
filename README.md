@@ -102,7 +102,7 @@ cd C:\Users\Administrator\Documents\geumcheon-platform
 - 실제 Excel 파싱
 - 외부 공공데이터 API 자동 수집
 
-지금의 다음 우선순위는 `docs/project-roadmap.md`의 P4 API 수집 로그 mock 화면입니다. P3 실제 DB 모드 전환은 PostgreSQL/PostGIS 설치 전까지 계속 보류합니다.
+지금의 다음 우선순위는 `docs/project-roadmap.md`의 P5 지도/분석 고도화입니다. P3 실제 DB 모드 전환은 PostgreSQL/PostGIS 설치 전까지 계속 보류합니다.
 
 ## Important Files
 

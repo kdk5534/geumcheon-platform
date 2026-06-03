@@ -20,6 +20,7 @@ const BACKEND_API_BASE = "http://localhost:8080";
 const API_TIMEOUT_MS = 450;
 const ADMIN_API_TIMEOUT_MS = 5000;
 const UPLOAD_LOG_KEY = "geumcheon-upload-logs";
+const API_LOG_KEY = "geumcheon-api-logs";
 const DATASET_CONFIG_KEY = "geumcheon-admin-datasets";
 const ADMIN_AUTH_HEADER = `Basic ${btoa("admin:admin1234")}`;
 const CSV_EXTENSIONS = new Set(["csv"]);
@@ -155,9 +156,9 @@ async function loadApiLogs() {
   try {
     const response = await fetch("./assets/data/api-logs.json");
     const data = await response.json();
-    return Array.isArray(data) ? data : defaultApiLogs();
+    return mergeApiLogEdits(Array.isArray(data) ? data : defaultApiLogs());
   } catch {
-    return defaultApiLogs();
+    return mergeApiLogEdits(defaultApiLogs());
   }
 }
 
@@ -549,6 +550,30 @@ function defaultApiLogs() {
   ];
 }
 
+function mergeApiLogEdits(baseLogs) {
+  const storedLogs = readApiLogs();
+  return storedLogs.length > 0 ? storedLogs : baseLogs;
+}
+
+function readApiLogs() {
+  try {
+    const raw = localStorage.getItem(API_LOG_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveApiLogs() {
+  localStorage.setItem(API_LOG_KEY, JSON.stringify(state.apiLogs));
+}
+
+function formatMockTimestamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function apiLogStatusLabel(status) {
   const labels = {
     success: "성공",
@@ -622,6 +647,11 @@ function renderApiLogs() {
           <div><dt>로그 ID</dt><dd>${escapeHtml(log.id || "-")}</dd></div>
         </dl>
         <p>${escapeHtml(log.note || "")}</p>
+        ${(log.status === "fail" || log.status === "queued" || log.status === "manual") ? `
+          <div class="api-log-actions">
+            <button class="sample-link" type="button" data-api-log-retry="${escapeHtml(log.id)}">재수집</button>
+          </div>
+        ` : ""}
       </article>
     `).join("");
 }
@@ -884,6 +914,7 @@ function bindEvents() {
     button.addEventListener("click", handleApiLogFilterChange);
   });
   document.querySelector("#apiLogSearch")?.addEventListener("input", handleApiLogSearchChange);
+  document.querySelector("#apiLogGrid")?.addEventListener("click", handleApiLogRetry);
 
   document.querySelector("#mapMarkers").addEventListener("click", focusFacility);
   document.querySelector("#mapMarkers").addEventListener("keydown", (event) => {
@@ -951,6 +982,33 @@ function handleApiLogFilterChange(event) {
 
 function handleApiLogSearchChange(event) {
   state.apiLogSearch = event.target.value || "";
+  renderApiLogs();
+}
+
+function handleApiLogRetry(event) {
+  const button = event.target.closest("[data-api-log-retry]");
+  if (!button) {
+    return;
+  }
+
+  const sourceLog = state.apiLogs.find((log) => log.id === button.dataset.apiLogRetry);
+  if (!sourceLog) {
+    return;
+  }
+
+  const retryLog = {
+    ...sourceLog,
+    id: `${sourceLog.id}-retry-${Date.now()}`,
+    status: "success",
+    collectedAt: formatMockTimestamp(),
+    duration: "14초",
+    rows: Math.max(Number(sourceLog.rows || 0), 1),
+    nextRun: "다음 주기 대기",
+    note: `${sourceLog.sourceName} 재수집이 정상 반영되었습니다.`
+  };
+
+  state.apiLogs = [retryLog, ...state.apiLogs];
+  saveApiLogs();
   renderApiLogs();
 }
 

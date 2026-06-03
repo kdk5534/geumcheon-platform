@@ -92,6 +92,7 @@ cd C:\Users\Administrator\Documents\geumcheon-platform
 - 공개/숨김, 업로드 방식, 컬럼 매핑 필요 여부의 mock 반영
 - API 수집 상태 mock 화면
 - API 수집 로그 mock 화면
+- API 로그 재수집 mock 액션
 - DB 저장용 스키마와 코드 준비
 - Excel 파일 선택 시 깨진 미리보기가 나오지 않도록 안내 처리
 

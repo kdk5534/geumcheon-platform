@@ -869,6 +869,16 @@ h3 {
   line-height: 1.45;
 }
 
+.api-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.api-log-actions .sample-link {
+  min-height: 30px;
+}
+
 .api-log-empty {
   grid-column: 1 / -1;
   display: grid;

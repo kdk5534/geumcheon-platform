@@ -164,7 +164,16 @@
       "transit": "1·7호선 / 버스 밀집",
       "safety": "보완 필요",
       "note": "교통 접근성이 뛰어나고 상권이 밀집한 권역입니다.",
-      "recommendation": "생활시설은 유지하고 보행 접근성을 보강하면 균형이 좋아집니다."
+      "recommendation": "생활시설은 유지하고 보행 접근성을 보강하면 균형이 좋아집니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 18,
+        "mobilityCount": 4,
+        "safetyCount": 2,
+        "commercialLabel": "상권 밀집",
+        "highlights": ["보건소", "약국", "공영주차장"],
+        "note": "업무와 상권이 강하고 교통 거점이 가까워 생활 반경이 넓게 형성됩니다."
+      }
     },
     {
       "name": "독산동",
@@ -178,7 +187,16 @@
       "transit": "버스 중심 / 역세권 분산",
       "safety": "안정적",
       "note": "생활시설과 안전시설 균형이 좋아 주민 체감도가 높습니다.",
-      "recommendation": "안전 강점을 유지하면서 교통 연결성 개선 여지를 살펴보면 좋습니다."
+      "recommendation": "안전 강점을 유지하면서 교통 연결성 개선 여지를 살펴보면 좋습니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 14,
+        "mobilityCount": 3,
+        "safetyCount": 3,
+        "commercialLabel": "균형",
+        "highlights": ["생활의원", "AED", "버스정류소"],
+        "note": "주거와 생활시설이 균형을 이루는 권역으로, 생활 편의와 안전이 안정적으로 보입니다."
+      }
     },
     {
       "name": "시흥동",
@@ -192,7 +210,16 @@
       "transit": "버스 환승 중심",
       "safety": "양호",
       "note": "학교·생활시설이 고르게 있고 안전 지표가 강한 편입니다.",
-      "recommendation": "생활시설 보강과 환승 동선 정리가 체감 개선에 가장 효과적입니다."
+      "recommendation": "생활시설 보강과 환승 동선 정리가 체감 개선에 가장 효과적입니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 16,
+        "mobilityCount": 2,
+        "safetyCount": 4,
+        "commercialLabel": "교육·생활 중심",
+        "highlights": ["대피소", "학교", "생활시설"],
+        "note": "안전시설 비중이 높고 교육·생활 동선이 명확해 주민 생활권 분석에 적합합니다."
+      }
     }
   ]
 }

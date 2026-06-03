@@ -123,6 +123,7 @@ async function loadData() {
   renderAccess();
   renderGeoSummary();
   renderGeoSpotlight();
+  renderGeoRadius();
   renderGeoDistricts();
   state.adminDatasetBase = defaultAdminDatasets();
   state.adminDatasets = mergeDatasetEdits(state.adminDatasetBase);
@@ -140,6 +141,7 @@ async function loadData() {
   renderFacilities();
   renderGeoSummary();
   renderGeoSpotlight();
+  renderGeoRadius();
   renderGeoDistricts();
   renderApiStatus();
   await loadBackendUploadLogs();
@@ -457,6 +459,60 @@ function renderGeoSpotlight() {
         <span>추천 포인트</span>
         <strong>${escapeHtml(recommendation)}</strong>
       </div>
+    </article>
+  `;
+}
+
+function renderGeoRadius() {
+  const panel = document.querySelector("#geoRadius");
+  if (!panel) {
+    return;
+  }
+
+  const district = currentGeoDistrict();
+  if (!district) {
+    panel.innerHTML = `<div class="geo-summary-empty">반경 분석 데이터를 불러올 수 없습니다.</div>`;
+    return;
+  }
+
+  const radius = district.radius || {};
+  const highlights = Array.isArray(radius.highlights) ? radius.highlights : [];
+  const facilityCount = Number(radius.facilityCount || 0);
+  const mobilityCount = Number(radius.mobilityCount || 0);
+  const safetyCount = Number(radius.safetyCount || 0);
+  const commercialLevel = radius.commercialLevel || "보통";
+  const maxValue = Math.max(facilityCount, mobilityCount, safetyCount, 1);
+
+  panel.innerHTML = `
+    <article class="geo-radius-card">
+      <div class="panel-title">
+        <div>
+          <p class="eyebrow">반경 분석</p>
+          <h3>${escapeHtml(district.name)} ${escapeHtml(radius.range || "500m")} 생활권</h3>
+        </div>
+        <span>${escapeHtml(radius.commercialLabel || commercialLevel)}</span>
+      </div>
+      <div class="geo-radius-kpis">
+        <div>
+          <span>생활시설</span>
+          <strong>${facilityCount}개</strong>
+          <div class="geo-radius-bar"><div class="geo-radius-fill" style="width: ${Math.max(12, Math.round((facilityCount / maxValue) * 100))}%"></div></div>
+        </div>
+        <div>
+          <span>교통 거점</span>
+          <strong>${mobilityCount}개</strong>
+          <div class="geo-radius-bar"><div class="geo-radius-fill alt" style="width: ${Math.max(12, Math.round((mobilityCount / maxValue) * 100))}%"></div></div>
+        </div>
+        <div>
+          <span>안전 거점</span>
+          <strong>${safetyCount}개</strong>
+          <div class="geo-radius-bar"><div class="geo-radius-fill warm" style="width: ${Math.max(12, Math.round((safetyCount / maxValue) * 100))}%"></div></div>
+        </div>
+      </div>
+      <div class="geo-radius-tags">
+        ${highlights.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+      </div>
+      <p>${escapeHtml(radius.note || district.note || "")}</p>
     </article>
   `;
 }
@@ -1154,6 +1210,7 @@ function handleGeoMetricChange(event) {
   state.geoMetric = event.target.value || "생활";
   renderGeoSummary();
   renderGeoSpotlight();
+  renderGeoRadius();
   renderGeoDistricts();
 }
 
@@ -1165,6 +1222,7 @@ function handleGeoDistrictSelect(event) {
 
   state.geoDistrict = card.dataset.districtName;
   renderGeoSpotlight();
+  renderGeoRadius();
   renderGeoDistricts();
 }
 

@@ -28,6 +28,7 @@ const DATASET_CONFIG_KEY = "geumcheon-admin-datasets";
 const ADMIN_AUTH_HEADER = `Basic ${btoa("admin:admin1234")}`;
 const CSV_EXTENSIONS = new Set(["csv"]);
 const EXCEL_EXTENSIONS = new Set(["xlsx", "xls"]);
+const ALLOWED_UPLOAD_MODES = new Set(["CSV", "API", "API/CSV"]);
 
 const datasetFieldSchemas = {
   facilities: {
@@ -1319,15 +1320,24 @@ function handleDatasetEditorSubmit(event) {
     return;
   }
 
-  Object.assign(dataset, {
-    datasetName: document.querySelector("#datasetNameField").value.trim() || dataset.datasetName,
-    domain: document.querySelector("#datasetDomainField").value.trim() || "기타",
-    sourceName: document.querySelector("#datasetSourceField").value.trim() || "Mock",
-    refreshCycle: document.querySelector("#datasetRefreshField").value.trim() || "수시",
+  const draft = {
+    datasetKey: dataset.datasetKey,
+    datasetName: document.querySelector("#datasetNameField").value.trim(),
+    domain: document.querySelector("#datasetDomainField").value.trim(),
+    sourceName: document.querySelector("#datasetSourceField").value.trim(),
+    refreshCycle: document.querySelector("#datasetRefreshField").value.trim(),
     uploadMode: document.querySelector("#datasetUploadModeField").value,
     requiredMapping: document.querySelector("#datasetMappingField").checked,
     publicVisible: document.querySelector("#datasetPublicField").checked
-  });
+  };
+
+  const validation = validateAdminDatasetDraft(draft);
+  if (!validation.valid) {
+    renderDatasetValidation(validation.errors, validation.warnings);
+    return;
+  }
+
+  Object.assign(dataset, validation.normalized);
 
   saveDatasetEdits();
   if (isDatasetUploadable(dataset)) {
@@ -1355,6 +1365,94 @@ function resetCurrentDataset() {
   renderDatasetManager();
   renderDatasetSelect();
   renderDatasetEditor("초기값으로 복원했습니다.");
+}
+
+function validateAdminDatasetDraft(draft) {
+  const errors = [];
+  const warnings = [];
+  const normalized = {
+    datasetKey: draft.datasetKey,
+    datasetName: draft.datasetName || "",
+    domain: draft.domain || "기타",
+    sourceName: draft.sourceName || "Mock",
+    refreshCycle: draft.refreshCycle || "수시",
+    uploadMode: draft.uploadMode || "CSV",
+    requiredMapping: Boolean(draft.requiredMapping),
+    publicVisible: Boolean(draft.publicVisible)
+  };
+
+  if (!normalized.datasetKey) {
+    errors.push("데이터셋 키가 비어 있습니다.");
+  }
+  if (!normalized.datasetName) {
+    errors.push("데이터명은 반드시 입력해야 합니다.");
+  } else if (normalized.datasetName.length > 40) {
+    errors.push("데이터명은 40자 이내로 입력해 주세요.");
+  }
+  if (normalized.domain.length > 20) {
+    errors.push("분야는 20자 이내로 입력해 주세요.");
+  }
+  if (normalized.sourceName.length > 60) {
+    errors.push("출처는 60자 이내로 입력해 주세요.");
+  }
+  if (normalized.refreshCycle.length > 20) {
+    errors.push("갱신주기는 20자 이내로 입력해 주세요.");
+  }
+  if (!ALLOWED_UPLOAD_MODES.has(normalized.uploadMode)) {
+    errors.push("업로드 방식은 CSV, API, API/CSV 중 하나여야 합니다.");
+  }
+  if (!normalized.publicVisible) {
+    warnings.push("화면 공개가 꺼져 있어 업로드 선택 목록에서 제외됩니다.");
+  }
+  if (!String(normalized.uploadMode || "").includes("CSV")) {
+    warnings.push("CSV 업로드 목록에는 표시되지 않습니다.");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    normalized
+  };
+}
+
+function renderDatasetValidation(errors = [], warnings = []) {
+  const status = document.querySelector("#datasetEditorStatus");
+  const editor = document.querySelector("#datasetEditor");
+  if (!status || !editor) {
+    return;
+  }
+
+  editor.querySelectorAll("[aria-invalid]").forEach((field) => {
+    field.removeAttribute("aria-invalid");
+  });
+
+  const fieldMap = {
+    "데이터명": "#datasetNameField",
+    "분야": "#datasetDomainField",
+    "출처": "#datasetSourceField",
+    "갱신주기": "#datasetRefreshField",
+    "업로드 방식": "#datasetUploadModeField"
+  };
+
+  const matchedFields = [];
+  errors.forEach((message) => {
+    const fieldLabel = Object.entries(fieldMap).find(([label]) => message.includes(label));
+    if (fieldLabel) {
+      matchedFields.push(fieldLabel[1]);
+    }
+  });
+  matchedFields.forEach((selector) => {
+    const field = document.querySelector(selector);
+    if (field) {
+      field.setAttribute("aria-invalid", "true");
+    }
+  });
+
+  status.innerHTML = [
+    errors.length > 0 ? `<span class="is-error">${escapeHtml(errors[0])}</span>` : "",
+    warnings.length > 0 ? `<span class="is-warning">${escapeHtml(warnings[0])}</span>` : ""
+  ].filter(Boolean).join(" ");
 }
 
 function focusFacility(event) {

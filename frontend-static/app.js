@@ -10,6 +10,7 @@ const state = {
   selectedDatasetKey: "facilities",
   selectedUploadDatasetKey: "facilities",
   geoMetric: "생활",
+  geoDistrict: "가산동",
   apiSources: [],
   apiSourceFilter: "전체",
   apiLogs: [],
@@ -121,6 +122,7 @@ async function loadData() {
   renderCommercial();
   renderAccess();
   renderGeoSummary();
+  renderGeoSpotlight();
   renderGeoDistricts();
   state.adminDatasetBase = defaultAdminDatasets();
   state.adminDatasets = mergeDatasetEdits(state.adminDatasetBase);
@@ -137,6 +139,7 @@ async function loadData() {
   renderMetrics();
   renderFacilities();
   renderGeoSummary();
+  renderGeoSpotlight();
   renderGeoDistricts();
   renderApiStatus();
   await loadBackendUploadLogs();
@@ -371,6 +374,10 @@ function renderGeoSummary() {
   if (metricLabel) {
     metricLabel.textContent = `${state.geoMetric} 기준`;
   }
+
+  if (!currentGeoDistrict()) {
+    state.geoDistrict = bestDistrict?.name || districts[0]?.name || "가산동";
+  }
 }
 
 function renderGeoDistricts() {
@@ -383,12 +390,13 @@ function renderGeoDistricts() {
   const metric = state.geoMetric;
   const ranked = [...districts].sort((a, b) => Number(b.scores?.[metric] || 0) - Number(a.scores?.[metric] || 0));
   const topScore = Math.max(...ranked.map((district) => Number(district.scores?.[metric] || 0)), 1);
+  const activeDistrict = currentGeoDistrict();
 
   grid.innerHTML = ranked.map((district, index) => {
     const score = Number(district.scores?.[metric] || 0);
     const width = Math.max(8, Math.round((score / topScore) * 100));
     return `
-      <article class="district-card ${index === 0 ? "is-leading" : ""}">
+      <article class="district-card ${index === 0 ? "is-leading" : ""} ${activeDistrict?.name === district.name ? "is-active" : ""}" data-district-name="${escapeHtml(district.name)}">
         <div class="district-head">
           <div>
             <p>${escapeHtml(district.zone || district.name)}</p>
@@ -408,6 +416,71 @@ function renderGeoDistricts() {
       </article>
     `;
   }).join("");
+}
+
+function renderGeoSpotlight() {
+  const spot = document.querySelector("#geoSpotlight");
+  if (!spot) {
+    return;
+  }
+
+  const district = currentGeoDistrict();
+  if (!district) {
+    spot.innerHTML = `<div class="geo-summary-empty">집계구 상세 정보를 불러올 수 없습니다.</div>`;
+    return;
+  }
+
+  const scores = district.scores || {};
+  const metricValue = Number(scores[state.geoMetric] || 0);
+  const trendLabel = metricValue >= 85 ? "매우 우수" : metricValue >= 75 ? "우수" : metricValue >= 65 ? "보통" : "보완 필요";
+  const recommendation = district.recommendation || defaultGeoRecommendation(district);
+
+  spot.innerHTML = `
+    <article class="geo-spotlight-card">
+      <div class="geo-spotlight-head">
+        <div>
+          <p>${escapeHtml(district.zone || "집계구")}</p>
+          <h3>${escapeHtml(district.name)}</h3>
+        </div>
+        <div class="geo-spotlight-score">
+          <strong>${metricValue}점</strong>
+          <span>${escapeHtml(trendLabel)}</span>
+        </div>
+      </div>
+      <div class="geo-spotlight-tags">
+        <span>생활 ${Number(scores["생활"] || 0)}점</span>
+        <span>교통 ${Number(scores["교통"] || 0)}점</span>
+        <span>안전 ${Number(scores["안전"] || 0)}점</span>
+      </div>
+      <p class="geo-spotlight-note">${escapeHtml(district.note)}</p>
+      <div class="geo-spotlight-reco">
+        <span>추천 포인트</span>
+        <strong>${escapeHtml(recommendation)}</strong>
+      </div>
+    </article>
+  `;
+}
+
+function currentGeoDistrict() {
+  const districts = Array.isArray(state.data.districts) ? state.data.districts : [];
+  return districts.find((district) => district.name === state.geoDistrict) || districts[0] || null;
+}
+
+function defaultGeoRecommendation(district) {
+  if (!district) {
+    return "비교 대상이 없습니다.";
+  }
+
+  if (district.name === "가산동") {
+    return "생활시설은 유지하고 보행 접근성을 보강하면 균형이 좋아집니다.";
+  }
+  if (district.name === "독산동") {
+    return "안전 강점을 유지하면서 교통 연결성 개선 여지를 살펴보면 좋습니다.";
+  }
+  if (district.name === "시흥동") {
+    return "생활시설 보강과 환승 동선 정리가 체감 개선에 가장 효과적입니다.";
+  }
+  return "상세 분석 보강이 필요합니다.";
 }
 
 function mergeApiSources(sources = []) {
@@ -990,6 +1063,7 @@ function bindEvents() {
     renderCommercial();
   });
   document.querySelector("#geoMetricSelect")?.addEventListener("change", handleGeoMetricChange);
+  document.querySelector("#districtList")?.addEventListener("click", handleGeoDistrictSelect);
 
   document.querySelector("#datasetSelect")?.addEventListener("change", handleDatasetChange);
   document.querySelector("#csvFile")?.addEventListener("change", handleCsvUpload);
@@ -1079,6 +1153,18 @@ function handleApiLogSearchChange(event) {
 function handleGeoMetricChange(event) {
   state.geoMetric = event.target.value || "생활";
   renderGeoSummary();
+  renderGeoSpotlight();
+  renderGeoDistricts();
+}
+
+function handleGeoDistrictSelect(event) {
+  const card = event.target.closest("[data-district-name]");
+  if (!card) {
+    return;
+  }
+
+  state.geoDistrict = card.dataset.districtName;
+  renderGeoSpotlight();
   renderGeoDistricts();
 }
 

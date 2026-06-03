@@ -999,6 +999,99 @@ select {
   font-size: 18px;
 }
 
+.geo-spotlight {
+  margin-bottom: 14px;
+}
+
+.geo-spotlight-card {
+  padding: 16px;
+  background: linear-gradient(135deg, #f7fbf9, #eef6f3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.geo-spotlight-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.geo-spotlight-head p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.geo-spotlight-head h3 {
+  margin-bottom: 0;
+  font-size: 22px;
+}
+
+.geo-spotlight-score {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.geo-spotlight-score strong {
+  color: var(--green);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.geo-spotlight-score span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.geo-spotlight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.geo-spotlight-tags span {
+  padding: 5px 10px;
+  color: #26443a;
+  background: #eef5f1;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.geo-spotlight-note {
+  margin-bottom: 12px;
+  color: #42534d;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.geo-spotlight-reco {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.geo-spotlight-reco span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.geo-spotlight-reco strong {
+  color: #213832;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .geo-workflow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
@@ -1033,6 +1126,12 @@ select {
 
 .district-card.is-leading {
   border-left-color: var(--green);
+}
+
+.district-card.is-active {
+  background: #f4fbf8;
+  border-color: #9ac9b0;
+  box-shadow: inset 0 0 0 1px rgba(20, 107, 74, 0.08);
 }
 
 .district-head {
@@ -1688,6 +1787,7 @@ select {
   .portal-grid,
   .map-layout,
   .geo-summary,
+  .geo-spotlight,
   .geo-workflow,
   .api-summary,
   .api-log-summary,
@@ -1735,6 +1835,7 @@ select {
   .metric-grid,
   .split-section,
   .geo-summary,
+  .geo-spotlight,
   .geo-workflow,
   .api-summary,
   .api-log-summary,

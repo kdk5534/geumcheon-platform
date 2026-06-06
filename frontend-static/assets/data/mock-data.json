@@ -1,0 +1,420 @@
+{
+  "metrics": [
+    {
+      "label": "기온",
+      "value": "24.2℃",
+      "badge": "초단기",
+      "note": "금천구 대표 좌표 기준",
+      "trend": [22.1, 22.8, 23.4, 24.0, 23.7, 24.2]
+    },
+    {
+      "label": "미세먼지",
+      "value": "보통",
+      "badge": "시간",
+      "note": "서울 열린데이터 연동 예정",
+      "trend": [35, 42, 38, 29, 45, 31]
+    },
+    {
+      "label": "교통 알림",
+      "value": "3건",
+      "badge": "실시간",
+      "note": "공사·통제·사고 이벤트",
+      "trend": [5, 3, 7, 4, 6, 3]
+    },
+    {
+      "label": "상권 점포",
+      "value": "12,840",
+      "badge": "Mock",
+      "note": "상가업소정보 API 대체",
+      "trend": [12540, 12610, 12690, 12740, 12800, 12840]
+    }
+  ],
+  "meta": {
+    "overview": {
+      "source": "금천구 Mock 데이터",
+      "asOf": "2026.06.02 16:00"
+    },
+    "life": {
+      "source": "생활시설 Mock 데이터",
+      "asOf": "2026.06.02 16:00"
+    },
+    "commercial": {
+      "source": "상가업소정보 Mock 집계",
+      "asOf": "2026.06.02 15:40"
+    },
+    "geo": {
+      "source": "행정동/집계구 Mock GeoJSON",
+      "asOf": "2026.06.02 16:00"
+    },
+    "api": {
+      "source": "API 설정/로그 Mock",
+      "asOf": "2026.06.02 16:00"
+    },
+    "population": {
+      "source": "주민등록인구 Mock (행안부 형식)",
+      "asOf": "2026.06.01 00:00"
+    }
+  },
+  "facilities": [
+    {
+      "id": "F001",
+      "category": "병원",
+      "name": "금천구 보건소",
+      "address": "서울특별시 금천구 시흥대로73길 70",
+      "phone": "02-2627-2422",
+      "latitude": 37.4568,
+      "longitude": 126.8954,
+      "x": 386,
+      "y": 332,
+      "color": "#ba3f33"
+    },
+    {
+      "id": "F002",
+      "category": "약국",
+      "name": "가산디지털약국",
+      "address": "서울특별시 금천구 가산동",
+      "phone": "02-0000-0000",
+      "latitude": 37.4723,
+      "longitude": 126.8917,
+      "x": 330,
+      "y": 164,
+      "color": "#6658a6"
+    },
+    {
+      "id": "F003",
+      "category": "주차장",
+      "name": "금천구청역 공영주차장",
+      "address": "서울특별시 금천구 시흥대로63길",
+      "phone": "02-0000-0000",
+      "latitude": 37.4556,
+      "longitude": 126.8941,
+      "x": 430,
+      "y": 366,
+      "color": "#1f7f86"
+    },
+    {
+      "id": "F004",
+      "category": "안전",
+      "name": "시흥동 민방위 대피소",
+      "address": "서울특별시 금천구 시흥동",
+      "phone": "02-2627-0000",
+      "latitude": 37.4519,
+      "longitude": 126.9002,
+      "x": 586,
+      "y": 284,
+      "color": "#b46d16"
+    },
+    {
+      "id": "F005",
+      "category": "병원",
+      "name": "독산 생활의원",
+      "address": "서울특별시 금천구 독산동",
+      "phone": "02-0000-0000",
+      "latitude": 37.4612,
+      "longitude": 126.9085,
+      "x": 286,
+      "y": 340,
+      "color": "#ba3f33"
+    },
+    {
+      "id": "F006",
+      "category": "안전",
+      "name": "AED 설치 지점",
+      "address": "서울특별시 금천구 가산동",
+      "phone": "02-2627-0000",
+      "latitude": 37.4697,
+      "longitude": 126.8868,
+      "x": 454,
+      "y": 196,
+      "color": "#b46d16"
+    }
+  ],
+  "commercial": {
+    "카페": {
+      "total": 482,
+      "radius": 38,
+      "density": "높음",
+      "byDong": [
+        { "name": "가산동", "count": 186 },
+        { "name": "독산동", "count": 142 },
+        { "name": "시흥동", "count": 154 }
+      ],
+      "trend": [
+        { "month": "2025-07", "count": 448 },
+        { "month": "2025-08", "count": 452 },
+        { "month": "2025-09", "count": 455 },
+        { "month": "2025-10", "count": 461 },
+        { "month": "2025-11", "count": 464 },
+        { "month": "2025-12", "count": 468 },
+        { "month": "2026-01", "count": 463 },
+        { "month": "2026-02", "count": 466 },
+        { "month": "2026-03", "count": 471 },
+        { "month": "2026-04", "count": 476 },
+        { "month": "2026-05", "count": 479 },
+        { "month": "2026-06", "count": 482 }
+      ]
+    },
+    "음식점": {
+      "total": 1840,
+      "radius": 126,
+      "density": "매우 높음",
+      "byDong": [
+        { "name": "가산동", "count": 720 },
+        { "name": "독산동", "count": 588 },
+        { "name": "시흥동", "count": 532 }
+      ],
+      "trend": [
+        { "month": "2025-07", "count": 1792 },
+        { "month": "2025-08", "count": 1798 },
+        { "month": "2025-09", "count": 1805 },
+        { "month": "2025-10", "count": 1810 },
+        { "month": "2025-11", "count": 1818 },
+        { "month": "2025-12", "count": 1822 },
+        { "month": "2026-01", "count": 1815 },
+        { "month": "2026-02", "count": 1819 },
+        { "month": "2026-03", "count": 1825 },
+        { "month": "2026-04", "count": 1831 },
+        { "month": "2026-05", "count": 1836 },
+        { "month": "2026-06", "count": 1840 }
+      ]
+    },
+    "편의점": {
+      "total": 214,
+      "radius": 17,
+      "density": "보통",
+      "byDong": [
+        { "name": "가산동", "count": 76 },
+        { "name": "독산동", "count": 70 },
+        { "name": "시흥동", "count": 68 }
+      ],
+      "trend": [
+        { "month": "2025-07", "count": 208 },
+        { "month": "2025-08", "count": 208 },
+        { "month": "2025-09", "count": 209 },
+        { "month": "2025-10", "count": 210 },
+        { "month": "2025-11", "count": 211 },
+        { "month": "2025-12", "count": 212 },
+        { "month": "2026-01", "count": 211 },
+        { "month": "2026-02", "count": 212 },
+        { "month": "2026-03", "count": 212 },
+        { "month": "2026-04", "count": 213 },
+        { "month": "2026-05", "count": 213 },
+        { "month": "2026-06", "count": 214 }
+      ]
+    },
+    "학원": {
+      "total": 392,
+      "radius": 31,
+      "density": "보통",
+      "byDong": [
+        { "name": "가산동", "count": 88 },
+        { "name": "독산동", "count": 136 },
+        { "name": "시흥동", "count": 168 }
+      ],
+      "trend": [
+        { "month": "2025-07", "count": 374 },
+        { "month": "2025-08", "count": 376 },
+        { "month": "2025-09", "count": 379 },
+        { "month": "2025-10", "count": 381 },
+        { "month": "2025-11", "count": 383 },
+        { "month": "2025-12", "count": 385 },
+        { "month": "2026-01", "count": 384 },
+        { "month": "2026-02", "count": 386 },
+        { "month": "2026-03", "count": 388 },
+        { "month": "2026-04", "count": 389 },
+        { "month": "2026-05", "count": 391 },
+        { "month": "2026-06", "count": 392 }
+      ]
+    }
+  },
+  "population": [
+    {
+      "areaName": "가산동",
+      "baseDate": "2026-06-01",
+      "total": 41280,
+      "male": 22140,
+      "female": 19140,
+      "byAge": [
+        { "ageBand": "0~9세",  "male": 1820, "female": 1730 },
+        { "ageBand": "10~19세","male": 1940, "female": 1820 },
+        { "ageBand": "20~29세","male": 3650, "female": 3120 },
+        { "ageBand": "30~39세","male": 4210, "female": 3680 },
+        { "ageBand": "40~49세","male": 3980, "female": 3440 },
+        { "ageBand": "50~59세","male": 3420, "female": 2980 },
+        { "ageBand": "60~69세","male": 2180, "female": 1920 },
+        { "ageBand": "70세 이상","male": 940, "female": 1450 }
+      ]
+    },
+    {
+      "areaName": "독산동",
+      "baseDate": "2026-06-01",
+      "total": 56740,
+      "male": 28460,
+      "female": 28280,
+      "byAge": [
+        { "ageBand": "0~9세",  "male": 2840, "female": 2710 },
+        { "ageBand": "10~19세","male": 2980, "female": 2820 },
+        { "ageBand": "20~29세","male": 4520, "female": 4380 },
+        { "ageBand": "30~39세","male": 5140, "female": 4960 },
+        { "ageBand": "40~49세","male": 4880, "female": 4720 },
+        { "ageBand": "50~59세","male": 4210, "female": 4080 },
+        { "ageBand": "60~69세","male": 2640, "female": 2810 },
+        { "ageBand": "70세 이상","male": 1250, "female": 1800 }
+      ]
+    },
+    {
+      "areaName": "시흥동",
+      "baseDate": "2026-06-01",
+      "total": 48920,
+      "male": 24180,
+      "female": 24740,
+      "byAge": [
+        { "ageBand": "0~9세",  "male": 2210, "female": 2100 },
+        { "ageBand": "10~19세","male": 2580, "female": 2440 },
+        { "ageBand": "20~29세","male": 3940, "female": 3820 },
+        { "ageBand": "30~39세","male": 4320, "female": 4180 },
+        { "ageBand": "40~49세","male": 4080, "female": 3960 },
+        { "ageBand": "50~59세","male": 3760, "female": 3840 },
+        { "ageBand": "60~69세","male": 2180, "female": 2480 },
+        { "ageBand": "70세 이상","male": 1110, "female": 1920 }
+      ]
+    }
+  ],
+  "access": [
+    {
+      "name": "의료 접근성",
+      "score": 82,
+      "note": "병원·약국 기준 Mock 산정"
+    },
+    {
+      "name": "교통 접근성",
+      "score": 76,
+      "note": "역·정류소 거리 기준 Mock 산정"
+    },
+    {
+      "name": "안전시설 접근성",
+      "score": 69,
+      "note": "AED·대피소 기준 Mock 산정"
+    },
+    {
+      "name": "생활편의 접근성",
+      "score": 88,
+      "note": "공공시설·주차장 기준 Mock 산정"
+    }
+  ],
+  "districts": [
+    {
+      "name": "가산동",
+      "zone": "상권·업무",
+      "scores": {
+        "생활": 86,
+        "교통": 94,
+        "안전": 68
+      },
+      "facilities": "18개",
+      "transit": "1·7호선 / 버스 밀집",
+      "safety": "보완 필요",
+      "note": "교통 접근성이 뛰어나고 상권이 밀집한 권역입니다.",
+      "recommendation": "생활시설은 유지하고 보행 접근성을 보강하면 균형이 좋아집니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 18,
+        "mobilityCount": 4,
+        "safetyCount": 2,
+        "commercialLabel": "상권 밀집",
+        "highlights": ["보건소", "약국", "공영주차장"],
+        "note": "업무와 상권이 강하고 교통 거점이 가까워 생활 반경이 넓게 형성됩니다."
+      }
+    },
+    {
+      "name": "독산동",
+      "zone": "주거·생활",
+      "scores": {
+        "생활": 79,
+        "교통": 73,
+        "안전": 81
+      },
+      "facilities": "14개",
+      "transit": "버스 중심 / 역세권 분산",
+      "safety": "안정적",
+      "note": "생활시설과 안전시설 균형이 좋아 주민 체감도가 높습니다.",
+      "recommendation": "안전 강점을 유지하면서 교통 연결성 개선 여지를 살펴보면 좋습니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 14,
+        "mobilityCount": 3,
+        "safetyCount": 3,
+        "commercialLabel": "균형",
+        "highlights": ["생활의원", "AED", "버스정류소"],
+        "note": "주거와 생활시설이 균형을 이루는 권역으로, 생활 편의와 안전이 안정적으로 보입니다."
+      }
+    },
+    {
+      "name": "시흥동",
+      "zone": "생활·교육",
+      "scores": {
+        "생활": 74,
+        "교통": 69,
+        "안전": 84
+      },
+      "facilities": "16개",
+      "transit": "버스 환승 중심",
+      "safety": "양호",
+      "note": "학교·생활시설이 고르게 있고 안전 지표가 강한 편입니다.",
+      "recommendation": "생활시설 보강과 환승 동선 정리가 체감 개선에 가장 효과적입니다.",
+      "radius": {
+        "range": "500m",
+        "facilityCount": 16,
+        "mobilityCount": 2,
+        "safetyCount": 4,
+        "commercialLabel": "교육·생활 중심",
+        "highlights": ["대피소", "학교", "생활시설"],
+        "note": "안전시설 비중이 높고 교육·생활 동선이 명확해 주민 생활권 분석에 적합합니다."
+      }
+    }
+  ],
+  "boundaries": [
+    {
+      "key": "행정동",
+      "title": "행정동 경계",
+      "summary": "가산동·독산동·시흥동 행정동 기준으로 생활시설과 지도 마커를 읽는 기본 레이어입니다.",
+      "legend": ["동 단위", "생활시설", "기본 경계"],
+      "layerClass": "",
+      "labelClass": "",
+      "cardClass": "is-admin",
+      "paths": [
+        { "d": "M230 56 L458 76 L546 168 L514 264 L338 248 L204 174 Z", "label": "가산동", "x": 332, "y": 146 },
+        { "d": "M204 188 L340 262 L516 280 L560 394 L392 488 L220 420 L150 292 Z", "label": "독산동", "x": 316, "y": 356 },
+        { "d": "M360 104 L622 124 L694 242 L660 388 L560 394 L516 280 L546 168 Z", "label": "시흥동", "x": 592, "y": 254 }
+      ]
+    },
+    {
+      "key": "집계구",
+      "title": "집계구 경계",
+      "summary": "격자형 집계구를 겹쳐 접근성 편차와 생활권 밀도를 보는 보조 레이어입니다.",
+      "legend": ["통계 격자", "편차 확인", "보조 경계"],
+      "layerClass": "is-compact",
+      "labelClass": "is-compact",
+      "cardClass": "is-compact",
+      "paths": [
+        { "d": "M270 88 L388 94 L378 176 L248 174 Z", "label": "A-01", "x": 300, "y": 136 },
+        { "d": "M396 92 L522 108 L512 194 L378 176 Z", "label": "A-02", "x": 438, "y": 146 },
+        { "d": "M250 184 L382 176 L366 284 L224 286 Z", "label": "B-01", "x": 286, "y": 232 },
+        { "d": "M382 176 L520 194 L506 292 L366 284 Z", "label": "B-02", "x": 434, "y": 238 }
+      ]
+    },
+    {
+      "key": "상권",
+      "title": "상권 경계",
+      "summary": "역세권과 상업 밀집축을 따라 상권이 어디에 모이는지 보여주는 분석 레이어입니다.",
+      "legend": ["역세권", "상업 축", "수요 집중"],
+      "layerClass": "is-commerce",
+      "labelClass": "is-commerce",
+      "cardClass": "is-commerce",
+      "paths": [
+        { "d": "M300 112 L514 132 L556 224 L456 308 L330 264 Z", "label": "가산 상권", "x": 416, "y": 194 },
+        { "d": "M176 252 L334 296 L318 424 L186 388 Z", "label": "독산 상권", "x": 238, "y": 336 }
+      ]
+    }
+  ]
+}

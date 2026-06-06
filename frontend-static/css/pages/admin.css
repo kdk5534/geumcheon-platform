@@ -1,0 +1,113 @@
+/* 관리자 페이지 전용 스타일: 레이아웃 래퍼 + 섹션 구분 */
+
+/* ─────────────────────────────────────────
+   페이지 래퍼
+───────────────────────────────────────── */
+.admin-page {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+/* ─────────────────────────────────────────
+   섹션 제목
+───────────────────────────────────────── */
+.admin-section {
+  margin-bottom: var(--space-10);
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-section-title {
+  font-size: var(--text-lg);
+  font-weight: 900;
+  color: var(--ink);
+  margin: 0;
+}
+
+.admin-section-badge {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--muted);
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-3);
+}
+
+/* ─────────────────────────────────────────
+   관리자 인증 섹션
+───────────────────────────────────────── */
+.admin-auth-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+/* ─────────────────────────────────────────
+   데이터셋 관리 레이아웃
+───────────────────────────────────────── */
+.admin-dataset-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.admin-dataset-list-pane {
+  border-right: 1px solid var(--line);
+  padding: var(--space-4);
+}
+
+.admin-dataset-editor-pane {
+  padding: var(--space-6);
+}
+
+/* ─────────────────────────────────────────
+   업로드 섹션
+───────────────────────────────────────── */
+.admin-upload-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+/* ─────────────────────────────────────────
+   반응형
+───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .admin-page {
+    padding: var(--space-4);
+  }
+
+  .admin-auth-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dataset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dataset-list-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}

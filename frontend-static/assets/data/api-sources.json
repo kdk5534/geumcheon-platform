@@ -1,0 +1,74 @@
+[
+  {
+    "datasetKey": "weather",
+    "name": "기상 현황",
+    "domain": "실시간",
+    "status": "mock",
+    "refreshCycle": "10분",
+    "targetScreen": "메인 대시보드",
+    "envVar": "DATA_GO_KR_API_KEY",
+    "source": "기상청",
+    "lastSynced": "2026.06.02 16:00",
+    "note": "금천구 대표 좌표 기준 Mock 응답"
+  },
+  {
+    "datasetKey": "dust",
+    "name": "미세먼지/초미세먼지",
+    "domain": "실시간",
+    "status": "key-needed",
+    "refreshCycle": "시간",
+    "targetScreen": "대기 현황",
+    "envVar": "SEOUL_OPEN_API_KEY",
+    "source": "서울 열린데이터광장",
+    "lastSynced": "대기중",
+    "note": "측정소 기준시각 표기 필요"
+  },
+  {
+    "datasetKey": "traffic",
+    "name": "교통 알림",
+    "domain": "실시간",
+    "status": "check-required",
+    "refreshCycle": "실시간",
+    "targetScreen": "상황판",
+    "envVar": "SEOUL_OPEN_API_KEY",
+    "source": "서울 TOPIS",
+    "lastSynced": "점검 필요",
+    "note": "공사·통제·사고 이벤트 우선"
+  },
+  {
+    "datasetKey": "stores",
+    "name": "상가업소 정보",
+    "domain": "상권",
+    "status": "ready",
+    "refreshCycle": "수시",
+    "targetScreen": "상권분석",
+    "envVar": "DATA_GO_KR_API_KEY",
+    "source": "소상공인시장진흥공단",
+    "lastSynced": "2026.06.02 15:40",
+    "note": "업종 분류와 좌표가 있어 핵심 데이터"
+  },
+  {
+    "datasetKey": "parking",
+    "name": "공영주차장",
+    "domain": "생활",
+    "status": "mock",
+    "refreshCycle": "수시",
+    "targetScreen": "생활지도",
+    "envVar": "SEOUL_OPEN_API_KEY",
+    "source": "서울/금천 열린데이터",
+    "lastSynced": "2026.06.02 14:50",
+    "note": "정적 주차장 목록으로 개발 중"
+  },
+  {
+    "datasetKey": "population",
+    "name": "주민등록 인구",
+    "domain": "인구",
+    "status": "key-needed",
+    "refreshCycle": "월",
+    "targetScreen": "인구 대시보드",
+    "envVar": "SEOUL_OPEN_API_KEY",
+    "source": "행안부/서울 열린데이터",
+    "lastSynced": "대기중",
+    "note": "행정동 기준 우선"
+  }
+]

@@ -1,0 +1,222 @@
+/* 상권분석 페이지 전용 스타일 */
+
+/* ─────────────────────────────────────────
+   페이지 래퍼
+───────────────────────────────────────── */
+.cml-page {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+/* ─────────────────────────────────────────
+   업종 필터 바
+───────────────────────────────────────── */
+.cml-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.cml-filter-label {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--muted);
+  margin-right: var(--space-2);
+}
+
+.cml-filter-btn {
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--wash);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.cml-filter-btn:hover {
+  background: #e7efec;
+  color: var(--ink);
+  border-color: var(--green);
+}
+
+.cml-filter-btn.is-active {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* ─────────────────────────────────────────
+   KPI 카드 행
+───────────────────────────────────────── */
+.cml-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.cml-kpi-card {
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.cml-kpi-card p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cml-kpi-card strong {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.cml-kpi-card strong span {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+/* ─────────────────────────────────────────
+   차트 그리드 레이아웃
+───────────────────────────────────────── */
+.cml-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.cml-chart-card--wide {
+  grid-column: 1 / -1;
+}
+
+/* ECharts 컨테이너 */
+.cml-echart {
+  height: 240px;
+  width: 100%;
+}
+
+.cml-echart--tall {
+  height: 280px;
+}
+
+/* ─────────────────────────────────────────
+   차트 카드
+───────────────────────────────────────── */
+.cml-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.cml-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.cml-chart-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.cml-industry-badge {
+  padding: var(--space-1) var(--space-3);
+  background: #e6f1ed;
+  color: var(--green);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.cml-chart-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cml-bar-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 56px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cml-bar-label {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cml-bar-track {
+  height: 10px;
+  background: var(--wash);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.cml-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.cml-bar-val {
+  font-size: var(--text-base);
+  font-weight: 800;
+  color: var(--ink);
+  text-align: right;
+}
+
+/* ─────────────────────────────────────────
+   반응형
+───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .cml-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cml-chart-card--wide {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 780px) {
+  .cml-page {
+    padding: var(--space-4);
+  }
+
+  .cml-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .cml-kpi-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,139 @@
+/* API 상태 + 로그 페이지 공통 스타일 */
+
+/* ─────────────────────────────────────────
+   페이지 래퍼
+───────────────────────────────────────── */
+.api-page {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+/* ─────────────────────────────────────────
+   요약 KPI 행
+───────────────────────────────────────── */
+.api-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.api-summary-kpi {
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.api-summary-kpi span {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+
+.api-summary-kpi strong {
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* ─────────────────────────────────────────
+   필터 바
+───────────────────────────────────────── */
+.api-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.api-filter-btn {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--wash);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.api-filter-btn:hover {
+  background: #e7efec;
+  color: var(--ink);
+  border-color: var(--green);
+}
+
+.api-filter-btn.is-active {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* ─────────────────────────────────────────
+   검색 입력 (api-logs)
+───────────────────────────────────────── */
+.api-search-input {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--wash);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  width: 240px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.api-search-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(46, 125, 82, 0.15);
+  outline: none;
+}
+
+/* ─────────────────────────────────────────
+   카드 그리드
+───────────────────────────────────────── */
+.api-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.api-grid-empty {
+  grid-column: 1 / -1;
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--text-base);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+/* ─────────────────────────────────────────
+   반응형
+───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .api-page {
+    padding: var(--space-4);
+  }
+
+  .api-summary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .api-search-input {
+    width: 100%;
+  }
+}

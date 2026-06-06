@@ -1,0 +1,11 @@
+.env
+uploads/
+.tools/
+.tmp/
+backend-egovframe-skeleton/target/
+frontend-static/node_modules/
+frontend-static/dist/
+frontend-static/build/
+node_modules/
+target/
+*.log

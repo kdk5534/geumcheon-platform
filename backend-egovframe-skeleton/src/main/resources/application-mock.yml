@@ -1,0 +1,29 @@
+spring:
+  security:
+    user:
+      name: admin
+      password: admin1234
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+
+geumcheon:
+  runtime:
+    mode: mock
+  security:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  collector:
+    enabled: false
+    retry-count: 1
+    retry-delay-seconds: 1
+    schedule-enabled: false
+    cron: 0 0 4 * * *
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

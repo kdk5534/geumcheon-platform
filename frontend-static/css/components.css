@@ -1,0 +1,164 @@
+/* 공통 UI 컴포넌트: 홈 대시보드와 페이지 전환 구조에서 재사용하는 클래스 */
+
+/* ─────────────────────────────────────────
+   페이지 헤더
+───────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.page-header-copy .eyebrow {
+  margin-bottom: var(--space-2);
+}
+
+.page-header-copy h2 {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-2xl);
+}
+
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--muted);
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.page-back:hover {
+  background: #e7efec;
+  color: var(--ink);
+}
+
+/* ─────────────────────────────────────────
+   주제 진입 카드 (홈 → 각 페이지로 이동)
+───────────────────────────────────────── */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: var(--ink);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+  cursor: pointer;
+}
+
+.topic-card:hover {
+  border-color: var(--green);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.topic-card:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+.topic-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.topic-icon.green  { background: #e6f1ed; color: var(--green); }
+.topic-icon.blue   { background: #e6edf8; color: var(--blue); }
+.topic-icon.teal   { background: #e4f2f4; color: var(--teal); }
+.topic-icon.amber  { background: #f5ecd9; color: var(--amber); }
+.topic-icon.violet { background: #ece8f6; color: var(--violet); }
+.topic-icon.navy   { background: #e6ecea; color: var(--navy); }
+
+.topic-card h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+}
+
+.topic-card p {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  flex: 1;
+}
+
+.topic-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--green);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+/* ─────────────────────────────────────────
+   Stub(준비 중) 페이지
+───────────────────────────────────────── */
+.stub-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: var(--space-16);
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.stub-page h2 {
+  margin-bottom: var(--space-2);
+}
+
+.stub-page p {
+  max-width: 440px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────
+   nav 활성 상태
+───────────────────────────────────────── */
+.nav a.is-active {
+  background: #e7efec;
+  color: var(--green);
+}
+
+/* ─────────────────────────────────────────
+   반응형
+───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .topic-grid {
+    grid-template-columns: 1fr;
+  }
+}

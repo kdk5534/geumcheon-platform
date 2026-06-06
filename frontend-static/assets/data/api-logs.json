@@ -1,0 +1,74 @@
+[
+  {
+    "id": "weather-20260602-1600",
+    "sourceName": "기상 현황",
+    "domain": "도시환경",
+    "status": "success",
+    "collectedAt": "2026.06.02 16:00",
+    "duration": "18초",
+    "rows": 1280,
+    "targetScreen": "메인 대시보드",
+    "nextRun": "16:10",
+    "note": "정상 수집 완료. 최신 기상 지표를 갱신했습니다."
+  },
+  {
+    "id": "stores-20260602-1540",
+    "sourceName": "상권/업소 정보",
+    "domain": "상권",
+    "status": "success",
+    "collectedAt": "2026.06.02 15:40",
+    "duration": "31초",
+    "rows": 842,
+    "targetScreen": "상권 분석",
+    "nextRun": "16:40",
+    "note": "업소명 중복 정제 규칙 적용 후 반영했습니다."
+  },
+  {
+    "id": "dust-20260602-1500",
+    "sourceName": "미세먼지",
+    "domain": "도시환경",
+    "status": "queued",
+    "collectedAt": "2026.06.02 15:00",
+    "duration": "-",
+    "rows": 0,
+    "targetScreen": "대기 현황",
+    "nextRun": "15:10",
+    "note": "다음 예약 수집 대기 중입니다."
+  },
+  {
+    "id": "parking-20260602-1450",
+    "sourceName": "공영주차장",
+    "domain": "생활",
+    "status": "manual",
+    "collectedAt": "2026.06.02 14:50",
+    "duration": "수동",
+    "rows": 214,
+    "targetScreen": "생활지도",
+    "nextRun": "수동",
+    "note": "지도 좌표 보정 확인이 필요합니다."
+  },
+  {
+    "id": "traffic-20260602-1405",
+    "sourceName": "교통 혼잡",
+    "domain": "교통",
+    "status": "fail",
+    "collectedAt": "2026.06.02 14:05",
+    "duration": "9초",
+    "rows": 0,
+    "targetScreen": "교통 현황",
+    "nextRun": "14:15",
+    "note": "API 응답 코드 403. 키 또는 호출 제한을 다시 확인해야 합니다."
+  },
+  {
+    "id": "population-20260602-1320",
+    "sourceName": "인구 통계",
+    "domain": "행정",
+    "status": "success",
+    "collectedAt": "2026.06.02 13:20",
+    "duration": "22초",
+    "rows": 156,
+    "targetScreen": "인구 분석",
+    "nextRun": "다음 날 08:00",
+    "note": "행정동 단위 집계가 정상 반영되었습니다."
+  }
+]

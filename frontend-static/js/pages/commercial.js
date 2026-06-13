@@ -200,9 +200,10 @@ function buildBarOption() {
 
 function buildDonutOption() {
   const commercial = state.data?.commercial ?? {};
-  const data = INDUSTRIES.map((ind) => ({
+  const data = INDUSTRIES.map((ind, i) => ({
     name: ind,
     value: Number(commercial[ind]?.total ?? 0),
+    itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] },
   }));
 
   return {
@@ -216,7 +217,7 @@ function buildDonutOption() {
       data,
       label: { show: false },
       emphasis: { label: { show: true, fontSize: 13, fontWeight: "bold" } },
-      itemStyle: { borderRadius: 4, borderColor: CHART_COLORS.surface, borderWidth: 2 },
+      itemStyle: { borderRadius: 4, borderColor: "#fff", borderWidth: 2 },
     }],
   };
 }

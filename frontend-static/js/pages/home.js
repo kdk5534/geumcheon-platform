@@ -8,10 +8,10 @@ import { icon } from "../core/icons.js";
 
 // metric 인덱스별 아이콘·테마 컬러 (ECharts에서 쓰므로 실제 hex 값으로 선언)
 const METRIC_CONFIG = [
-  { iconName: "activity",  color: "#146b4a", bgColor: "#e6f1ed" },
-  { iconName: "filter",    color: "#b56b17", bgColor: "#fef3e2" },
-  { iconName: "alert",     color: "#bd493c", bgColor: "#fdeeed" },
-  { iconName: "bar-chart", color: "#245b9e", bgColor: "#e6edf8" },
+  { iconName: "activity",  color: "#146b4a", bgColor: "#e6f1ed", tip: "실시간 환경·기상 지표 (기상청 금천구 관측)" },
+  { iconName: "filter",    color: "#b56b17", bgColor: "#fef3e2", tip: "상권·유동인구 현황 (유동인구 분석 기준)" },
+  { iconName: "alert",     color: "#bd493c", bgColor: "#fdeeed", tip: "안전·재난 경보 발령 건수 (행안부 집계)" },
+  { iconName: "bar-chart", color: "#245b9e", bgColor: "#e6edf8", tip: "주민등록 인구 통계 (행정안전부 기준)" },
 ];
 
 // 모듈-레벨 차트 인스턴스
@@ -128,9 +128,11 @@ export function renderMetrics() {
     return `
     <article class="metric-card">
       <div class="metric-card-header">
-        <div class="metric-icon-wrap" style="background:${cfg.bgColor};color:${cfg.color}">
-          ${icon(cfg.iconName, { size: 18 })}
-        </div>
+        <sl-tooltip content="${escapeHtml(cfg.tip)}" placement="bottom">
+          <div class="metric-icon-wrap" style="background:${cfg.bgColor};color:${cfg.color}">
+            ${icon(cfg.iconName, { size: 18 })}
+          </div>
+        </sl-tooltip>
         <div class="metric-card-meta">
           <span class="metric-label">${escapeHtml(metric.label)}</span>
           <span class="metric-badge">${escapeHtml(metric.badge)}</span>

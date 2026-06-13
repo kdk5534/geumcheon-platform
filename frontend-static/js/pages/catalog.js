@@ -5,7 +5,7 @@ import { icon } from "../core/icons.js";
 
 const CATEGORIES = ["전체", "교통물류", "환경기상", "사회복지", "공공행정", "보건의료", "문화관광", "산업고용", "재난안전"];
 const TYPE_LABELS = { sheet: "시트", chart: "차트", map: "지도", file: "파일", api: "API" };
-const TYPE_ICONS  = { sheet: "list", chart: "bar-chart", map: "map", file: "filter", api: "database" };
+const TYPE_ICONS  = { sheet: "list", chart: "bar-chart", map: "map", file: "file", api: "database" };
 
 // 카테고리별 배지 색상 (wash 토큰 기반)
 const CATEGORY_COLORS = {
@@ -93,23 +93,44 @@ function buildSkeleton() {
 /** 전체 페이지 렌더 */
 function render(container) {
   const total = allDatasets.length;
+  const catCount  = new Set(allDatasets.map((d) => d.category)).size;
+  const typeCount = new Set(allDatasets.flatMap((d) => d.types || [])).size;
+  const liveCount = allDatasets.filter((d) => d.updateCycle === "실시간").length;
+
   container.innerHTML = `
     <div class="cat-page">
       <div class="page-header">
         <div class="page-header-copy">
           <p class="eyebrow">데이터 카탈로그</p>
           <h2>금천구 공공데이터</h2>
-          <p class="page-header-sub">
-            ${total}개 데이터셋을 검색·열람할 수 있습니다. 출처: 금천구청·서울시·국가기관.
-          </p>
+          <p class="page-header-sub">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
+      </div>
+
+      <!-- 통계 요약 스트립 -->
+      <div class="cat-stats-strip">
+        <div class="cat-stat-item">
+          <strong>${total}</strong><span>전체 데이터셋</span>
+        </div>
+        <div class="cat-stat-divider"></div>
+        <div class="cat-stat-item">
+          <strong>${catCount}</strong><span>분류 카테고리</span>
+        </div>
+        <div class="cat-stat-divider"></div>
+        <div class="cat-stat-item">
+          <strong>${typeCount}</strong><span>데이터 형식</span>
+        </div>
+        <div class="cat-stat-divider"></div>
+        <div class="cat-stat-item">
+          <strong>${liveCount}</strong><span>실시간 갱신</span>
+        </div>
       </div>
 
       <!-- 툴바: 검색 + 정렬 -->
       <div class="cat-toolbar">
         <div class="cat-search-wrap">
-          <span class="cat-search-icon" aria-hidden="true">${icon("filter", { size: 15 })}</span>
+          <span class="cat-search-icon" aria-hidden="true">${icon("search", { size: 15 })}</span>
           <input
             id="cat-search"
             class="cat-search"

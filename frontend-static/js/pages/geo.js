@@ -460,7 +460,23 @@ function initRadarChart() {
   const districtScores = GEO_METRICS.map((m) => Number(district.scores?.[m] || 0));
 
   chartRadar = createChart(el, {
-    tooltip: {},
+    tooltip: {
+      formatter: (params) => {
+        if (!params || !params.value) return "";
+        const vals = params.value;
+        const rows = GEO_METRICS.map((m, i) =>
+          `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">` +
+          `<span style="color:#65736d">${m}</span>` +
+          `<strong>${vals[i] != null ? vals[i] + "점" : "—"}</strong>` +
+          `</div>`
+        ).join("");
+        return (
+          `<div style="font-size:12px;min-width:148px">` +
+          `<div style="font-weight:800;margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid #e8edeb">` +
+          escapeHtml(params.name) + `</div>` + rows + `</div>`
+        );
+      },
+    },
     legend: {
       data: [escapeHtml(district.name), "구 평균"],
       bottom: 0,
@@ -562,7 +578,7 @@ function initComparisonChart() {
         name: "최고",
         type: "bar",
         data: metricRows.map((r) => r.leader),
-        itemStyle: { color: "#d8e0dd", borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: CHART_COLORS.line, borderRadius: [4, 4, 0, 0] },
         barMaxWidth: 36,
         label: { show: true, position: "top", color: CHART_COLORS.muted, fontSize: 11,
                  formatter: (p) => p.value },

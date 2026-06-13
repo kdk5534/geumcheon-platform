@@ -780,17 +780,3 @@
   }
 }
 
-/* home-section-more 링크 스타일 */
-.home-section-more {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--green);
-  text-decoration: none;
-  margin-left: auto;
-  white-space: nowrap;
-  transition: opacity var(--transition-fast);
-}
-
-.home-section-more:hover {
-  opacity: 0.75;
-}

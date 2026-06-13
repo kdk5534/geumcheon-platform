@@ -215,7 +215,7 @@ select {
 
 .nav a:hover,
 .nav a:focus-visible {
-  background: #ebf3ef;
+  background: var(--green-wash);
   color: var(--green);
   outline: none;
 }
@@ -379,38 +379,6 @@ select {
   border-radius: 6px;
 }
 
-.geo-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.geo-summary .data-stamp {
-  grid-column: 1 / -1;
-  margin-top: 0;
-}
-
-.geo-summary div {
-  padding: 12px 14px;
-  background: #f6faf8;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.geo-summary span {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.geo-summary strong {
-  display: block;
-  margin-top: 4px;
-  color: #233b34;
-  font-size: 18px;
-}
 
 .geo-spotlight {
   margin-bottom: 14px;

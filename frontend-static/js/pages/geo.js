@@ -70,6 +70,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">집계구 분석</p>
           <h2>금천구 생활권 비교</h2>
+          <p class="page-header-sub">행정동·집계구 단위 생활·교통·안전 접근성 지표를 비교·분석합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

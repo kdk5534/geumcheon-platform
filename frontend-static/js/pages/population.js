@@ -71,6 +71,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">인구 분석</p>
           <h2>금천구 인구 현황</h2>
+          <p class="page-header-sub">행정동별 인구 피라미드와 연령대·성별 분포를 시각화합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

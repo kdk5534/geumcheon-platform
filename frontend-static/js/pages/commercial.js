@@ -72,6 +72,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">상권분석</p>
           <h2>금천구 상권 현황</h2>
+          <p class="page-header-sub">업종별 점포 분포와 월별 추이를 행정동 단위로 비교합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

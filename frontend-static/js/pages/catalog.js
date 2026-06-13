@@ -149,13 +149,15 @@ function render(container) {
 
       <!-- 카테고리 필터 탭 -->
       <div class="cat-category-bar" role="group" aria-label="카테고리 필터">
-        ${CATEGORIES.map((cat) => `
-          <button class="cat-cat-btn${cat === "전체" ? " is-active" : ""}"
-                  data-cat="${escapeHtml(cat)}"
-                  aria-pressed="${cat === "전체"}">
-            ${escapeHtml(cat)}
-          </button>
-        `).join("")}
+        ${CATEGORIES.map((cat) => {
+          const cnt = cat === "전체" ? total : allDatasets.filter((d) => d.category === cat).length;
+          return `
+            <button class="cat-cat-btn${cat === "전체" ? " is-active" : ""}"
+                    data-cat="${escapeHtml(cat)}"
+                    aria-pressed="${cat === "전체"}">
+              ${escapeHtml(cat)}<span class="cat-cat-count">${cnt}</span>
+            </button>`;
+        }).join("")}
       </div>
 
       <!-- 형식(type) 필터 -->

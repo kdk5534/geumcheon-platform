@@ -17,6 +17,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-left: var(--space-4);
+  border-left: 4px solid var(--green);
 }
 
 .page-header-copy .eyebrow {

@@ -283,8 +283,8 @@ h3 {
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .metric-card {
@@ -1945,6 +1945,7 @@ button {
   padding: 20px;
   min-height: 148px;
   border-top: 3px solid transparent;
+  border-radius: var(--radius-xl);
   transition: box-shadow var(--transition-fast);
 }
 

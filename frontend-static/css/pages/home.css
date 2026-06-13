@@ -247,6 +247,8 @@
   align-items: center;
   gap: var(--space-3);
   margin: var(--space-8) 0 var(--space-4);
+  padding-left: var(--space-4);
+  border-left: 4px solid var(--green);
 }
 
 .home-section-label h2 {
@@ -623,7 +625,9 @@
 .home-topics-header {
   margin: var(--space-8) 0 var(--space-3);
   padding-top: var(--space-6);
+  padding-left: var(--space-4);
   border-top: 1px solid var(--line);
+  border-left: 4px solid var(--green);
 }
 
 .home-topics-header h2 {

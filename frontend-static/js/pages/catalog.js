@@ -95,7 +95,7 @@ function render(container) {
   const total = allDatasets.length;
   const catCount  = new Set(allDatasets.map((d) => d.category)).size;
   const typeCount = new Set(allDatasets.flatMap((d) => d.types || [])).size;
-  const liveCount = allDatasets.filter((d) => d.updateCycle === "실시간").length;
+  const apiCount  = allDatasets.filter((d) => (d.types || []).includes("api")).length;
 
   container.innerHTML = `
     <div class="cat-page">
@@ -123,7 +123,7 @@ function render(container) {
         </div>
         <div class="cat-stat-divider"></div>
         <div class="cat-stat-item">
-          <strong>${liveCount}</strong><span>실시간 갱신</span>
+          <strong>${apiCount}</strong><span>Open API 제공</span>
         </div>
       </div>
 

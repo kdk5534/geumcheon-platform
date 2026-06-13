@@ -36,8 +36,8 @@
   --container: min(1440px, calc(100% - 56px));
 
   /* 전환 */
-  --transition-fast: 0.15s ease;
-  --transition-base: 0.22s ease;
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.20s ease;
 
   /* 다층 레이어 그림자 — 부드럽고 입체적인 깊이 */
   --shadow-sm: 0 1px 2px rgba(20, 32, 27, 0.04), 0 1px 5px rgba(20, 32, 27, 0.06);
@@ -47,10 +47,6 @@
 
   /* 포커스 링 */
   --focus-ring: 0 0 0 3px rgba(20, 107, 74, 0.28);
-
-  /* 전환 속도 조정 */
-  --transition-fast: 0.12s ease;
-  --transition-base: 0.2s ease;
 
   /* 카드 호버 색 */
   --hover-fill: rgba(20, 107, 74, 0.05);

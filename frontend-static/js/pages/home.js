@@ -348,6 +348,16 @@ function renderInsightCommercial() {
 
   insightChartLeft = createChart(el, {
     ...BASE_OPTION,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        const p = params[0];
+        if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
+          `<div style="margin-top:3px;color:#65736d">${Number(p.value).toLocaleString()}개 점포</div></div>`;
+      },
+    },
     grid: { top: 4, bottom: 4, left: 52, right: 36 },
     xAxis: { type: "value", show: false },
     yAxis: {
@@ -384,6 +394,16 @@ function renderInsightPopulation() {
 
   insightChartRight = createChart(el, {
     ...BASE_OPTION,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        const p = params[0];
+        if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
+          `<div style="margin-top:3px;color:#65736d">총 ${Number(p.value).toLocaleString()}명</div></div>`;
+      },
+    },
     grid: { top: 4, bottom: 28, left: 8, right: 8 },
     xAxis: {
       type: "category",

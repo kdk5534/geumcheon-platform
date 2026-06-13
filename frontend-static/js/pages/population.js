@@ -229,7 +229,23 @@ function buildBarOption() {
   const females    = population.map((p) => Number(p.female || 0));
 
   return {
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        if (!params?.length) return "";
+        const area = params[0]?.name || "";
+        const rows = params.map((p) =>
+          `<div style="display:flex;justify-content:space-between;gap:16px;padding:1px 0">` +
+          `<span style="color:#65736d">${p.seriesName}</span>` +
+          `<strong>${Number(p.value).toLocaleString()}명</strong>` +
+          `</div>`
+        ).join("");
+        return `<div style="font-size:12px;min-width:160px">` +
+          `<div style="font-weight:800;margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid #e8edeb">${area}</div>` +
+          rows + `</div>`;
+      },
+    },
     legend: {
       data: ["총인구", "남성", "여성"],
       right: 0, top: 0,

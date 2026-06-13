@@ -1,62 +1,75 @@
 package kr.go.geumcheon.dataplatform.admin;
 
+import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 class AdminUploadControllerTest {
 
     private final AdminUploadStore uploadStore = mock(AdminUploadStore.class);
     private final ExcelUploadParser excelUploadParser = mock(ExcelUploadParser.class);
-    private final AdminUploadController controller = new AdminUploadController(uploadStore, excelUploadParser, 15, 5);
+
+    @TempDir
+    Path tempDir;
 
     @Test
     void previewUploadRejectsUnknownDatasetKey() {
-        var response = controller.previewUpload("unknown-dataset", csvFile());
+        var response = controller().previewUpload("unknown-dataset", facilitiesCsvFile());
 
-        assertThat(response.success()).isFalse();
-        assertThat(response.message()).contains("Unknown datasetKey");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().success()).isFalse();
+        assertThat(response.getBody().message()).contains("Unknown datasetKey");
         verifyNoInteractions(uploadStore, excelUploadParser);
     }
 
     @Test
-    void commitUploadRejectsUnsupportedDatasetKey() {
+    void previewDraftStoresOnlyMetadata() {
+        AdminUploadController controller = controller();
+
+        var preview = controller.previewUpload("facilities", facilitiesCsvFile());
+
+        assertThat(preview.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(preview.getBody().data().sampleRows()).hasSize(1);
+        assertThat(preview.getBody().data().rowCount()).isEqualTo(1);
+        assertThat(preview.getBody().data().columnCount()).isEqualTo(8);
+    }
+
+    @Test
+    void commitUploadAllowsStoresDataset() {
+        AdminUploadController controller = controller();
+        var preview = controller.previewUpload("stores", storesCsvFile());
+        when(uploadStore.recordUpload(any(), eq(DatasetRegistry.find("stores").toAdminSummary()), eq(8), any(), any()))
+                .thenReturn(successLog("stores"));
+
         var response = controller.commitUpload(new UploadCommitRequest(
                 "stores",
-                "preview-id",
-                "sample.csv",
+                preview.getBody().data().uploadId(),
+                "stores.csv",
                 1,
                 8,
-                Map.of("name", "name")
-        ));
-
-        assertThat(response.success()).isFalse();
-        assertThat(response.message()).contains("not supported");
-        verifyNoInteractions(uploadStore, excelUploadParser);
-    }
-
-    @Test
-    void commitUploadRejectsPreviewCountMismatch() {
-        var preview = controller.previewUpload("facilities", csvFile());
-
-        assertThat(preview.success()).isTrue();
-
-        var response = controller.commitUpload(new UploadCommitRequest(
-                "facilities",
-                preview.data().uploadId(),
-                "sample.csv",
-                2,
-                7,
                 Map.of(
                         "id", "id",
-                        "category", "category",
                         "name", "name",
+                        "category", "category",
                         "address", "address",
                         "phone", "phone",
                         "latitude", "latitude",
@@ -65,21 +78,70 @@ class AdminUploadControllerTest {
                 )
         ));
 
-        assertThat(response.success()).isFalse();
-        assertThat(response.message()).contains("rowCount does not match preview data");
-        assertThat(response.message()).contains("columnCount does not match preview data");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().success()).isTrue();
+        verify(uploadStore).recordUpload(any(), eq(DatasetRegistry.find("stores").toAdminSummary()), eq(8), any(), any());
+    }
+
+    @Test
+    void commitUploadAllowsPopulationDataset() {
+        AdminUploadController controller = controller();
+        var preview = controller.previewUpload("population", populationCsvFile());
+        when(uploadStore.recordUpload(any(), eq(DatasetRegistry.find("population").toAdminSummary()), eq(6), any(), any()))
+                .thenReturn(successLog("population"));
+
+        var response = controller.commitUpload(new UploadCommitRequest(
+                "population",
+                preview.getBody().data().uploadId(),
+                "population.csv",
+                1,
+                6,
+                Map.of(
+                        "areaName", "areaName",
+                        "baseDate", "baseDate",
+                        "populationTotal", "populationTotal",
+                        "male", "male",
+                        "female", "female",
+                        "source", "source"
+                )
+        ));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().success()).isTrue();
+        verify(uploadStore).recordUpload(any(), eq(DatasetRegistry.find("population").toAdminSummary()), eq(6), any(), any());
+    }
+
+    @Test
+    void commitUploadRejectsPreviewCountMismatch() {
+        AdminUploadController controller = controller();
+        var preview = controller.previewUpload("facilities", facilitiesCsvFile());
+
+        var response = controller.commitUpload(new UploadCommitRequest(
+                "facilities",
+                preview.getBody().data().uploadId(),
+                "sample.csv",
+                2,
+                7,
+                facilityMappings()
+        ));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().message()).contains("rowCount does not match preview data");
+        assertThat(response.getBody().message()).contains("columnCount does not match preview data");
         verifyNoInteractions(uploadStore, excelUploadParser);
     }
 
     @Test
     void commitUploadRejectsMissingRequiredMappings() {
-        var preview = controller.previewUpload("facilities", csvFile());
-
-        assertThat(preview.success()).isTrue();
+        AdminUploadController controller = controller();
+        var preview = controller.previewUpload("facilities", facilitiesCsvFile());
 
         var response = controller.commitUpload(new UploadCommitRequest(
                 "facilities",
-                preview.data().uploadId(),
+                preview.getBody().data().uploadId(),
                 "sample.csv",
                 1,
                 8,
@@ -94,20 +156,108 @@ class AdminUploadControllerTest {
                 )
         ));
 
-        assertThat(response.success()).isFalse();
-        assertThat(response.message()).contains("missing required mappings");
-        assertThat(response.message()).contains("longitude");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().message()).contains("missing required mappings");
+        assertThat(response.getBody().message()).contains("longitude");
         verifyNoInteractions(uploadStore, excelUploadParser);
     }
 
-    private MockMultipartFile csvFile() {
+    @Test
+    void commitUploadRejectsMissingPreviewAsNotFound() {
+        var response = controller().commitUpload(new UploadCommitRequest(
+                "facilities",
+                UUID.randomUUID().toString(),
+                "sample.csv",
+                1,
+                8,
+                facilityMappings()
+        ));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().message()).contains("Upload preview data was not found");
+        verifyNoInteractions(uploadStore, excelUploadParser);
+    }
+
+    @Test
+    void collectionLogsClampsLimitToConfiguredMaximum() {
+        AdminUploadController controller = controller();
+        when(uploadStore.recentLogs(100)).thenReturn(List.of());
+
+        var response = controller.collectionLogs(999);
+
+        assertThat(response.success()).isTrue();
+        verify(uploadStore).recentLogs(100);
+    }
+
+    private AdminUploadController controller() {
+        return new AdminUploadController(
+                uploadStore,
+                excelUploadParser,
+                new CsvParser(),
+                new UploadValidator(),
+                new UploadDraftManager(Duration.ofMinutes(15), 5, tempDir)
+        );
+    }
+
+    private UploadLogSummary successLog(String datasetKey) {
+        return new UploadLogSummary(
+                UUID.randomUUID().toString(),
+                datasetKey,
+                datasetKey,
+                datasetKey + ".csv",
+                "SUCCESS",
+                1,
+                1,
+                1,
+                0,
+                Instant.now(),
+                "ok"
+        );
+    }
+
+    private Map<String, String> facilityMappings() {
+        return Map.of(
+                "id", "id",
+                "category", "category",
+                "name", "name",
+                "address", "address",
+                "phone", "phone",
+                "latitude", "latitude",
+                "longitude", "longitude",
+                "source", "source"
+        );
+    }
+
+    private MockMultipartFile facilitiesCsvFile() {
         String csv = """
                 id,category,name,address,phone,latitude,longitude,source
                 FAC-001,hospital,Geumcheon Health Center,Siheung-daero 73-gil 70,02-2627-2422,37.4568,126.8954,Sample
                 """;
+        return csvFile("sample.csv", csv);
+    }
+
+    private MockMultipartFile storesCsvFile() {
+        String csv = """
+                id,name,category,address,phone,latitude,longitude,source
+                STORE-001,Geumcheon Cafe,Cafe,Siheung-daero 20,02-0000-0000,37.4550,126.9000,Sample
+                """;
+        return csvFile("stores.csv", csv);
+    }
+
+    private MockMultipartFile populationCsvFile() {
+        String csv = """
+                areaName,baseDate,populationTotal,male,female,source
+                가산동,2026-05-01,24000,12100,11900,Sample
+                """;
+        return csvFile("population.csv", csv);
+    }
+
+    private MockMultipartFile csvFile(String fileName, String csv) {
         return new MockMultipartFile(
                 "file",
-                "sample.csv",
+                fileName,
                 "text/csv",
                 csv.getBytes(StandardCharsets.UTF_8)
         );

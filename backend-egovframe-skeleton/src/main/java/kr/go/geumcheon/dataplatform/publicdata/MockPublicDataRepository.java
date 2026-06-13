@@ -1,6 +1,7 @@
 package kr.go.geumcheon.dataplatform.publicdata;
 
 import kr.go.geumcheon.dataplatform.dataset.DatasetSummary;
+import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import kr.go.geumcheon.dataplatform.facility.FacilitySummary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -207,12 +208,7 @@ public class MockPublicDataRepository extends JdbcPublicDataRepository {
     }
 
     private List<DatasetSummary> defaultDatasets() {
-        return List.of(
-                new DatasetSummary("stores", "Store Information", "commercial", "Small Enterprise Market Agency", "daily", "API available", true),
-                new DatasetSummary("air-quality", "Fine Dust / Ultrafine Dust", "environment", "Seoul Open Data Plaza", "realtime", "API available", true),
-                new DatasetSummary("facilities", "Community Facilities", "life", "Geumcheon Open Data", "realtime", "CSV/API", false),
-                new DatasetSummary("population", "Population Statistics", "population", "Seoul Open Data Plaza", "monthly", "CSV/API", false)
-        );
+        return DatasetRegistry.publicSummaries();
     }
 
     private List<FacilitySummary> defaultFacilities() {

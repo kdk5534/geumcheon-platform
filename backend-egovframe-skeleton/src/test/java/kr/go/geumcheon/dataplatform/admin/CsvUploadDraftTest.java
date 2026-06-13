@@ -1,7 +1,10 @@
 package kr.go.geumcheon.dataplatform.admin;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -10,15 +13,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CsvUploadDraftTest {
 
+    @TempDir
+    Path tempDir;
+
     @Test
-    void draftExpiresAtTheTtlBoundary() {
+    void draftExpiresAtTheTtlBoundary() throws Exception {
+        Path contentPath = Files.createTempFile(tempDir, "draft-", ".csv");
+        Files.writeString(contentPath, "id\nFAC-001");
         CsvUploadDraft draft = new CsvUploadDraft(
                 "upload-1",
                 "facilities",
                 "sample.csv",
-                new byte[0],
+                false,
+                contentPath,
+                Files.size(contentPath),
+                CsvUploadDraft.sha256(Files.readAllBytes(contentPath)),
                 List.of("id"),
-                List.of(List.of("FAC-001")),
+                1,
+                1,
                 Instant.parse("2026-06-06T00:00:00Z")
         );
 

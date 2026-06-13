@@ -46,6 +46,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">관리자</p>
           <h2>데이터셋 관리 · CSV 업로드</h2>
+          <p class="page-header-sub">데이터셋 메타데이터 관리, CSV·Excel 업로드, 컬럼 매핑 및 검증을 지원합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

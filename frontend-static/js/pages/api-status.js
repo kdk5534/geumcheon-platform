@@ -85,6 +85,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">API 수집 현황</p>
           <h2>공공데이터 연동 상태</h2>
+          <p class="page-header-sub">공공데이터 API 연결 상태와 수집 주기를 소스별로 모니터링합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

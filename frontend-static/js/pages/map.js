@@ -140,6 +140,7 @@ function buildHtml() {
           <div class="page-header-copy">
             <p class="eyebrow">생활지도</p>
             <h2>금천구 생활시설 지도</h2>
+            <p class="page-header-sub">병원·약국·주차장·안전시설 위치와 행정동별 접근성을 지도에서 확인합니다.</p>
           </div>
           <a class="page-back" href="#/home">← 홈으로</a>
         </div>

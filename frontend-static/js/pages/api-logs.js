@@ -99,6 +99,7 @@ function buildHtml() {
         <div class="page-header-copy">
           <p class="eyebrow">수집 로그</p>
           <h2>API 수집 실행 내역</h2>
+          <p class="page-header-sub">API 수집 실행 내역을 상태·소스별로 필터링하고 수동 재수집을 실행합니다.</p>
         </div>
         <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>

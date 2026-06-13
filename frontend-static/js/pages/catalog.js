@@ -161,11 +161,14 @@ function render(container) {
       <!-- 형식(type) 필터 -->
       <div class="cat-type-bar" role="group" aria-label="데이터 형식 필터">
         <span class="cat-type-label">형식</span>
-        ${Object.entries(TYPE_LABELS).map(([key, label]) => `
-          <button class="cat-type-btn" data-type="${key}" aria-pressed="false">
-            ${icon(TYPE_ICONS[key] || "list", { size: 12 })} ${label}
-          </button>
-        `).join("")}
+        ${Object.entries(TYPE_LABELS).map(([key, label]) => {
+          const cnt = allDatasets.filter((d) => (d.types || []).includes(key)).length;
+          return `
+            <button class="cat-type-btn" data-type="${key}" aria-pressed="false">
+              ${icon(TYPE_ICONS[key] || "list", { size: 12 })} ${label}
+              <span class="cat-type-count">${cnt}</span>
+            </button>`;
+        }).join("")}
       </div>
 
       <!-- 결과 수 -->
@@ -232,7 +235,7 @@ function renderCards(container) {
   if (filtered.length === 0) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1">
-        <div class="empty-state-icon">${icon("filter", { size: 24 })}</div>
+        <div class="empty-state-icon">${icon("search", { size: 24 })}</div>
         <h3>검색 결과 없음</h3>
         <p>다른 키워드나 필터 조건을 사용해 보세요.</p>
       </div>`;

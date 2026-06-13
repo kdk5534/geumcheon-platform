@@ -234,6 +234,13 @@ select {
   opacity: 1;
 }
 
+/* API·관리자 영역 구분자: 데이터 탐색 페이지와 시각적으로 분리 */
+.nav a[data-route="api"] {
+  margin-left: var(--space-2);
+  padding-left: calc(12px + var(--space-2));
+  border-left: 1px solid rgba(58, 79, 71, 0.25);
+}
+
 .shell {
   width: min(1440px, calc(100% - 56px));
   margin: 0 auto;

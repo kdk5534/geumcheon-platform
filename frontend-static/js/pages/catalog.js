@@ -232,7 +232,12 @@ function renderCards(container) {
   const filters  = getFilters(container);
   const filtered = applyFilters(allDatasets, filters);
 
-  if (countEl) countEl.textContent = `${filtered.length}개 데이터셋`;
+  if (countEl) {
+    const total = allDatasets.length;
+    countEl.textContent = filtered.length === total
+      ? `${total}개 데이터셋`
+      : `${filtered.length}개 결과 (전체 ${total}개 중)`;
+  }
 
   if (filtered.length === 0) {
     grid.innerHTML = `

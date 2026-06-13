@@ -368,191 +368,6 @@ h3 {
 }
 
 
-.facility-item {
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbfdfc;
-}
-
-.facility-item.is-unplaced {
-  border-style: dashed;
-  background: #f6f8f7;
-  opacity: 0.82;
-}
-
-.facility-item strong {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.facility-item span {
-  display: inline-block;
-  margin-bottom: 8px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  color: var(--green);
-  background: #e4f2eb;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.facility-item p {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-
-
-.api-source-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.api-source-head p {
-  margin: 0 0 4px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.api-source-head strong {
-  color: #213832;
-  font-size: 16px;
-}
-
-.api-source-status {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  color: #253832;
-  background: #eef4f1;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-
-.api-log-card {
-  padding: 14px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--line-strong);
-  border-radius: 8px;
-}
-
-.api-log-card.is-success {
-  border-left-color: #2f8a57;
-}
-
-.api-log-card.is-failed {
-  border-left-color: #b9473f;
-}
-
-.api-log-card.is-queued {
-  border-left-color: #b7822d;
-}
-
-.api-log-card.is-manual {
-  border-left-color: #1f7f86;
-}
-
-.api-log-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.api-log-head p {
-  margin: 0 0 4px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.api-log-head strong {
-  color: #213832;
-  font-size: 16px;
-}
-
-.api-log-status {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  color: #253832;
-  background: #eef4f1;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.api-log-card.is-success .api-log-status {
-  color: #1f5a39;
-  background: #e4f3ea;
-}
-
-.api-log-card.is-failed .api-log-status {
-  color: #8b2f27;
-  background: #ffe8e5;
-}
-
-.api-log-card.is-queued .api-log-status {
-  color: #7a4b09;
-  background: #fff1d6;
-}
-
-.api-log-card.is-manual .api-log-status {
-  color: #0f5b63;
-  background: #e4f4f6;
-}
-
-.api-log-kpis {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-}
-
-.api-log-kpis div {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.api-log-kpis dt {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.api-log-kpis dd {
-  margin: 0;
-  color: #243933;
-  font-size: 12px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.api-log-card > p {
-  margin: 12px 0 0;
-  color: #4e5c57;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.api-log-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
-}
-
-.api-log-actions .sample-link {
-  min-height: 30px;
-}
 
 select {
   min-width: 136px;
@@ -605,7 +420,8 @@ select {
   padding: 16px;
   background: linear-gradient(135deg, #f7fbf9, #eef6f3);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .geo-spotlight-head {
@@ -698,7 +514,8 @@ select {
   padding: 16px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .geo-radius-kpis {
@@ -785,7 +602,8 @@ select {
     linear-gradient(135deg, rgba(36, 91, 158, 0.04), rgba(20, 107, 74, 0.06)),
     #fff;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .geo-comparison-head {
@@ -944,7 +762,8 @@ select {
   padding: 16px;
   background: linear-gradient(135deg, rgba(36, 91, 158, 0.03), rgba(20, 107, 74, 0.05));
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .geo-industry-summary {
@@ -1058,8 +877,13 @@ select {
   background: #fff;
   border: 1px solid var(--line);
   border-left: 4px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: box-shadow var(--transition-fast);
+}
+
+.district-card:not(.is-active):hover {
+  box-shadow: var(--shadow-sm);
 }
 
 .district-card.is-leading {
@@ -1246,6 +1070,12 @@ select {
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.dataset-row:hover {
+  background: var(--hover-fill);
+  box-shadow: var(--shadow-sm);
 }
 
 .dataset-row.is-active {

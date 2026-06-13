@@ -283,6 +283,12 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.home-insight-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .home-insight-header {
@@ -337,7 +343,7 @@
 }
 
 .home-insight-chart {
-  height: 160px;
+  height: 180px;
   padding: var(--space-3);
 }
 

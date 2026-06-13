@@ -52,6 +52,7 @@ export async function mount(container) {
   bindSearch(container);
   renderMetrics();
   renderStatsStrip();
+  renderPopularDatasets(container); // 비동기, ECharts 로딩을 막지 않음
 
   try {
     await loadECharts();
@@ -417,6 +418,7 @@ function bindSearch(container) {
 
   const ROUTE_MAP = {
     "상황판": "home", "홈": "home", "대시보드": "home",
+    "카탈로그": "catalog", "데이터카탈로그": "catalog", "데이터셋": "catalog",
     "생활지도": "map", "지도": "map", "시설": "map",
     "상권": "commercial", "상권분석": "commercial", "카페": "commercial", "음식점": "commercial",
     "집계구": "geo", "집계": "geo", "권역": "geo",
@@ -569,6 +571,15 @@ function buildHomeHtml() {
 
     ${buildNoticesSection()}
 
+    <!-- 인기 데이터셋 (카탈로그 미리보기) -->
+    <div class="home-section-label" style="margin-top: var(--space-8)">
+      <h2>인기 데이터셋</h2>
+      <a class="home-section-more" href="#/catalog" aria-label="데이터 카탈로그 전체보기">전체 카탈로그 →</a>
+    </div>
+    <div id="home-popular-datasets" class="home-popular-grid" aria-label="인기 데이터셋">
+      ${buildPopularDatasetsSkeleton()}
+    </div>
+
     <div class="home-topics-header">
       <h2>분석 화면</h2>
       <p>아래 카드를 클릭해 세부 분석 화면으로 이동하세요.</p>
@@ -656,6 +667,59 @@ function buildDataStatusSection() {
   `;
 }
 
+/** 인기 데이터셋 스켈레톤 플레이스홀더 */
+function buildPopularDatasetsSkeleton() {
+  return Array(4).fill(`<div class="skeleton" style="height:100px;border-radius:var(--radius-xl)"></div>`).join("");
+}
+
+/** datasets.json을 로드해 인기 데이터셋 그리드를 렌더한다. */
+async function renderPopularDatasets(container) {
+  try {
+    const res = await fetch("./assets/data/datasets.json");
+    if (!res.ok) return;
+    const data = await res.json();
+    const top = [...(data.datasets || [])]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 4);
+
+    if (!isMounted) return;
+    const grid = container.querySelector("#home-popular-datasets");
+    if (!grid || !top.length) return;
+
+    const CAT_COLORS = {
+      교통물류: { bg: "var(--teal-wash)",   fg: "var(--teal)" },
+      환경기상: { bg: "var(--blue-wash)",   fg: "var(--blue)" },
+      사회복지: { bg: "var(--green-wash)",  fg: "var(--green)" },
+      공공행정: { bg: "var(--navy-wash)",   fg: "var(--navy)" },
+      보건의료: { bg: "var(--amber-wash)",  fg: "var(--amber)" },
+      문화관광: { bg: "var(--violet-wash)", fg: "var(--violet)" },
+      산업고용: { bg: "var(--blue-wash)",   fg: "var(--blue)" },
+      재난안전: { bg: "var(--red-wash)",    fg: "var(--red)" },
+    };
+
+    grid.innerHTML = top.map((d) => {
+      const color = CAT_COLORS[d.category] || { bg: "var(--wash)", fg: "var(--muted)" };
+      const views = Number(d.views || 0).toLocaleString();
+      const types = (d.types || []).slice(0, 3).join(" · ");
+      return `
+        <a class="home-popular-card" href="#/catalog" aria-label="${escapeHtml(d.title)} 데이터셋 보기">
+          <span class="home-popular-cat" style="background:${color.bg};color:${color.fg}">
+            ${escapeHtml(d.category)}
+          </span>
+          <strong class="home-popular-title">${escapeHtml(d.title)}</strong>
+          <p class="home-popular-org">${escapeHtml(d.org)}</p>
+          <div class="home-popular-meta">
+            <span>${escapeHtml(types)}</span>
+            <span>${icon("list", { size: 11 })} ${views}회</span>
+          </div>
+        </a>
+      `;
+    }).join("");
+  } catch {
+    /* 로드 실패 시 스켈레톤 유지 */
+  }
+}
+
 function buildHeroDeco() {
   return `<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -671,19 +735,21 @@ function buildHeroDeco() {
 
 function buildTopicCards() {
   const topics = [
-    { route: "map",        iconName: "map",       iconClass: "green",  title: "생활지도",      desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 병원·약국·주차장·안전 시설을 권역별로 비교합니다.",         label: "시설 지도 보기" },
-    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",      desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다. 카페·음식점·편의점·학원 필터를 지원합니다.",       label: "상권 분석 보기" },
-    { route: "geo",        iconName: "pin",       iconClass: "teal",   title: "집계구 분석",   desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다. 반경 분석과 권역 비교를 지원합니다.",          label: "집계구 분석 보기" },
-    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",     desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다. 남녀 성비와 총인구 현황을 비교합니다.",               label: "인구 분석 보기" },
-    { route: "api",        iconName: "plug",      iconClass: "blue",   title: "API 수집 현황", desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다. 수동 재수집을 실행할 수 있습니다.",                    label: "API 현황 보기" },
-    { route: "api-logs",   iconName: "list",      iconClass: "violet", title: "수집 로그",     desc: "API 수집 실행 내역을 필터링하고 검색합니다. 상태별·소스별로 수집 결과를 추적합니다.",                     label: "로그 보기" },
-    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",        desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다. 컬럼 매핑과 검증을 지원합니다.",              label: "관리 화면 열기" }
+    { route: "catalog",    iconName: "database",  iconClass: "green",  title: "데이터 카탈로그", desc: "금천구·서울시·국가기관의 공공데이터 24종을 검색·분류·열람합니다. 카테고리별 필터와 형식 검색 지원.",     label: "카탈로그 보기" },
+    { route: "map",        iconName: "map",       iconClass: "teal",   title: "생활지도",        desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 병원·약국·주차장·안전 시설을 권역별로 비교합니다.",   label: "시설 지도 보기" },
+    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",        desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다. 카페·음식점·편의점·학원 필터를 지원합니다.", label: "상권 분석 보기" },
+    { route: "geo",        iconName: "pin",       iconClass: "blue",   title: "집계구 분석",     desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다. 반경 분석과 권역 비교를 지원합니다.",      label: "집계구 분석 보기" },
+    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",       desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다. 남녀 성비와 총인구 현황을 비교합니다.",             label: "인구 분석 보기" },
+    { route: "api",        iconName: "activity",  iconClass: "violet", title: "API 수집 현황",   desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다. 수동 재수집을 실행할 수 있습니다.",                  label: "API 현황 보기" },
+    { route: "api-logs",   iconName: "list",      iconClass: "blue",   title: "수집 로그",       desc: "API 수집 실행 내역을 필터링하고 검색합니다. 상태별·소스별로 수집 결과를 추적합니다.",                   label: "로그 보기" },
+    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",          desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다. 컬럼 매핑과 검증을 지원합니다.",            label: "관리 화면 열기" }
   ];
 
   // accent: 카드 상단 강조선 색 (CSS 변수로 전달)
   const ACCENT_MAP = {
-    map: "#146b4a", commercial: "#b56b17", geo: "#197982",
-    population: "#197982", api: "#245b9e", "api-logs": "#6556a3", admin: "#21342f"
+    catalog: "#146b4a", map: "#197982", commercial: "#b56b17",
+    geo: "#245b9e", population: "#197982", api: "#6556a3",
+    "api-logs": "#245b9e", admin: "#21342f"
   };
 
   return topics.map((topic) => {

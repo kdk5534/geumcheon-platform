@@ -11,12 +11,21 @@
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 
+    <!-- Shoelace 2.20.1: 웹 컴포넌트 UI 라이브러리 (CDN autoloader, 빌드 불필요) -->
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css">
+    <script type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
+
     <!-- 기존 스타일(전역 리셋 + 색상 토큰) -->
     <link rel="stylesheet" href="./styles.css">
 
     <!-- 새 디자인 시스템: styles.css 위에 덧씌운다 -->
     <link rel="stylesheet" href="./css/tokens.css">
     <link rel="stylesheet" href="./css/components.css">
+
+    <!-- Shoelace 테마 브리지: green 팔레트·Pretendard를 --sl-* 변수에 매핑 -->
+    <link rel="stylesheet" href="./css/shoelace-theme.css">
   </head>
   <body>
     <a class="skip-link" href="#view">본문으로 바로 이동</a>
@@ -52,6 +61,7 @@
 
       <nav class="nav" id="main-nav" aria-label="주요 메뉴">
         <a href="#/home"       data-route="home"      >상황판</a>
+        <a href="#/catalog"    data-route="catalog"   >데이터 카탈로그</a>
         <a href="#/map"        data-route="map"       >생활지도</a>
         <a href="#/commercial" data-route="commercial">상권분석</a>
         <a href="#/geo"        data-route="geo"       >집계구</a>

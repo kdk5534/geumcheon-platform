@@ -5,6 +5,7 @@ import { loadLocalData, loadBackendData, loadApiSources, loadApiLogsRaw } from "
 import { init as initRouter } from "./core/router.js";
 import { icon } from "./core/icons.js";
 import * as homePage from "./pages/home.js";
+import * as catalogPage from "./pages/catalog.js";
 import * as mapPage from "./pages/map.js";
 import * as commercialPage from "./pages/commercial.js";
 import * as geoPage from "./pages/geo.js";
@@ -18,11 +19,12 @@ import * as populationPage from "./pages/population.js";
 (function initNavIcons() {
   const NAV_ICONS = {
     home:       "home",
+    catalog:    "database",
     map:        "map",
     commercial: "bar-chart",
     geo:        "filter",
     population: "users",
-    api:        "database",
+    api:        "activity",
     "api-logs": "list",
     admin:      "settings"
   };
@@ -80,14 +82,15 @@ import * as populationPage from "./pages/population.js";
 const viewContainer = document.getElementById("view");
 
 initRouter(viewContainer, {
-  home: homePage,
-  map: mapPage,
-  commercial: commercialPage,
-  geo: geoPage,
-  population: populationPage,
-  api: apiStatusPage,
-  "api-logs": apiLogsPage,
-  admin: adminPage
+  home:        homePage,
+  catalog:     catalogPage,
+  map:         mapPage,
+  commercial:  commercialPage,
+  geo:         geoPage,
+  population:  populationPage,
+  api:         apiStatusPage,
+  "api-logs":  apiLogsPage,
+  admin:       adminPage
 }, "home");
 
 // ─── 공통 데이터 로드 ─────────────────────────────────────────

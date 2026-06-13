@@ -44,7 +44,7 @@
 }
 
 .cml-filter-btn:hover {
-  background: #e7efec;
+  background: var(--green-wash);
   color: var(--ink);
   border-color: rgba(20, 107, 74, 0.4);
 }
@@ -181,7 +181,7 @@
 
 .cml-industry-badge {
   padding: var(--space-1) var(--space-3);
-  background: #e6f1ed;
+  background: var(--green-wash);
   color: var(--green);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);

@@ -187,7 +187,10 @@ function buildBarOption() {
     series: [{
       type: "bar",
       data: values,
-      itemStyle: { color: CHART_PALETTE[0], borderRadius: [0, 4, 4, 0] },
+      itemStyle: {
+        color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length],
+        borderRadius: [0, 4, 4, 0]
+      },
       label: { show: true, position: "right", color: CHART_COLORS.text, fontSize: 11,
                formatter: (p) => Number(p.value).toLocaleString() },
       barMaxWidth: 40,
@@ -225,7 +228,13 @@ function buildLineOption() {
   const values = trend.map((t) => Number(t.count));
 
   return {
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      formatter: (params) => {
+        const p = params[0];
+        return `${p.axisValue}<br><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CHART_PALETTE[0]};margin-right:4px"></span>${Number(p.value).toLocaleString()}개`;
+      }
+    },
     grid: { left: 16, right: 24, top: 16, bottom: 8, containLabel: true },
     xAxis: {
       type: "category",
@@ -239,19 +248,20 @@ function buildLineOption() {
       type: "value",
       axisLine: { show: false },
       splitLine: { lineStyle: { color: CHART_COLORS.line } },
-      axisLabel: { color: CHART_COLORS.text, fontSize: 11 },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11,
+                   formatter: (v) => Number(v).toLocaleString() },
       scale: true,
     },
     series: [{
       type: "line",
       data: values,
-      smooth: true,
+      smooth: 0.4,
       symbol: "circle",
-      symbolSize: 6,
+      symbolSize: 7,
       lineStyle: { color: CHART_PALETTE[0], width: 2.5 },
-      itemStyle: { color: CHART_PALETTE[0] },
+      itemStyle: { color: CHART_PALETTE[0], borderWidth: 2, borderColor: "#fff" },
       areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [{ offset: 0, color: "rgba(20,107,74,0.18)" }, { offset: 1, color: "rgba(20,107,74,0)" }] } },
+        colorStops: [{ offset: 0, color: "rgba(20,107,74,0.2)" }, { offset: 1, color: "rgba(20,107,74,0)" }] } },
     }],
   };
 }

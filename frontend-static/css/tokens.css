@@ -54,4 +54,13 @@
 
   /* 카드 호버 색 */
   --hover-fill: rgba(20, 107, 74, 0.05);
+
+  /* 아이콘·배지 배경 (색상 세탁 — 연한 파스텔) */
+  --green-wash:  #e6f1ed;
+  --blue-wash:   #e6edf8;
+  --teal-wash:   #e4f2f4;
+  --amber-wash:  #fef3e2;
+  --red-wash:    #fdeeed;
+  --violet-wash: #ece8f6;
+  --navy-wash:   #e6ecea;
 }

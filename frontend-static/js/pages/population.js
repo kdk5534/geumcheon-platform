@@ -125,22 +125,22 @@ function renderKpi() {
 
   el.innerHTML = `
     <article class="pop-kpi-card">
-      <div class="pop-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("users", { size: 16 })}</div>
+      <div class="pop-kpi-icon" style="background:var(--green-wash);color:var(--green)">${icon("users", { size: 16 })}</div>
       <p>금천구 총인구</p>
       <strong>${Number(totalAll).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
-      <div class="pop-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("activity", { size: 16 })}</div>
+      <div class="pop-kpi-icon" style="background:var(--blue-wash);color:var(--blue)">${icon("activity", { size: 16 })}</div>
       <p>남성 인구</p>
       <strong>${Number(totalMale).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
-      <div class="pop-kpi-icon" style="background:#fef3e2;color:#b56b17">${icon("activity", { size: 16 })}</div>
+      <div class="pop-kpi-icon" style="background:var(--amber-wash);color:var(--amber)">${icon("activity", { size: 16 })}</div>
       <p>여성 인구</p>
       <strong>${Number(totalFemale).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
-      <div class="pop-kpi-icon" style="background:#e4f2f4;color:#197982">${icon("trending-up", { size: 16 })}</div>
+      <div class="pop-kpi-icon" style="background:var(--teal-wash);color:var(--teal)">${icon("trending-up", { size: 16 })}</div>
       <p>성비 (여성=100)</p>
       <strong>${sexRatio}<span></span></strong>
     </article>

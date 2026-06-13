@@ -136,7 +136,7 @@
 
 .district-card.is-active {
   border-color: var(--green) !important;
-  background: #f0f7f4 !important;
+  background: var(--hover-fill) !important;
 }
 
 /* ─────────────────────────────────────────

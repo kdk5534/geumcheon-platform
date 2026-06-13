@@ -44,9 +44,9 @@
 .api-summary-kpi--amber  { border-top: 3px solid var(--amber); }
 .api-summary-kpi--muted  { border-top: 3px solid var(--line-strong); }
 
-.api-summary-kpi--green  .api-kpi-icon { background: #e6f1ed; color: var(--green); }
-.api-summary-kpi--blue   .api-kpi-icon { background: #e6edf8; color: var(--blue); }
-.api-summary-kpi--amber  .api-kpi-icon { background: #fef3e2; color: var(--amber); }
+.api-summary-kpi--green  .api-kpi-icon { background: var(--green-wash);  color: var(--green); }
+.api-summary-kpi--blue   .api-kpi-icon { background: var(--blue-wash);   color: var(--blue); }
+.api-summary-kpi--amber  .api-kpi-icon { background: var(--amber-wash);  color: var(--amber); }
 .api-summary-kpi--muted  .api-kpi-icon { background: var(--wash); color: var(--muted); }
 
 .api-summary-kpi span {
@@ -93,7 +93,7 @@
 }
 
 .api-filter-btn:hover {
-  background: #e7efec;
+  background: var(--green-wash);
   color: var(--ink);
   border-color: rgba(20, 107, 74, 0.4);
 }
@@ -223,10 +223,10 @@
   white-space: nowrap;
 }
 
-.api-source-card.is-ready  .api-source-status { background: #e6f1ed; color: var(--green); }
-.api-source-card.is-mock   .api-source-status { background: #e6edf8; color: var(--blue); }
-.api-source-card.is-key    .api-source-status { background: #fef3e2; color: var(--amber); }
-.api-source-card.is-check  .api-source-status { background: #fdeeed; color: var(--red); }
+.api-source-card.is-ready  .api-source-status { background: var(--green-wash);  color: var(--green); }
+.api-source-card.is-mock   .api-source-status { background: var(--blue-wash);   color: var(--blue); }
+.api-source-card.is-key    .api-source-status { background: var(--amber-wash);  color: var(--amber); }
+.api-source-card.is-check  .api-source-status { background: var(--red-wash);    color: var(--red); }
 
 .api-source-card dl {
   margin: 0;
@@ -325,10 +325,10 @@
   white-space: nowrap;
 }
 
-.api-log-card.is-success .api-log-status { background: #e6f1ed; color: var(--green); }
-.api-log-card.is-failed  .api-log-status { background: #fdeeed; color: var(--red); }
-.api-log-card.is-queued  .api-log-status { background: #e6edf8; color: var(--blue); }
-.api-log-card.is-manual  .api-log-status { background: #fef3e2; color: var(--amber); }
+.api-log-card.is-success .api-log-status { background: var(--green-wash);  color: var(--green); }
+.api-log-card.is-failed  .api-log-status { background: var(--red-wash);    color: var(--red); }
+.api-log-card.is-queued  .api-log-status { background: var(--blue-wash);   color: var(--blue); }
+.api-log-card.is-manual  .api-log-status { background: var(--amber-wash);  color: var(--amber); }
 
 .api-log-kpis {
   margin: 0;
@@ -392,7 +392,7 @@
 }
 
 .sample-link:hover {
-  background: #daeee6;
+  background: var(--green-wash);
   border-color: rgba(20, 107, 74, 0.4);
 }
 

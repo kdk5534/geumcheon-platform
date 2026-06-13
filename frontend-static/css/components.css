@@ -64,7 +64,7 @@
 }
 
 .page-back:hover {
-  background: #e7efec;
+  background: var(--green-wash);
   color: var(--green);
   border-color: var(--green);
 }
@@ -124,13 +124,13 @@
   border-radius: var(--radius-lg);
 }
 
-.topic-icon.green  { background: #e6f1ed; color: var(--green); }
-.topic-icon.blue   { background: #e6edf8; color: var(--blue); }
-.topic-icon.teal   { background: #e4f2f4; color: var(--teal); }
-.topic-icon.amber  { background: #fef3e2; color: var(--amber); }
-.topic-icon.violet { background: #ece8f6; color: var(--violet); }
-.topic-icon.navy   { background: #e6ecea; color: var(--navy); }
-.topic-icon.red    { background: #fdeeed; color: var(--red); }
+.topic-icon.green  { background: var(--green-wash);  color: var(--green); }
+.topic-icon.blue   { background: var(--blue-wash);   color: var(--blue); }
+.topic-icon.teal   { background: var(--teal-wash);   color: var(--teal); }
+.topic-icon.amber  { background: var(--amber-wash);  color: var(--amber); }
+.topic-icon.violet { background: var(--violet-wash); color: var(--violet); }
+.topic-icon.navy   { background: var(--navy-wash);   color: var(--navy); }
+.topic-icon.red    { background: var(--red-wash);    color: var(--red); }
 
 /* SVG 아이콘 크기 보정 */
 .topic-icon .icon { display: block; }
@@ -194,7 +194,7 @@
    nav 활성 상태 (개선)
 ───────────────────────────────────────── */
 .nav a.is-active {
-  background: #daeee6;
+  background: var(--green-wash);
   color: var(--green);
   font-weight: 800;
   box-shadow: inset 0 0 0 1px rgba(20, 107, 74, 0.18);
@@ -343,10 +343,10 @@
   line-height: 1.6;
 }
 
-.badge-green  { background: #e6f1ed; color: var(--green); }
-.badge-blue   { background: #e6edf8; color: var(--blue); }
-.badge-amber  { background: #fef3e2; color: var(--amber); }
-.badge-red    { background: #fdeeed; color: var(--red); }
+.badge-green  { background: var(--green-wash);  color: var(--green); }
+.badge-blue   { background: var(--blue-wash);   color: var(--blue); }
+.badge-amber  { background: var(--amber-wash);  color: var(--amber); }
+.badge-red    { background: var(--red-wash);    color: var(--red); }
 .badge-muted  { background: var(--wash); color: var(--muted); border: 1px solid var(--line); }
 
 /* ─────────────────────────────────────────

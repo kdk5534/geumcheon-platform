@@ -130,17 +130,17 @@ function renderKpi() {
 
   el.innerHTML = `
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("bar-chart", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--green-wash);color:var(--green)">${icon("bar-chart", { size: 16 })}</div>
       <p>전체 점포</p>
       <strong>${Number(item.total).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("pin", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--blue-wash);color:var(--blue)">${icon("pin", { size: 16 })}</div>
       <p>500m 반경</p>
       <strong>${Number(item.radius).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:#fef3e2;color:#b56b17">${icon("trending-up", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--amber-wash);color:var(--amber)">${icon("trending-up", { size: 16 })}</div>
       <p>경쟁 밀도</p>
       <strong style="color:${densityColor}">${escapeHtml(item.density)}</strong>
     </article>

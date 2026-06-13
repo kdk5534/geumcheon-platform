@@ -70,7 +70,7 @@
 }
 
 .map-choropleth-btn:hover {
-  background: #e7efec;
+  background: var(--teal-wash);
   color: var(--ink);
   border-color: var(--teal);
 }
@@ -95,7 +95,7 @@
 }
 
 .map-filter-btn:hover {
-  background: #e7efec;
+  background: var(--green-wash);
   color: var(--ink);
   border-color: var(--green);
 }
@@ -199,7 +199,7 @@
 
 .facility-item:hover,
 .facility-item:focus {
-  background: #f0f6f3;
+  background: var(--hover-fill);
   outline: none;
 }
 
@@ -243,7 +243,7 @@
   font-size: var(--text-xs);
   font-weight: 800;
   color: var(--green);
-  background: #e6f1ed;
+  background: var(--green-wash);
   border-radius: var(--radius-full);
   padding: 1px var(--space-2);
   white-space: nowrap;
@@ -293,7 +293,7 @@
   font-size: var(--text-xs);
   font-weight: 700;
   color: var(--green);
-  background: #e6f1ed;
+  background: var(--green-wash);
   border-radius: var(--radius-full);
   padding: 2px 8px;
   margin-bottom: 4px;

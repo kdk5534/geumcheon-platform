@@ -5,6 +5,7 @@ import { escapeHtml } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
 import { currentCommercialIndustryData } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { icon } from "../core/icons.js";
 
 const INDUSTRIES = ["카페", "음식점", "편의점", "학원"];
 
@@ -72,7 +73,7 @@ function buildHtml() {
           <p class="eyebrow">상권분석</p>
           <h2>금천구 상권 현황</h2>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="cml-filter-bar" role="group" aria-label="업종 선택">
@@ -129,14 +130,17 @@ function renderKpi() {
 
   el.innerHTML = `
     <article class="cml-kpi-card">
+      <div class="cml-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("bar-chart", { size: 16 })}</div>
       <p>전체 점포</p>
       <strong>${Number(item.total).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
+      <div class="cml-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("pin", { size: 16 })}</div>
       <p>500m 반경</p>
       <strong>${Number(item.radius).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
+      <div class="cml-kpi-icon" style="background:#fef3e2;color:#b56b17">${icon("trending-up", { size: 16 })}</div>
       <p>경쟁 밀도</p>
       <strong style="color:${densityColor}">${escapeHtml(item.density)}</strong>
     </article>

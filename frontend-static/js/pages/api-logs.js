@@ -100,7 +100,7 @@ function buildHtml() {
           <p class="eyebrow">수집 로그</p>
           <h2>API 수집 실행 내역</h2>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div id="api-log-summary" class="api-summary-row" aria-live="polite"></div>
@@ -145,10 +145,10 @@ function renderApiLogs() {
   }, {});
 
   summaryEl.innerHTML = `
-    <article class="api-summary-kpi"><span>성공</span><strong>${counts.success || 0}</strong></article>
-    <article class="api-summary-kpi"><span>실패</span><strong>${counts.fail || 0}</strong></article>
-    <article class="api-summary-kpi"><span>대기</span><strong>${counts.queued || 0}</strong></article>
-    <article class="api-summary-kpi"><span>수동</span><strong>${counts.manual || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--green"><span>성공</span><strong>${counts.success || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--amber"><span>실패</span><strong>${counts.fail || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--blue"><span>대기</span><strong>${counts.queued || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--muted"><span>수동</span><strong>${counts.manual || 0}</strong></article>
   `;
 
   if (filtered.length === 0) {

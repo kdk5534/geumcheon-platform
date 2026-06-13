@@ -23,7 +23,7 @@ export const CHART_COLORS = {
 // 모든 ECharts 차트에 적용할 기본 테마 옵션
 export const BASE_OPTION = {
   backgroundColor: "transparent",
-  textStyle: { fontFamily: '"Segoe UI", "Malgun Gothic", Arial, sans-serif', color: CHART_COLORS.text },
+  textStyle: { fontFamily: '"Pretendard", "Pretendard Variable", "Noto Sans KR", "Malgun Gothic", sans-serif', color: CHART_COLORS.text, fontSize: 12 },
   color: CHART_PALETTE,
 };
 

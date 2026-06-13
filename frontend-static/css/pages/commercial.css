@@ -28,27 +28,51 @@
 }
 
 .cml-filter-btn {
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-full);
   background: var(--wash);
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .cml-filter-btn:hover {
   background: #e7efec;
   color: var(--ink);
-  border-color: var(--green);
+  border-color: rgba(20, 107, 74, 0.4);
 }
 
 .cml-filter-btn.is-active {
   background: var(--green);
   color: #fff;
   border-color: var(--green);
+  font-weight: 700;
+}
+
+.cml-filter-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.cml-kpi-card {
+  border-radius: var(--radius-xl);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.cml-kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--line-strong);
+}
+
+.cml-chart-card {
+  border-radius: var(--radius-xl);
 }
 
 /* ─────────────────────────────────────────
@@ -65,8 +89,22 @@
   padding: var(--space-6);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-top: 3px solid var(--line-strong);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
+}
+
+.cml-kpi-card:nth-child(1) { border-top-color: var(--amber); }
+.cml-kpi-card:nth-child(2) { border-top-color: var(--green); }
+.cml-kpi-card:nth-child(3) { border-top-color: var(--blue); }
+
+.cml-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
 }
 
 .cml-kpi-card p {

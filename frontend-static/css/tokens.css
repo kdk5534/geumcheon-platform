@@ -39,9 +39,19 @@
   --transition-fast: 0.15s ease;
   --transition-base: 0.22s ease;
 
-  /* 그림자 강화 */
-  --shadow-sm: 0 1px 3px rgba(20, 32, 27, 0.07);
-  --shadow-md: 0 4px 12px rgba(20, 32, 27, 0.09);
-  --shadow-lg: 0 8px 24px rgba(20, 32, 27, 0.11);
-  --shadow-xl: 0 16px 40px rgba(20, 32, 27, 0.13);
+  /* 다층 레이어 그림자 — 부드럽고 입체적인 깊이 */
+  --shadow-sm: 0 1px 2px rgba(20, 32, 27, 0.04), 0 1px 5px rgba(20, 32, 27, 0.06);
+  --shadow-md: 0 2px 6px rgba(20, 32, 27, 0.05), 0 4px 16px rgba(20, 32, 27, 0.08);
+  --shadow-lg: 0 4px 12px rgba(20, 32, 27, 0.07), 0 8px 28px rgba(20, 32, 27, 0.10);
+  --shadow-xl: 0 8px 20px rgba(20, 32, 27, 0.09), 0 20px 50px rgba(20, 32, 27, 0.12);
+
+  /* 포커스 링 */
+  --focus-ring: 0 0 0 3px rgba(20, 107, 74, 0.28);
+
+  /* 전환 속도 조정 */
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
+
+  /* 카드 호버 색 */
+  --hover-fill: rgba(20, 107, 74, 0.05);
 }

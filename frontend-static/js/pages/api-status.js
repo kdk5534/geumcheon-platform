@@ -3,6 +3,7 @@
 import { state } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
+import { icon } from "../core/icons.js";
 
 const FILTER_OPTIONS = ["전체", "준비됨", "Mock", "키 필요", "확인 필요"];
 
@@ -85,7 +86,7 @@ function buildHtml() {
           <p class="eyebrow">API 수집 현황</p>
           <h2>공공데이터 연동 상태</h2>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div id="api-status-summary" class="api-summary-row" aria-live="polite"></div>
@@ -113,10 +114,22 @@ function renderApiStatus() {
   }, {});
 
   summaryEl.innerHTML = `
-    <article class="api-summary-kpi"><span>준비됨</span><strong>${counts.ready || 0}</strong></article>
-    <article class="api-summary-kpi"><span>Mock</span><strong>${counts.mock || 0}</strong></article>
-    <article class="api-summary-kpi"><span>키 필요</span><strong>${counts["key-needed"] || 0}</strong></article>
-    <article class="api-summary-kpi"><span>확인 필요</span><strong>${counts["check-required"] || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--green">
+      <div class="api-kpi-icon">${icon("check", { size: 15 })}</div>
+      <span>준비됨</span><strong>${counts.ready || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--blue">
+      <div class="api-kpi-icon">${icon("database", { size: 15 })}</div>
+      <span>Mock</span><strong>${counts.mock || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--amber">
+      <div class="api-kpi-icon">${icon("alert", { size: 15 })}</div>
+      <span>키 필요</span><strong>${counts["key-needed"] || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--muted">
+      <div class="api-kpi-icon">${icon("refresh-cw", { size: 15 })}</div>
+      <span>확인 필요</span><strong>${counts["check-required"] || 0}</strong>
+    </article>
   `;
 
   const activeFilter = state.apiSourceFilter || "전체";

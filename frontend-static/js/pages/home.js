@@ -1,81 +1,169 @@
-// 홈 대시보드: 히어로 배너 + KPI 카드 + 스파크라인 + 주제 진입 카드
+// 홈 대시보드: 히어로 배너 + 검색 + KPI 카드(아이콘+카운터) + 인사이트 차트 + 주제 진입 카드
 
 import { state } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { getSectionMeta, sourceModeText } from "../core/meta.js";
-import { loadECharts, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
+import { icon } from "../core/icons.js";
 
-// 모듈-레벨 스파크라인 인스턴스 (unmount 시 dispose)
+// metric 인덱스별 아이콘·테마 컬러 (ECharts에서 쓰므로 실제 hex 값으로 선언)
+const METRIC_CONFIG = [
+  { iconName: "activity",  color: "#146b4a", bgColor: "#e6f1ed" },
+  { iconName: "filter",    color: "#b56b17", bgColor: "#fef3e2" },
+  { iconName: "alert",     color: "#bd493c", bgColor: "#fdeeed" },
+  { iconName: "bar-chart", color: "#245b9e", bgColor: "#e6edf8" },
+];
+
+// 모듈-레벨 차트 인스턴스
 const sparklines = [];
+let insightChartLeft  = null;
+let insightChartRight = null;
+let isMounted = false;
 
 function disposeSparklines() {
   sparklines.forEach((c) => { try { c.dispose(); } catch {} });
   sparklines.length = 0;
 }
 
-/** 홈 페이지 CSS를 동적으로 주입한다. 이미 있으면 중복 추가하지 않는다. */
+/** hex 색상 문자열 → rgba 문자열 변환. ECharts 그라데이션에서 CSS 변수 대신 사용. */
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function injectCss() {
-  const id = "css-page-home";
-  if (!document.getElementById(id)) {
+  if (!document.getElementById("css-page-home")) {
     const link = document.createElement("link");
-    link.id = id;
+    link.id = "css-page-home";
     link.rel = "stylesheet";
     link.href = "./css/pages/home.css";
     document.head.appendChild(link);
   }
 }
 
-/** 홈 페이지를 container에 마운트한다. */
+// ─── 공개 인터페이스 ──────────────────────────────────────────
+
 export async function mount(container) {
+  isMounted = true;
   injectCss();
   container.innerHTML = buildHomeHtml();
+  bindSearch(container);
   renderMetrics();
+  renderStatsStrip();
 
-  // ECharts가 로드된 경우 스파크라인 추가 (실패해도 기본 카드는 정상 표시)
   try {
     await loadECharts();
-    if (document.getElementById("home-metrics")) renderSparklines();
+    if (!isMounted) return;
+    if (document.getElementById("home-metrics")) {
+      renderSparklines();
+      animateMetricValues();
+    }
+    renderInsightCharts();
   } catch {}
 }
 
-/** 홈 페이지를 언마운트한다. */
 export function unmount() {
+  isMounted = false;
   disposeSparklines();
+  disposeChart(insightChartLeft);  insightChartLeft  = null;
+  disposeChart(insightChartRight); insightChartRight = null;
+}
+
+// ─── 카운터 애니메이션 ───────────────────────────────────────
+
+/** 숫자가 포함된 .metric-value 요소들을 0부터 올려가며 애니메이션한다. */
+function animateMetricValues() {
+  if (!state.data?.metrics) return;
+
+  document.querySelectorAll(".metric-value[data-target]").forEach((el) => {
+    const target = parseFloat(el.dataset.target);
+    if (isNaN(target) || target === 0) return;
+
+    const suffix = el.dataset.suffix || "";
+    const isDecimal = !Number.isInteger(target);
+    const duration = 1000;
+    let startTime = null;
+
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = eased * target;
+      el.textContent = isDecimal
+        ? current.toFixed(1) + suffix
+        : Math.floor(current).toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
 }
 
 // ─── 렌더 함수 ────────────────────────────────────────────────
 
-/** KPI 카드 그리드를 갱신한다. state.data.metrics가 준비되지 않으면 스켈레톤을 유지한다. */
 export function renderMetrics() {
   const grid = document.getElementById("home-metrics");
-  if (!grid) {
-    return;
-  }
+  if (!grid) return;
 
   if (!state.data?.metrics) {
-    grid.innerHTML = `
-      <div class="metric-card"><div class="metric-value">—</div><p class="metric-note">로드 중...</p></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
-    `;
+    grid.innerHTML = Array.from({ length: 4 }).map(() =>
+      `<div class="metric-card skeleton-card"></div>`
+    ).join("");
     return;
   }
 
-  grid.innerHTML = state.data.metrics.map((metric, idx) => `
+  grid.innerHTML = state.data.metrics.map((metric, idx) => {
+    const cfg = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
+    const trendDir = getTrendDirection(metric.trend);
+
+    // 숫자 추출 (카운터 애니메이션용): "12,840"→12840/"", "24.2℃"→24.2/"℃"
+    const match = String(metric.value).match(/^([\d,]+(?:\.\d+)?)(.*)/);
+    const rawNum = match ? match[1].replace(/,/g, "") : "";
+    const numVal = match ? parseFloat(rawNum) : NaN;
+    const suffix = match ? match[2].trim() : "";
+    const hasCounter = !isNaN(numVal) && numVal > 1;
+
+    return `
     <article class="metric-card">
-      <div class="metric-top">
-        <span>${escapeHtml(metric.label)}</span>
-        <span class="metric-badge">${escapeHtml(metric.badge)}</span>
+      <div class="metric-card-header">
+        <div class="metric-icon-wrap" style="background:${cfg.bgColor};color:${cfg.color}">
+          ${icon(cfg.iconName, { size: 18 })}
+        </div>
+        <div class="metric-card-meta">
+          <span class="metric-label">${escapeHtml(metric.label)}</span>
+          <span class="metric-badge">${escapeHtml(metric.badge)}</span>
+        </div>
       </div>
-      <div class="metric-value">${escapeHtml(metric.value)}</div>
+      <div class="metric-value${hasCounter ? "" : " metric-value--text"}"
+           ${hasCounter ? `data-target="${numVal}" data-suffix="${escapeHtml(suffix)}"` : ""}>
+        ${hasCounter ? "0" + escapeHtml(suffix) : escapeHtml(metric.value)}
+      </div>
       ${metric.trend ? `<div class="metric-sparkline" data-metric-idx="${idx}"></div>` : ""}
-      <p class="metric-note">${escapeHtml(metric.note)}</p>
+      <div class="metric-footer">
+        <p class="metric-note">${escapeHtml(metric.note)}</p>
+        ${trendDir ? `<span class="metric-trend metric-trend--${trendDir.dir}">${trendDir.label}</span>` : ""}
+      </div>
     </article>
-  `).join("");
+    `;
+  }).join("");
+
+  // 렌더 직후 카운터 실행 (ECharts 없어도 숫자 애니메이션은 항상 동작)
+  requestAnimationFrame(() => animateMetricValues());
 }
 
-/** KPI 카드 내 스파크라인을 ECharts 미니 라인 차트로 렌더한다. */
+/** trend 배열에서 상승/하락 방향을 반환한다. */
+function getTrendDirection(trend) {
+  if (!trend?.length || trend.length < 2) return null;
+  const last = trend[trend.length - 1];
+  const prev = trend[trend.length - 2];
+  const diff = last - prev;
+  if (Math.abs(diff) < 0.001) return null;
+  return diff > 0
+    ? { dir: "up",   label: `▲ ${Math.abs(diff % 1 === 0 ? diff : diff.toFixed(1))}` }
+    : { dir: "down", label: `▼ ${Math.abs(diff % 1 === 0 ? diff : diff.toFixed(1))}` };
+}
+
 function renderSparklines() {
   disposeSparklines();
   if (!state.data?.metrics) return;
@@ -85,7 +173,12 @@ function renderSparklines() {
     const el = document.querySelector(`.metric-sparkline[data-metric-idx="${idx}"]`);
     if (!el) return;
 
+    const cfg = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
     const values = metric.trend.map((t) => t.value ?? t);
+    const lineColor = cfg.color;
+    const areaTop = hexToRgba(lineColor, 0.18);
+    const areaBot = hexToRgba(lineColor, 0);
+
     const chart = window.echarts.init(el, null, { renderer: "svg" });
     chart.setOption({
       backgroundColor: "transparent",
@@ -97,9 +190,16 @@ function renderSparklines() {
         data: values,
         smooth: true,
         symbol: "none",
-        lineStyle: { color: CHART_PALETTE[0], width: 1.5 },
-        areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [{ offset: 0, color: "rgba(20,107,74,0.25)" }, { offset: 1, color: "rgba(20,107,74,0)" }] } }
+        lineStyle: { color: lineColor, width: 1.8 },
+        areaStyle: {
+          color: {
+            type: "linear", x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: areaTop },
+              { offset: 1, color: areaBot }
+            ]
+          }
+        }
       }],
       animation: false
     });
@@ -107,31 +207,246 @@ function renderSparklines() {
   });
 }
 
-/** 데이터 갱신 후 스파크라인만 다시 그린다. renderMetrics() 이후 호출 전제. */
-export function refreshSparklines() {
-  renderSparklines();
-}
+export function refreshSparklines() { renderSparklines(); }
 
-/** 히어로 배너의 데이터 모드 배지와 eyebrow를 갱신한다. */
 export function renderHeroMode() {
-  const badge = document.getElementById("home-mode-badge");
+  const badge   = document.getElementById("home-mode-badge");
   const eyebrow = document.getElementById("home-eyebrow");
-
-  if (!state.data) {
-    return;
-  }
+  if (!state.data) return;
 
   const sourceText = sourceModeText(state.data.sourceMode);
   const { asOf } = getSectionMeta("overview");
 
-  if (eyebrow) {
-    eyebrow.textContent = `${asOf} 기준 · ${sourceText}`;
-  }
-
+  if (eyebrow) eyebrow.textContent = `${asOf} 기준 · ${sourceText}`;
   if (badge) {
     const hint = state.data.sourceModeError ? " · 일부 지연" : "";
     badge.textContent = `${sourceText}${hint}`;
   }
+  renderHeroStats();
+}
+
+function renderHeroStats() {
+  const wrap = document.getElementById("home-hero-stats");
+  if (!wrap) return;
+
+  const sources    = Array.isArray(state.apiSources) ? state.apiSources : [];
+  const total      = sources.length || 6;
+  const ready      = sources.filter((s) => s.status === "ready").length;
+  const pop        = state.data?.population?.[0]?.total;
+  const facilities = state.data?.facilities?.length;
+
+  wrap.innerHTML = `
+    <div class="home-stat-card">
+      <span>데이터 소스</span>
+      <strong data-counter="${total}" data-suffix="종">${total}종</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>수집 정상</span>
+      <strong class="${ready > 0 ? "ok" : "pending"}"${ready > 0 ? ` data-counter="${ready}" data-suffix="종"` : ""}>${ready > 0 ? ready + "종" : "대기"}</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>등록 시설</span>
+      <strong${facilities != null ? ` data-counter="${facilities}" data-suffix="건"` : ""}>${facilities != null ? facilities + "건" : "—"}</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>대표 동 인구</span>
+      <strong${pop ? ` data-counter="${pop}" data-suffix="명"` : ""}>${pop ? pop.toLocaleString() + "명" : "—"}</strong>
+    </div>
+  `;
+
+  // 카운트 업 애니메이션 실행
+  animateHeroCounters(wrap);
+}
+
+/** 풀너비 통계 스트립을 state 데이터로 채운다. */
+export function renderStatsStrip() {
+  if (!state.data) return;
+
+  const pop = state.data.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const commercial = state.data.commercial;
+  const commercialTotal = commercial
+    ? Object.values(commercial).reduce((s, cat) => s + Number(cat.total || 0), 0)
+    : 0;
+  const facilities = state.data.facilities?.length || 0;
+  const sources = (Array.isArray(state.apiSources) ? state.apiSources.length : 0) || 6;
+
+  const animate = (el, target, suffix = "", decimal = false) => {
+    if (!el || !target) return;
+    const duration = 1200;
+    let start = null;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const val = eased * target;
+      el.textContent = decimal
+        ? val.toFixed(1) + suffix
+        : Math.floor(val).toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const popEl  = document.getElementById("strip-population");
+  const comEl  = document.getElementById("strip-commercial");
+  const facEl  = document.getElementById("strip-facilities");
+  const srcEl  = document.getElementById("strip-sources");
+
+  if (pop > 0)              { popEl.textContent  = "0명"; animate(popEl,  pop,            "명"); }
+  if (commercialTotal > 0)  { comEl.textContent  = "0";   animate(comEl,  commercialTotal, "");  }
+  if (facilities > 0)       { facEl.textContent  = "0건"; animate(facEl,  facilities,     "건"); }
+  if (sources > 0)          { srcEl.textContent  = "0종"; animate(srcEl,  sources,        "종"); }
+}
+
+/** hero stat 카드 숫자를 0에서 목표값으로 ease-out 카운트 업한다. */
+function animateHeroCounters(wrap) {
+  const duration = 900;
+  wrap.querySelectorAll("[data-counter]").forEach((el) => {
+    const target = parseInt(el.dataset.counter, 10);
+    if (!target || target === 0) return;
+    const suffix = el.dataset.suffix || "";
+    let startTime = null;
+    const step = (ts) => {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+function renderInsightCharts() {
+  if (!state.data || !window.echarts) return;
+  renderInsightCommercial();
+  renderInsightPopulation();
+}
+
+function renderInsightCommercial() {
+  const el = document.getElementById("insight-commercial-chart");
+  if (!el) return;
+
+  const commercial = state.data.commercial;
+  if (!commercial) return;
+
+  const categories = [];
+  const values = [];
+
+  Object.keys(commercial).forEach((ind) => {
+    const byDong = commercial[ind]?.byDong;
+    if (!byDong?.length) return;
+    const total = byDong.reduce((s, d) => s + (d.count ?? 0), 0);
+    categories.push(ind);
+    values.push(total);
+  });
+
+  if (!categories.length) return;
+
+  insightChartLeft = createChart(el, {
+    ...BASE_OPTION,
+    grid: { top: 4, bottom: 4, left: 52, right: 36 },
+    xAxis: { type: "value", show: false },
+    yAxis: {
+      type: "category",
+      data: categories,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily }
+    },
+    series: [{
+      type: "bar",
+      data: values,
+      barMaxWidth: 16,
+      itemStyle: {
+        color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length],
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: { show: true, position: "right", color: CHART_COLORS.text, fontSize: 10,
+               formatter: (p) => Number(p.value).toLocaleString() }
+    }],
+    animation: true
+  });
+}
+
+function renderInsightPopulation() {
+  const el = document.getElementById("insight-population-chart");
+  if (!el) return;
+
+  const population = state.data?.population;
+  if (!population?.length) return;
+
+  const names  = population.map((d) => d.areaName);
+  const totals = population.map((d) => d.total ?? 0);
+
+  insightChartRight = createChart(el, {
+    ...BASE_OPTION,
+    grid: { top: 4, bottom: 28, left: 8, right: 8 },
+    xAxis: {
+      type: "category",
+      data: names,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily }
+    },
+    yAxis: { type: "value", show: false },
+    series: [{
+      type: "bar",
+      data: totals,
+      barMaxWidth: 48,
+      itemStyle: {
+        color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length],
+        borderRadius: [6, 6, 0, 0]
+      },
+      label: {
+        show: true, position: "top",
+        formatter: (p) => (p.value / 10000).toFixed(1) + "만",
+        color: CHART_COLORS.text, fontSize: 11
+      }
+    }],
+    animation: true
+  });
+}
+
+// ─── 검색 ─────────────────────────────────────────────────────
+
+function bindSearch(container) {
+  const form  = container.querySelector(".home-search-form");
+  const input = container.querySelector(".home-search-input");
+  if (!form || !input) return;
+
+  const ROUTE_MAP = {
+    "상황판": "home", "홈": "home", "대시보드": "home",
+    "생활지도": "map", "지도": "map", "시설": "map",
+    "상권": "commercial", "상권분석": "commercial", "카페": "commercial", "음식점": "commercial",
+    "집계구": "geo", "집계": "geo", "권역": "geo",
+    "인구": "population", "인구분석": "population",
+    "api": "api", "api상태": "api", "수집": "api",
+    "로그": "api-logs", "api로그": "api-logs",
+    "관리자": "admin", "admin": "admin"
+  };
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const query = input.value.trim().toLowerCase().replace(/\s+/g, "");
+    if (!query) return;
+
+    const key = Object.keys(ROUTE_MAP).find((k) => k.toLowerCase() === query || k.toLowerCase().includes(query) || query.includes(k.toLowerCase()));
+    if (key) {
+      location.hash = `#/${ROUTE_MAP[key]}`;
+    } else {
+      input.classList.add("is-error");
+      input.setCustomValidity("일치하는 화면을 찾지 못했습니다.");
+      input.reportValidity();
+      setTimeout(() => { input.setCustomValidity(""); input.classList.remove("is-error"); }, 2000);
+    }
+    input.value = "";
+  });
+
+  input.addEventListener("input", () => {
+    input.setCustomValidity("");
+    input.classList.remove("is-error");
+  });
 }
 
 // ─── 템플릿 ───────────────────────────────────────────────────
@@ -142,33 +457,74 @@ function buildHomeHtml() {
 
   return `
     <section class="home-hero" aria-label="금천 데이터플랫폼 소개">
+      <div class="home-hero-deco" aria-hidden="true">${buildHeroDeco()}</div>
       <div class="home-hero-inner">
         <div class="home-hero-copy">
-          <p class="eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
+          <p class="eyebrow hero-eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
           <h1>금천구<br>도시·생활 데이터플랫폼</h1>
           <p>생활시설, 교통, 대기, 상권 지표를 한 화면에서 확인하고<br>
              지도 기반 분석으로 이어지는 구민용 데이터 서비스입니다.</p>
-          <span class="home-mode-badge" id="home-mode-badge" aria-label="현재 데이터 모드">${escapeHtml(sourceText)}</span>
+
+          <form class="home-search-form" role="search" aria-label="화면 검색">
+            <label class="sr-only" for="home-search-input">화면 검색</label>
+            <div class="home-search-wrap">
+              <span class="home-search-icon" aria-hidden="true">${icon("search", { size: 16 })}</span>
+              <input
+                id="home-search-input"
+                class="home-search-input"
+                type="search"
+                placeholder="화면 검색 (예: 상권, 지도, 인구…)"
+                autocomplete="off"
+                spellcheck="false">
+              <button class="home-search-btn" type="submit">이동</button>
+            </div>
+          </form>
+
+          <div class="home-hero-badges">
+            <span class="home-mode-badge" id="home-mode-badge" aria-label="현재 데이터 모드">${escapeHtml(sourceText)}</span>
+            <span class="home-hero-tag">${icon("check", { size: 12 })} WCAG AA 준수</span>
+            <span class="home-hero-tag">${icon("refresh-cw", { size: 12 })} 실시간 수집</span>
+          </div>
         </div>
 
-        <div class="home-hero-stats" aria-label="서비스 현황">
+        <div class="home-hero-stats" id="home-hero-stats" aria-label="서비스 현황">
           <div class="home-stat-card">
             <span>데이터 소스</span>
-            <strong>12종</strong>
+            <strong>6종</strong>
           </div>
           <div class="home-stat-card">
-            <span>수집 상태</span>
-            <strong class="ok">정상</strong>
+            <span>수집 정상</span>
+            <strong class="ok">대기</strong>
           </div>
           <div class="home-stat-card">
-            <span>API 전환</span>
-            <strong class="pending">준비중</strong>
+            <span>등록 시설</span>
+            <strong>—</strong>
           </div>
           <div class="home-stat-card">
-            <span>백엔드</span>
-            <strong>:8080</strong>
+            <span>대표 동 인구</span>
+            <strong>—</strong>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 풀너비 통계 스트립 -->
+    <section class="home-stats-strip" id="home-stats-strip" aria-label="금천구 주요 통계">
+      <div class="home-strip-item">
+        <div class="home-strip-num" id="strip-population">—</div>
+        <div class="home-strip-label">금천구 총인구</div>
+      </div>
+      <div class="home-strip-item">
+        <div class="home-strip-num" id="strip-commercial">—</div>
+        <div class="home-strip-label">상권 점포 수</div>
+      </div>
+      <div class="home-strip-item">
+        <div class="home-strip-num" id="strip-facilities">—</div>
+        <div class="home-strip-label">등록 생활시설</div>
+      </div>
+      <div class="home-strip-item">
+        <div class="home-strip-num" id="strip-sources">6종</div>
+        <div class="home-strip-label">데이터 소스</div>
       </div>
     </section>
 
@@ -178,11 +534,40 @@ function buildHomeHtml() {
     </div>
 
     <section class="metric-grid" id="home-metrics" aria-label="주요 지표">
-      <div class="metric-card"><div class="metric-value">—</div><p class="metric-note">로드 중...</p></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
-      <div class="metric-card"><div class="metric-value">—</div></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
     </section>
+
+    <div class="home-insight-row" aria-label="데이터 인사이트">
+      <div class="home-insight-card">
+        <div class="home-insight-header">
+          <div class="home-insight-icon blue">${icon("bar-chart", { size: 18 })}</div>
+          <div>
+            <p class="home-insight-label">상권 현황</p>
+            <p class="home-insight-sub">업종별 금천구 점포 수</p>
+          </div>
+          <a class="home-insight-link" href="#/commercial">자세히 ${icon("arrow-right", { size: 14 })}</a>
+        </div>
+        <div class="home-insight-chart" id="insight-commercial-chart"></div>
+      </div>
+      <div class="home-insight-card">
+        <div class="home-insight-header">
+          <div class="home-insight-icon green">${icon("users", { size: 18 })}</div>
+          <div>
+            <p class="home-insight-label">인구 현황</p>
+            <p class="home-insight-sub">행정동별 총인구</p>
+          </div>
+          <a class="home-insight-link" href="#/population">자세히 ${icon("arrow-right", { size: 14 })}</a>
+        </div>
+        <div class="home-insight-chart" id="insight-population-chart"></div>
+      </div>
+    </div>
+
+    ${buildDataStatusSection()}
+
+    ${buildNoticesSection()}
 
     <div class="home-topics-header">
       <h2>분석 화면</h2>
@@ -195,72 +580,123 @@ function buildHomeHtml() {
   `;
 }
 
-function buildTopicCards() {
-  const topics = [
-    {
-      route: "map",
-      icon: "🗺",
-      iconClass: "green",
-      title: "생활지도",
-      desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 병원·약국·주차장·안전 시설을 권역별로 비교합니다.",
-      label: "시설 지도 보기"
-    },
-    {
-      route: "commercial",
-      icon: "📊",
-      iconClass: "amber",
-      title: "상권분석",
-      desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다. 카페·음식점·편의점·학원 필터를 지원합니다.",
-      label: "상권 분석 보기"
-    },
-    {
-      route: "geo",
-      icon: "📍",
-      iconClass: "teal",
-      title: "집계구 분석",
-      desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다. 반경 분석과 권역 비교를 지원합니다.",
-      label: "집계구 분석 보기"
-    },
-    {
-      route: "population",
-      icon: "👥",
-      iconClass: "teal",
-      title: "인구 분석",
-      desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다. 남녀 성비와 총인구 현황을 비교합니다.",
-      label: "인구 분석 보기"
-    },
-    {
-      route: "api",
-      icon: "🔌",
-      iconClass: "blue",
-      title: "API 수집 현황",
-      desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다. 수동 재수집을 실행할 수 있습니다.",
-      label: "API 현황 보기"
-    },
-    {
-      route: "api-logs",
-      icon: "📋",
-      iconClass: "violet",
-      title: "수집 로그",
-      desc: "API 수집 실행 내역을 필터링하고 검색합니다. 상태별·소스별로 수집 결과를 추적합니다.",
-      label: "로그 보기"
-    },
-    {
-      route: "admin",
-      icon: "⚙",
-      iconClass: "navy",
-      title: "관리자",
-      desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다. 컬럼 매핑과 검증을 지원합니다.",
-      label: "관리 화면 열기"
-    }
+/** 공지사항 섹션 — 참조 포털의 공지/새소식 영역 */
+function buildNoticesSection() {
+  const notices = [
+    { type: "공지", title: "2026년 2분기 상권 데이터 정기 업데이트 완료", date: "2026.06.13", link: "#" },
+    { type: "안내", title: "금천구 집계구 GIS 데이터 신규 추가 (가산동·독산동·시흥동)", date: "2026.06.01", link: "#" },
+    { type: "공지", title: "API 수집 서버 점검 안내 (6월 둘째 주 토요일 02:00–04:00)", date: "2026.05.28", link: "#" },
+    { type: "새소식", title: "행안부 주민등록 API 연동 시범 운영 시작", date: "2026.05.15", link: "#" },
+    { type: "안내", title: "플랫폼 베타 오픈: 금천구 생활 데이터 서비스 개시", date: "2026.04.01", link: "#" },
   ];
 
-  return topics.map((topic) => `
-    <a class="topic-card" href="#/${escapeHtml(topic.route)}" aria-label="${escapeHtml(topic.title)} 화면으로 이동">
-      <div class="topic-icon ${topic.iconClass}" aria-hidden="true">${topic.icon}</div>
+  const badgeCls = { "공지": "notice-badge--green", "안내": "notice-badge--blue", "새소식": "notice-badge--amber" };
+
+  const rows = notices.map((n) => `
+    <li class="home-notice-item">
+      <span class="home-notice-badge ${badgeCls[n.type] || ""}">${escapeHtml(n.type)}</span>
+      <a class="home-notice-title" href="${escapeHtml(n.link)}">${escapeHtml(n.title)}</a>
+      <time class="home-notice-date" datetime="${escapeHtml(n.date)}">${escapeHtml(n.date)}</time>
+    </li>
+  `).join("");
+
+  return `
+    <div class="home-section-label" style="margin-top: var(--space-8)">
+      <h2>공지사항</h2>
+      <a class="home-section-more" href="#" aria-label="공지사항 전체보기">전체보기 →</a>
+    </div>
+    <div class="home-notices" role="region" aria-label="공지사항">
+      <ul class="home-notice-list">
+        ${rows}
+      </ul>
+    </div>
+  `;
+}
+
+/** 데이터 수집 현황 섹션 — 참조 포털의 "최신 데이터/공지" 영역에 해당 */
+function buildDataStatusSection() {
+  const datasets = [
+    { label: "기상 관측", source: "기상청 초단기 API",   updated: "2026.06.13 16:00", status: "ready" },
+    { label: "시설 정보", source: "금천구 생활시설 DB",  updated: "2026.06.13 00:00", status: "ready" },
+    { label: "상권 정보", source: "상가업소정보 API",    updated: "2026.06.02 15:40", status: "mock"  },
+    { label: "인구 통계", source: "행안부 주민등록 API", updated: "2026.06.01 00:00", status: "mock"  },
+    { label: "집계구 GIS",source: "행안부 집계구 API",   updated: "2026.06.01 00:00", status: "mock"  },
+    { label: "API 로그",  source: "내부 수집 로그 DB",   updated: "2026.06.13 16:00", status: "ready" },
+  ];
+
+  const statusBadge = (s) => {
+    if (s === "ready") return `<span class="home-ds-badge home-ds-badge--green">${icon("check", { size: 10 })} 정상</span>`;
+    if (s === "mock")  return `<span class="home-ds-badge home-ds-badge--amber">${icon("database", { size: 10 })} Mock</span>`;
+    return `<span class="home-ds-badge home-ds-badge--muted">대기</span>`;
+  };
+
+  const rows = datasets.map((d) => `
+    <div class="home-ds-row">
+      <div class="home-ds-label">${escapeHtml(d.label)}</div>
+      <div class="home-ds-source">${escapeHtml(d.source)}</div>
+      <div class="home-ds-updated">${escapeHtml(d.updated)}</div>
+      <div class="home-ds-status">${statusBadge(d.status)}</div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="home-section-label">
+      <h2>데이터 수집 현황</h2>
+      <span>API 연결 및 최신 수집 일시</span>
+    </div>
+    <div class="home-ds-table" aria-label="데이터 수집 현황">
+      <div class="home-ds-head">
+        <div>데이터셋</div>
+        <div>출처</div>
+        <div>최근 업데이트</div>
+        <div>상태</div>
+      </div>
+      ${rows}
+    </div>
+  `;
+}
+
+function buildHeroDeco() {
+  return `<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="hero-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+        <circle cx="1.5" cy="1.5" r="1.5" fill="rgba(255,255,255,0.06)"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#hero-dots)"/>
+    <circle cx="92%" cy="20%" r="180" fill="rgba(255,255,255,0.025)"/>
+    <circle cx="85%" cy="75%" r="100" fill="rgba(20,107,74,0.12)"/>
+  </svg>`;
+}
+
+function buildTopicCards() {
+  const topics = [
+    { route: "map",        iconName: "map",       iconClass: "green",  title: "생활지도",      desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 병원·약국·주차장·안전 시설을 권역별로 비교합니다.",         label: "시설 지도 보기" },
+    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",      desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다. 카페·음식점·편의점·학원 필터를 지원합니다.",       label: "상권 분석 보기" },
+    { route: "geo",        iconName: "pin",       iconClass: "teal",   title: "집계구 분석",   desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다. 반경 분석과 권역 비교를 지원합니다.",          label: "집계구 분석 보기" },
+    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",     desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다. 남녀 성비와 총인구 현황을 비교합니다.",               label: "인구 분석 보기" },
+    { route: "api",        iconName: "plug",      iconClass: "blue",   title: "API 수집 현황", desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다. 수동 재수집을 실행할 수 있습니다.",                    label: "API 현황 보기" },
+    { route: "api-logs",   iconName: "list",      iconClass: "violet", title: "수집 로그",     desc: "API 수집 실행 내역을 필터링하고 검색합니다. 상태별·소스별로 수집 결과를 추적합니다.",                     label: "로그 보기" },
+    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",        desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다. 컬럼 매핑과 검증을 지원합니다.",              label: "관리 화면 열기" }
+  ];
+
+  // accent: 카드 상단 강조선 색 (CSS 변수로 전달)
+  const ACCENT_MAP = {
+    map: "#146b4a", commercial: "#b56b17", geo: "#197982",
+    population: "#197982", api: "#245b9e", "api-logs": "#6556a3", admin: "#21342f"
+  };
+
+  return topics.map((topic) => {
+    const accent = ACCENT_MAP[topic.route] || "#146b4a";
+    return `
+    <a class="topic-card" href="#/${escapeHtml(topic.route)}"
+       aria-label="${escapeHtml(topic.title)} 화면으로 이동"
+       style="--card-accent:${accent}">
+      <div class="topic-icon ${topic.iconClass}" aria-hidden="true">${icon(topic.iconName, { size: 22 })}</div>
       <h3>${escapeHtml(topic.title)}</h3>
       <p>${escapeHtml(topic.desc)}</p>
-      <span class="topic-link">${escapeHtml(topic.label)} →</span>
+      <span class="topic-link">${escapeHtml(topic.label)} ${icon("arrow-right", { size: 13 })}</span>
     </a>
-  `).join("");
+  `;
+  }).join("");
 }

@@ -4,6 +4,7 @@ import { state } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { icon } from "../core/icons.js";
 
 const AGE_BANDS = ["0~9세", "10~19세", "20~29세", "30~39세", "40~49세", "50~59세", "60~69세", "70세 이상"];
 
@@ -71,7 +72,7 @@ function buildHtml() {
           <p class="eyebrow">인구 분석</p>
           <h2>금천구 인구 현황</h2>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="pop-filter-bar" role="group" aria-label="행정동 선택">
@@ -124,18 +125,22 @@ function renderKpi() {
 
   el.innerHTML = `
     <article class="pop-kpi-card">
+      <div class="pop-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("users", { size: 16 })}</div>
       <p>금천구 총인구</p>
       <strong>${Number(totalAll).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
+      <div class="pop-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("activity", { size: 16 })}</div>
       <p>남성 인구</p>
       <strong>${Number(totalMale).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
+      <div class="pop-kpi-icon" style="background:#fef3e2;color:#b56b17">${icon("activity", { size: 16 })}</div>
       <p>여성 인구</p>
       <strong>${Number(totalFemale).toLocaleString()}<span>명</span></strong>
     </article>
     <article class="pop-kpi-card">
+      <div class="pop-kpi-icon" style="background:#e4f2f4;color:#197982">${icon("trending-up", { size: 16 })}</div>
       <p>성비 (여성=100)</p>
       <strong>${sexRatio}<span></span></strong>
     </article>

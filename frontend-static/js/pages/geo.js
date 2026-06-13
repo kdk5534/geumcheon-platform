@@ -10,6 +10,7 @@ import {
   defaultGeoRecommendation
 } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { icon } from "../core/icons.js";
 
 // 모듈-레벨 차트 인스턴스
 let chartRadar = null;
@@ -70,7 +71,7 @@ function buildHtml() {
           <p class="eyebrow">집계구 분석</p>
           <h2>금천구 생활권 비교</h2>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <a class="page-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="geo-filter-bar">
@@ -149,14 +150,17 @@ function renderGeoSummary() {
 
   el.innerHTML = `
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("filter", { size: 15 })}</div>
       <span>비교 기준</span>
       <strong>${escapeHtml(state.geoMetric)}</strong>
     </article>
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e4f2f4;color:#197982">${icon("activity", { size: 15 })}</div>
       <span>권역 평균 점수</span>
       <strong>${avgScore}점</strong>
     </article>
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("trending-up", { size: 15 })}</div>
       <span>최고 권역</span>
       <strong>${escapeHtml(bestDistrict?.name || "-")}</strong>
     </article>

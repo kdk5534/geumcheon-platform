@@ -4,8 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>금천 데이터플랫폼</title>
+    <meta name="description" content="서울특별시 금천구 도시·생활 데이터 통합 플랫폼. 생활시설, 교통, 상권, 인구 지표를 한 화면에서 확인하세요.">
 
-    <!-- 기존 스타일(컬러 토큰 포함) — 페이지별 마이그레이션 후 점진적으로 제거 -->
+    <!-- Pretendard: 한글 최적화 웹폰트 (FOUT 최소화) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+
+    <!-- 기존 스타일(전역 리셋 + 색상 토큰) -->
     <link rel="stylesheet" href="./styles.css">
 
     <!-- 새 디자인 시스템: styles.css 위에 덧씌운다 -->
@@ -15,8 +21,20 @@
   <body>
     <a class="skip-link" href="#view">본문으로 바로 이동</a>
 
-    <header class="topbar">
-      <a class="brand" href="#/home" aria-label="금천 데이터플랫폼 홈">
+    <!-- 유틸리티 바: 날짜·기관 링크·접근성 -->
+    <div class="util-bar" role="complementary" aria-label="유틸리티 메뉴">
+      <div class="util-bar-inner">
+        <span class="util-bar-date" id="util-date" aria-live="polite"></span>
+        <div class="util-bar-links">
+          <a href="https://www.geumcheon.go.kr" target="_blank" rel="noopener noreferrer">금천구청 홈페이지</a>
+          <a href="https://data.seoul.go.kr" target="_blank" rel="noopener noreferrer">서울 열린데이터</a>
+          <a href="https://data.go.kr" target="_blank" rel="noopener noreferrer">공공데이터포털</a>
+        </div>
+      </div>
+    </div>
+
+    <header class="topbar" role="banner">
+      <a class="brand" href="#/home" aria-label="금천 데이터플랫폼 홈으로 이동">
         <span class="brand-mark" aria-hidden="true">G</span>
         <span>
           <strong>금천 데이터플랫폼</strong>
@@ -24,8 +42,16 @@
         </span>
       </a>
 
-      <nav class="nav" aria-label="주요 메뉴">
-        <a href="#/home"       data-route="home"     >상황판</a>
+      <!-- 모바일 햄버거 버튼 -->
+      <button class="nav-toggle" id="nav-toggle"
+              aria-label="메뉴 열기/닫기" aria-expanded="false" aria-controls="main-nav">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+
+      <nav class="nav" id="main-nav" aria-label="주요 메뉴">
+        <a href="#/home"       data-route="home"      >상황판</a>
         <a href="#/map"        data-route="map"       >생활지도</a>
         <a href="#/commercial" data-route="commercial">상권분석</a>
         <a href="#/geo"        data-route="geo"       >집계구</a>
@@ -37,7 +63,35 @@
     </header>
 
     <!-- 라우터가 각 페이지 HTML을 여기에 마운트한다 -->
-    <main id="view" class="shell" tabindex="-1"></main>
+    <main id="view" class="shell" tabindex="-1" role="main"></main>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="site-footer-inner">
+        <div class="site-footer-col">
+          <p class="site-footer-brand">금천 데이터플랫폼</p>
+          <p class="site-footer-org">서울특별시 금천구청 스마트도시과</p>
+          <p class="site-footer-addr">서울특별시 금천구 시흥대로73길 70</p>
+        </div>
+        <div class="site-footer-col">
+          <p class="site-footer-label">운영 안내</p>
+          <p>대표전화: 02-2627-1000</p>
+          <p>운영시간: 평일 09:00–18:00</p>
+          <p>본 사이트의 통계·수치는 공공데이터 및 시범 운영 Mock 데이터입니다.</p>
+        </div>
+        <div class="site-footer-col site-footer-links-col">
+          <p class="site-footer-label">관련 링크</p>
+          <ul class="site-footer-links">
+            <li><a href="https://www.geumcheon.go.kr" target="_blank" rel="noopener noreferrer">금천구청 공식 홈페이지</a></li>
+            <li><a href="https://data.go.kr" target="_blank" rel="noopener noreferrer">공공데이터포털</a></li>
+            <li><a href="https://data.seoul.go.kr" target="_blank" rel="noopener noreferrer">서울 열린데이터광장</a></li>
+            <li><a href="#/admin">플랫폼 관리자</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="site-footer-bottom">
+        <p>© 2024 금천구청. 본 플랫폼은 주민 편의 제공 목적으로 운영되며, 데이터의 정확성은 보장하지 않습니다.</p>
+      </div>
+    </footer>
 
     <script type="module" src="./js/main.js"></script>
   </body>

@@ -134,6 +134,69 @@ function buildHtml() {
           <div id="geo-access-chart" class="geo-echart geo-echart--access" aria-label="접근성 지수 가로 막대차트"></div>
         </div>
       </div>
+
+      ${buildGeoTable(districts)}
+    </div>
+  `;
+}
+
+// ─── 집계구 비교 데이터 테이블 ───────────────────────────────
+
+function buildGeoTable(districts) {
+  if (!districts.length) return "";
+
+  const SCORE_KEYS = ["생활", "교통", "안전"];
+
+  function scoreClass(v) {
+    if (v >= 80) return "geo-dt-score--hi";
+    if (v >= 65) return "geo-dt-score--mid";
+    return "geo-dt-score--lo";
+  }
+
+  const commercial = state.data?.commercial ?? {};
+  function dongTotal(name) {
+    return Object.values(commercial).reduce((s, cat) => {
+      const found = (cat?.byDong ?? []).find((d) => d.name === name);
+      return s + (found ? Number(found.count || 0) : 0);
+    }, 0);
+  }
+
+  const rows = districts.map((d) => {
+    const scores = SCORE_KEYS.map((k) => Number(d.scores?.[k] || 0));
+    const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const total  = dongTotal(d.name);
+    return `
+      <tr>
+        <td class="geo-dt-name">${escapeHtml(d.name)}</td>
+        ${scores.map((v) => `<td class="geo-dt-val ${scoreClass(v)}">${v}</td>`).join("")}
+        <td class="geo-dt-avg">${avg}점</td>
+        <td class="geo-dt-stores">${total ? total.toLocaleString() : "—"}</td>
+        <td class="geo-dt-zone">${escapeHtml(d.zone || "—")}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="geo-table-section reveal">
+      <div class="geo-card">
+        <h3 class="geo-card-title">권역별 접근성 지표 상세</h3>
+        <div class="geo-table-wrap">
+          <table class="geo-table" aria-label="권역별 접근성 지표">
+            <thead>
+              <tr>
+                <th>행정동</th>
+                <th>생활</th>
+                <th>교통</th>
+                <th>안전</th>
+                <th>평균</th>
+                <th>상권 점포</th>
+                <th>용도지구</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `;
 }

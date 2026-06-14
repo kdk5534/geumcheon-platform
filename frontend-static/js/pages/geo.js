@@ -10,6 +10,7 @@ import {
   defaultGeoRecommendation
 } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { revealOnScroll } from "../core/dom.js";
 import { icon } from "../core/icons.js";
 
 // 모듈-레벨 차트 인스턴스
@@ -48,6 +49,7 @@ export async function mount(container) {
   if (!isMounted) return;
 
   initAllCharts();
+  revealOnScroll(container);
 }
 
 export function unmount() {

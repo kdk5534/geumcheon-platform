@@ -165,6 +165,7 @@ function buildHtml() {
             <span class="map-list-title">시설 목록</span>
             <span class="map-list-count" id="map-list-count"></span>
           </div>
+          <div class="map-cat-stats" id="map-cat-stats" aria-label="카테고리별 시설 현황"></div>
           <ul class="map-facility-list" id="facility-list" role="list" aria-label="시설 목록"></ul>
         </aside>
       </div>
@@ -191,6 +192,7 @@ function initMap() {
   });
 
   buildMarkers();
+  renderCatStats();
   renderFacilityList();
 }
 
@@ -358,6 +360,34 @@ function buildMarkers() {
     layer.addLayer(marker);
     allMarkers.push({ id: facility.id, marker, facility, cat });
   });
+}
+
+// ─── 카테고리 통계 미니 차트 ──────────────────────────────────
+
+function renderCatStats() {
+  const el = document.getElementById("map-cat-stats");
+  if (!el) return;
+
+  const cats = CATEGORIES.filter((c) => c !== "전체");
+  const counts = cats.map((cat) => ({
+    cat,
+    count: allMarkers.filter((m) => m.cat === cat).length,
+    color: categoryColor[cat] || "#3d6f99",
+  }));
+  const max = Math.max(...counts.map((c) => c.count), 1);
+
+  el.innerHTML = `
+    <div class="map-cat-stats-title">카테고리별 현황</div>
+    ${counts.map(({ cat, count, color }) => `
+      <div class="map-cat-row">
+        <span class="map-cat-label">${escapeHtml(cat)}</span>
+        <div class="map-cat-track">
+          <div class="map-cat-fill" style="width:${Math.round((count / max) * 100)}%;background:${color}"></div>
+        </div>
+        <span class="map-cat-val">${count}</span>
+      </div>
+    `).join("")}
+  `;
 }
 
 // ─── 목록 렌더 ────────────────────────────────────────────────

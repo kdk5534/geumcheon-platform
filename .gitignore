@@ -9,3 +9,7 @@ frontend-static/build/
 node_modules/
 target/
 *.log
+/geo_boundary_focus.png
+/geo_compare_check.png
+/geumcheon_dom.txt
+/geumcheon_dom2.txt

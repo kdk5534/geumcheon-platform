@@ -14,7 +14,7 @@ public class AdminCredentialGuard implements ApplicationRunner {
 
     public AdminCredentialGuard(
             @Value("${geumcheon.runtime.mode:db}") String runtimeMode,
-            @Value("${spring.security.user.password:}") String adminPassword,
+            @Value("${ADMIN_INITIAL_PASSWORD:change-me}") String adminPassword,
             @Value("${spring.datasource.password:}") String dbPassword
     ) {
         this.runtimeMode = runtimeMode;

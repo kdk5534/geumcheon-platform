@@ -175,6 +175,4 @@ if (Test-JarIsStale -JarPath $JarPath -BackendRoot $BackendRoot) {
 }
 
 Set-Location $BackendRoot
-& $JavaExe -jar $JarPath `
-    "--spring.security.user.name=$env:ADMIN_INITIAL_LOGIN_ID" `
-    "--spring.security.user.password=$env:ADMIN_INITIAL_PASSWORD"
+& $JavaExe -jar $JarPath

@@ -13,12 +13,12 @@ import java.util.List;
 public class PublicDataController {
 
     private final PublicDataCollectorService collectorService;
-    private final JdbcPublicDataRepository repository;
+    private final PublicDataRepository repository;
     private final String runtimeMode;
 
     public PublicDataController(
             PublicDataCollectorService collectorService,
-            JdbcPublicDataRepository repository,
+            PublicDataRepository repository,
             @Value("${geumcheon.runtime.mode:db}") String runtimeMode
     ) {
         this.collectorService = collectorService;

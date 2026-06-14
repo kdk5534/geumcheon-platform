@@ -3,8 +3,11 @@ package kr.go.geumcheon.dataplatform.publicdata;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import kr.go.geumcheon.dataplatform.dataset.DatasetSummary;
 import kr.go.geumcheon.dataplatform.facility.FacilitySummary;
+import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository.CollectorSpec;
+import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository.DatasetRegistryEntry;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -27,42 +30,26 @@ import java.util.UUID;
 
 @Repository
 @Profile("!mock")
-public class JdbcPublicDataRepository {
+public class JdbcPublicDataRepository implements PublicDataRepository {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final DatasetRegistry datasetRegistry;
 
-    public JdbcPublicDataRepository(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+    public JdbcPublicDataRepository(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper, DatasetRegistry datasetRegistry) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+        this.datasetRegistry = datasetRegistry;
     }
 
+    @Override
     public List<DatasetSummary> listDatasets() {
-        return jdbcTemplate.query("""
-                SELECT
-                    dataset_key,
-                    dataset_name,
-                    domain,
-                    source_name,
-                    refresh_cycle,
-                    api_status,
-                    auth_key_required
-                FROM dataset
-                WHERE is_public = TRUE AND is_active = TRUE
-                ORDER BY dataset_name ASC
-                """, (rs, rowNum) -> new DatasetSummary(
-                rs.getString("dataset_key"),
-                rs.getString("dataset_name"),
-                rs.getString("domain"),
-                rs.getString("source_name"),
-                rs.getString("refresh_cycle"),
-                rs.getString("api_status"),
-                rs.getBoolean("auth_key_required")
-        ));
+        return datasetRegistry.listDatasetSummaries();
     }
 
+    @Override
     public List<FacilitySummary> listFacilities() {
         return jdbcTemplate.query("""
                 SELECT
@@ -91,6 +78,7 @@ public class JdbcPublicDataRepository {
         ));
     }
 
+    @Override
     public List<StoreSummary> listStores() {
         return jdbcTemplate.query("""
                 SELECT
@@ -117,6 +105,7 @@ public class JdbcPublicDataRepository {
         ));
     }
 
+    @Override
     public List<AirQualitySummary> listAirQuality() {
         return jdbcTemplate.query("""
                 WITH latest AS (
@@ -151,6 +140,7 @@ public class JdbcPublicDataRepository {
                 """, this::mapAirQuality);
     }
 
+    @Override
     public List<ApiSourceSummary> listApiSources(List<CollectorSpec> specs) {
         Map<String, ApiLogSummary> latestLogs = latestApiLogsByDataset();
         return specs.stream()
@@ -175,6 +165,7 @@ public class JdbcPublicDataRepository {
                 .toList();
     }
 
+    @Override
     public List<ApiLogSummary> recentApiLogs(List<CollectorSpec> specs) {
         Map<String, CollectorSpec> specMap = specs.stream().collect(java.util.stream.Collectors.toMap(
                 CollectorSpec::datasetKey,
@@ -205,6 +196,7 @@ public class JdbcPublicDataRepository {
                 """, (rs, rowNum) -> mapApiLog(rs, specMap));
     }
 
+    @Override
     public Map<String, DatasetRegistryEntry> loadDatasetRegistryEntries(List<CollectorSpec> specs) {
         Map<String, ApiLogSummary> latestLogs = latestApiLogsByDataset();
         Map<String, DatasetRegistryEntry> entries = new LinkedHashMap<>();
@@ -225,6 +217,7 @@ public class JdbcPublicDataRepository {
         return entries;
     }
 
+    @Override
     public UUID upsertDataset(CollectorSpec spec) {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO dataset (
@@ -270,6 +263,7 @@ public class JdbcPublicDataRepository {
         );
     }
 
+    @Override
     public UUID ensureIndicator(String indicatorKey, String indicatorName, String domain, String unit, String description, UUID datasetId) {
         return jdbcTemplate.queryForObject("""
                 INSERT INTO indicator (
@@ -304,6 +298,7 @@ public class JdbcPublicDataRepository {
     }
 
     @Transactional
+    @Override
     public int replaceStoreBusinesses(UUID datasetId, List<Map<String, String>> rows) {
         jdbcTemplate.update("DELETE FROM store_business WHERE dataset_id = ?", datasetId);
         List<Object[]> batchRows = new ArrayList<>();
@@ -342,6 +337,7 @@ public class JdbcPublicDataRepository {
     }
 
     @Transactional
+    @Override
     public int replaceAirQualitySnapshot(UUID datasetId, List<Map<String, String>> rows) {
         UUID indicatorId = ensureIndicator(
                 "seoul-air-quality",
@@ -380,6 +376,7 @@ public class JdbcPublicDataRepository {
         return batchRows.size();
     }
 
+    @Override
     public UUID recordCollectionLog(
             UUID datasetId,
             String collectionType,
@@ -785,35 +782,5 @@ public class JdbcPublicDataRepository {
     }
 
     private record PatternCandidate(DateTimeFormatter formatter, boolean withTime) {
-    }
-
-    public record DatasetRegistryEntry(
-            String datasetKey,
-            String datasetName,
-            String domain,
-            String sourceName,
-            String sourceUrl,
-            String refreshCycle,
-            String apiStatus,
-            boolean authKeyRequired,
-            String envVarName,
-            ApiLogSummary latestLog
-    ) {
-    }
-
-    public record CollectorSpec(
-            String datasetKey,
-            String datasetName,
-            String domain,
-            String sourceName,
-            String sourceUrl,
-            String refreshCycle,
-            String spatialType,
-            String apiStatus,
-            boolean authKeyRequired,
-            String envVarName,
-            boolean apiKeyPresent,
-            String targetScreen
-    ) {
     }
 }

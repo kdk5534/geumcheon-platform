@@ -3,12 +3,14 @@
 import {
   state,
   BACKEND_API_BASE, ADMIN_API_TIMEOUT_MS,
-  UPLOAD_LOG_KEY, DATASET_CONFIG_KEY, ADMIN_AUTH_STORAGE_KEY,
+  UPLOAD_LOG_KEY, DATASET_CONFIG_KEY,
   CSV_EXTENSIONS, EXCEL_EXTENSIONS, ALLOWED_UPLOAD_MODES,
   datasetFieldSchemas, fieldAliases
 } from "../core/state.js";
 import { escapeHtml, formatBytes, formatAdminAuthSavedAt } from "../core/dom.js";
 import { fetchWithTimeout } from "../core/api.js";
+
+const UPLOAD_LOG_LIMIT = 20;
 
 // ─── CSS 주입 ─────────────────────────────────────────────────
 
@@ -168,7 +170,7 @@ function buildHtml() {
       <div class="admin-section">
         <div class="admin-section-header">
           <h3 class="admin-section-title">업로드 로그</h3>
-          <span class="admin-section-badge">최근 5건</span>
+          <span class="admin-section-badge">최근 20건</span>
         </div>
         <div id="uploadLogs" aria-live="polite"></div>
       </div>
@@ -251,7 +253,6 @@ function buildAdminAuthHeader(loginId, password) {
 
 function clearAdminAuthSession(message = "", tone = "") {
   state.adminAuth = null;
-  clearStoredAdminAuth();
   syncAdminAuthForm();
   if (message) renderAdminAuthMessage(message, tone);
 }
@@ -275,18 +276,15 @@ async function handleAdminAuthSubmit(event) {
   try {
     await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/datasets`, {}, candidateAuth);
     state.adminAuth = candidateAuth;
-    saveStoredAdminAuth(candidateAuth);
     syncAdminAuthForm();
     await Promise.all([loadAdminDatasets(), loadBackendUploadLogs()]);
     if (state.adminAuth?.authHeader === candidateAuth.authHeader) renderAdminAuthMessage("인증 저장 완료", "success");
   } catch (error) {
     state.adminAuth = previousAuth;
     if (previousAuth) {
-      saveStoredAdminAuth(previousAuth);
       renderAdminAuthStatus();
       renderAdminAuthMessage("기존 인증 유지", "warning");
     } else {
-      clearStoredAdminAuth();
       renderAdminAuthStatus();
       renderAdminAuthMessage(friendlyAdminError(error), "error");
     }
@@ -303,14 +301,6 @@ async function handleAdminAuthClear(event) {
 }
 
 // ─── 인증 스토리지 ────────────────────────────────────────────
-
-function saveStoredAdminAuth(auth) {
-  try { sessionStorage.setItem(ADMIN_AUTH_STORAGE_KEY, JSON.stringify(auth)); } catch {}
-}
-
-function clearStoredAdminAuth() {
-  try { sessionStorage.removeItem(ADMIN_AUTH_STORAGE_KEY); } catch {}
-}
 
 // ─── 데이터셋 관리 ────────────────────────────────────────────
 
@@ -335,9 +325,9 @@ async function loadAdminDatasets() {
 function defaultAdminDatasets() {
   return [
     normalizeAdminDataset({ datasetKey: "facilities", datasetName: "생활시설 통합",    domain: "생활", sourceName: "금천구 열린데이터광장", refreshCycle: "수시",  uploadMode: "CSV",     requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true }),
-    normalizeAdminDataset({ datasetKey: "stores",     datasetName: "상가업소 정보",    domain: "상권", sourceName: "소상공인시장진흥공단",  refreshCycle: "수시",  uploadMode: "API/CSV", requiredMapping: true,  supportsUploadCommit: false, publicVisible: true }),
+    normalizeAdminDataset({ datasetKey: "stores",     datasetName: "상가업소 정보",    domain: "상권", sourceName: "소상공인시장진흥공단",  refreshCycle: "수시",  uploadMode: "API/CSV", requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true }),
     normalizeAdminDataset({ datasetKey: "air-quality",datasetName: "대기 현황",        domain: "실시간",sourceName: "서울 열린데이터광장", refreshCycle: "시간",  uploadMode: "API",     requiredMapping: false, supportsUploadCommit: false, publicVisible: true }),
-    normalizeAdminDataset({ datasetKey: "population", datasetName: "주민등록 인구",    domain: "인구", sourceName: "행안부/서울 열린데이터광장", refreshCycle: "월",uploadMode: "CSV",     requiredMapping: true,  supportsUploadCommit: false, publicVisible: false })
+    normalizeAdminDataset({ datasetKey: "population", datasetName: "주민등록 인구",    domain: "인구", sourceName: "행안부/서울 열린데이터광장", refreshCycle: "월",uploadMode: "CSV",     requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true })
   ];
 }
 
@@ -350,7 +340,7 @@ function normalizeAdminDataset(d) {
     refreshCycle: d.refreshCycle || "수시",
     uploadMode: d.uploadMode || "CSV",
     requiredMapping: Boolean(d.requiredMapping),
-    supportsUploadCommit: d.supportsUploadCommit ?? d.datasetKey === "facilities",
+    supportsUploadCommit: d.supportsUploadCommit ?? ["facilities", "stores", "population"].includes(d.datasetKey),
     publicVisible: d.publicVisible !== false
   };
 }
@@ -745,7 +735,7 @@ async function commitCsvUpload() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ datasetKey: preview.datasetKey, uploadId: preview.uploadId, fileName: preview.fileName, rowCount: preview.rowCount, columnCount: preview.columnCount, columnMappings: state.uploadMapping })
     });
-    state.uploadLogs = [mapBackendLog(response.data), ...state.uploadLogs].slice(0, 5);
+    state.uploadLogs = [mapBackendLog(response.data), ...state.uploadLogs].slice(0, UPLOAD_LOG_LIMIT);
     const msg = await refreshFacilitiesAfterUpload(preview);
     renderUploadLogs();
     renderUploadSummary(summary, { title: preview.fileName, status: "확정 완료", message: msg || "최근 로그에 반영했습니다.", tone: "success" });
@@ -783,7 +773,7 @@ function buildUploadLog(status, message) {
 
 function recordUploadLog(log) {
   saveUploadLog(log);
-  state.uploadLogs = [log, ...state.uploadLogs].slice(0, 5);
+  state.uploadLogs = [log, ...state.uploadLogs].slice(0, UPLOAD_LOG_LIMIT);
   renderUploadLogs();
 }
 
@@ -791,7 +781,7 @@ function recordUploadLog(log) {
 
 async function loadBackendUploadLogs() {
   try {
-    const response = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/collection-logs`);
+    const response = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/collection-logs?limit=${UPLOAD_LOG_LIMIT}`);
     state.uploadLogs = mapBackendLogs(response.data);
   } catch (error) {
     if ((error?.status === 401 || error?.status === 403) && state.adminAuth) clearAdminAuthSession("세션 인증이 만료되었습니다. 다시 로그인해 주세요.", "error");
@@ -833,7 +823,7 @@ function readUploadLogs() {
 }
 
 function saveUploadLog(log) {
-  const logs = [log, ...readUploadLogs()].slice(0, 5);
+  const logs = [log, ...readUploadLogs()].slice(0, UPLOAD_LOG_LIMIT);
   localStorage.setItem(UPLOAD_LOG_KEY, JSON.stringify(logs));
 }
 
@@ -939,8 +929,20 @@ async function fetchAdminJson(url, options = {}, authOverride = null) {
   const authHeader = (authOverride ?? state.adminAuth)?.authHeader || "";
   try {
     const res = await fetch(url, { ...options, signal: ctrl.signal, headers: { ...(authHeader ? { Authorization: authHeader } : {}), ...(options.headers || {}) } });
-    if (!res.ok) { const e = new Error(`Admin API failed: ${res.status}`); e.isHttpFailure = true; e.status = res.status; throw e; }
-    const payload = await res.json();
+    let payload = null;
+    try { payload = await res.json(); } catch {}
+    if (!res.ok) {
+      const e = new Error(payload?.message || `Admin API failed: ${res.status}`);
+      e.isHttpFailure = true;
+      e.status = res.status;
+      e.payload = payload;
+      throw e;
+    }
+    if (!payload) {
+      const e = new Error("Admin API returned an empty response.");
+      e.isHttpFailure = true;
+      throw e;
+    }
     if (payload.success === false) { const e = new Error(payload.message || "Admin API failed."); e.isApiFailure = true; throw e; }
     return payload;
   } finally { clearTimeout(timer); }

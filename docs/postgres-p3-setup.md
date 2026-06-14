@@ -43,6 +43,8 @@ $env:DB_PASSWORD = "your-local-password"
 
 $env:ADMIN_INITIAL_LOGIN_ID = "admin"
 $env:ADMIN_INITIAL_PASSWORD = "replace-with-a-strong-password"
+$env:ADMIN_INITIAL_NAME = "초기 관리자"
+$env:ADMIN_INITIAL_EMAIL = ""
 $env:CORS_ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 $env:UPLOAD_BASE_PATH = (Join-Path (Get-Location) "uploads")
 ```
@@ -113,7 +115,7 @@ cd <repo-root>
 .\scripts\apply-db.ps1 -Mode fresh -WithSeed
 ```
 
-이미 `schema.sql`은 들어갔고 씨드만 다시 넣어야 할 때:
+이미 스키마와 마이그레이션은 들어갔고 씨드만 다시 넣어야 할 때:
 
 ```powershell
 cd <repo-root>
@@ -127,7 +129,8 @@ cd <repo-root>
 .\scripts\apply-db.ps1 -Mode migrate
 ```
 
-`fresh`는 스키마를 처음부터 만들고, `-WithSeed`를 붙이면 mock 데이터도 넣습니다.
+`fresh`는 baseline 스키마 뒤에 후속 마이그레이션까지 이어서 적용하고, `-WithSeed`를 붙이면 mock 데이터도 넣습니다.
+DB 모드 백엔드는 시작 시 Flyway로 같은 순서의 마이그레이션을 다시 확인합니다. 이미 수동으로 구성된 기존 DB라면 `baseline-on-migrate` 로 이력을 맞춘 뒤 idempotent 마이그레이션만 이어서 반영합니다.
 
 ## 6. backend DB 모드 실행
 
@@ -174,3 +177,10 @@ cd <repo-root>
 - [`scripts/apply-db.ps1`](../scripts/apply-db.ps1)
 - [`scripts/run-backend-db.ps1`](../scripts/run-backend-db.ps1)
 - [`scripts/check-db-upload.ps1`](../scripts/check-db-upload.ps1)
+
+## 10. 인덱스 메모
+
+- `dataset_collection_log(collection_type, started_at DESC)` 인덱스는 최근 수집 로그 조회 쿼리용으로 반영했습니다.
+- `store_business.properties`, `indicator_value.value_json` 용 GIN 인덱스는 아직 보류했습니다.
+- 현재 코드베이스에는 이 jsonb 컬럼들을 `WHERE` 조건으로 조회하는 경로가 없고, 선택 목록/원본 파싱 용도로만 읽고 있어 쓰기 비용만 먼저 늘릴 가능성이 큽니다.
+- jsonb 조건 검색 API가 추가되면 그때 실제 쿼리 패턴에 맞춰 GIN 인덱스를 넣는 쪽이 안전합니다.

@@ -7,8 +7,9 @@ public interface AdminUploadStore {
             UploadCommitRequest request,
             AdminDatasetSummary dataset,
             int mappedColumnCount,
-            CsvUploadDraft draft
+            CsvUploadDraft draft,
+            List<List<String>> parsedRows
     );
 
-    List<UploadLogSummary> recentLogs();
+    List<UploadLogSummary> recentLogs(int limit);
 }

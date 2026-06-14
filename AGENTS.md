@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-이 저장소는 실행 경계 기준으로 구성되어 있습니다. `frontend-static/`에는 정적 MVP UI(`index.html`, `app.js`, `styles.css`, `assets/data`)가 있습니다. `backend-egovframe-skeleton/`은 Spring Boot 3.4 / Java 17 기반 백엔드이며, 소스는 `src/main/java/kr/go/geumcheon/dataplatform/...`, 테스트는 `src/test/java`에 있습니다. `database/`는 스키마와 마이그레이션 SQL, `scripts/`는 로컬 실행용 PowerShell 스크립트, `docs/`는 로드맵과 운영 문서를 담습니다. `target/`, `uploads/`, `.tmp/`는 생성 산출물로 보고 직접 수정하지 않습니다.
+이 저장소는 실행 경계 기준으로 구성되어 있습니다. `frontend-static/`에는 정적 MVP UI(`index.html`, `styles.css`, `js/`, `assets/data`)가 있습니다. `backend-egovframe-skeleton/`은 Spring Boot 3.4 / Java 17 기반 백엔드이며, 소스는 `src/main/java/kr/go/geumcheon/dataplatform/...`, 테스트는 `src/test/java`에 있습니다. `database/`는 스키마와 마이그레이션 SQL, `scripts/`는 로컬 실행용 PowerShell 스크립트, `docs/`는 로드맵과 운영 문서를 담습니다. `target/`, `uploads/`, `.tmp/`는 생성 산출물로 보고 직접 수정하지 않습니다.
 
 ## Build, Test, and Development Commands
 가능하면 개별 명령보다 저장소의 스크립트를 우선 사용합니다.

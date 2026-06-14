@@ -9,7 +9,7 @@ class RequestUrlMaskerTest {
     @Test
     void masksDataGoKrServiceKey() {
         String masked = RequestUrlMasker.mask(
-                "http://apis.data.go.kr/B553077/api/open/sdsc2/storeListInRadius?ServiceKey=abc123&cx=126.8954&cy=37.4568"
+                "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInRadius?ServiceKey=abc123&cx=126.8954&cy=37.4568"
         );
 
         assertThat(masked).contains("ServiceKey=[redacted]");
@@ -19,10 +19,10 @@ class RequestUrlMaskerTest {
     @Test
     void masksSeoulOpenApiKey() {
         String masked = RequestUrlMasker.mask(
-                "http://openAPI.seoul.go.kr:8088/secret-key/json/ListAirQualityByDistrictService/1/25/"
+                "https://openAPI.seoul.go.kr:8088/secret-key/json/ListAirQualityByDistrictService/1/25/"
         );
 
-        assertThat(masked).contains("http://openAPI.seoul.go.kr:8088/[redacted]/json/");
+        assertThat(masked).contains("https://openAPI.seoul.go.kr:8088/[redacted]/json/");
         assertThat(masked).doesNotContain("secret-key");
     }
 }

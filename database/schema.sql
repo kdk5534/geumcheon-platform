@@ -49,7 +49,6 @@ CREATE TABLE dataset (
 CREATE TABLE dataset_collection_log (
     log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     dataset_id UUID NOT NULL REFERENCES dataset(dataset_id),
-    uploaded_file_id UUID,
     collection_type VARCHAR(30) NOT NULL, -- API, CSV_UPLOAD, MANUAL, MOCK
     status VARCHAR(30) NOT NULL, -- SUCCESS, FAILED, SKIPPED
     started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -226,7 +225,6 @@ CREATE TABLE uploaded_file (
     file_hash VARCHAR(128),
     upload_status VARCHAR(30) NOT NULL DEFAULT 'UPLOADED',
     row_count INTEGER,
-    column_count INTEGER,
     uploaded_by UUID REFERENCES admin_user(admin_id),
     uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
@@ -235,10 +233,6 @@ CREATE TABLE uploaded_file (
 
 CREATE INDEX idx_uploaded_file_dataset_id ON uploaded_file(dataset_id);
 CREATE INDEX idx_uploaded_file_uploaded_at ON uploaded_file(uploaded_at DESC);
-
-ALTER TABLE dataset_collection_log
-    ADD CONSTRAINT fk_dataset_collection_log_uploaded_file
-    FOREIGN KEY (uploaded_file_id) REFERENCES uploaded_file(file_id);
 
 -- 8. Display management
 CREATE TABLE display_card (

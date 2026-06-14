@@ -8,10 +8,8 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:geumcheon_data}
     username: ${DB_USERNAME:geumcheon}
     password: ${DB_PASSWORD:change-me}
-  security:
-    user:
-      name: ${ADMIN_INITIAL_LOGIN_ID:admin}
-      password: ${ADMIN_INITIAL_PASSWORD:change-me}
+  flyway:
+    baseline-on-migrate: true
   servlet:
     multipart:
       max-file-size: ${MAX_UPLOAD_SIZE_MB:50}MB
@@ -32,6 +30,9 @@ geumcheon:
     default-timeout-seconds: ${COLLECTOR_DEFAULT_TIMEOUT_SECONDS:20}
     retry-count: ${COLLECTOR_RETRY_COUNT:3}
     retry-delay-seconds: ${COLLECTOR_RETRY_DELAY_SECONDS:5}
+    store-page-size: ${COLLECTOR_STORE_PAGE_SIZE:500}
+    store-max-pages: ${COLLECTOR_STORE_MAX_PAGES:200}
+    store-page-delay-millis: ${COLLECTOR_STORE_PAGE_DELAY_MILLIS:200}
     schedule-enabled: ${COLLECTOR_SCHEDULE_ENABLED:false}
     cron: ${COLLECTOR_CRON:0 0 4 * * *}
   security:

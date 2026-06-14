@@ -16,7 +16,8 @@ public class MockAdminUploadStore implements AdminUploadStore {
             UploadCommitRequest request,
             AdminDatasetSummary dataset,
             int mappedColumnCount,
-            CsvUploadDraft draft
+            CsvUploadDraft draft,
+            List<List<String>> parsedRows
     ) {
         if (dataset == null) {
             throw new IllegalArgumentException("Upload commit dataset was not found.");
@@ -25,23 +26,27 @@ public class MockAdminUploadStore implements AdminUploadStore {
             throw new IllegalArgumentException("CSV upload commit is not supported for datasetKey: " + dataset.datasetKey());
         }
 
+        int sourceRowCount = draft == null ? request.rowCount() : draft.rowCount();
+        int sourceColumnCount = draft == null ? request.columnCount() : draft.columnCount();
+        int savedRowCount = parsedRows == null ? sourceRowCount : parsedRows.size();
+
         return new UploadLogSummary(
                 UUID.randomUUID().toString(),
                 request.datasetKey(),
                 dataset.datasetName(),
                 request.fileName(),
                 "SUCCESS",
-                request.rowCount(),
-                request.columnCount(),
-                request.rowCount(),
-                0,
+                sourceRowCount,
+                sourceColumnCount,
+                savedRowCount,
+                Math.max(0, sourceRowCount - savedRowCount),
                 Instant.now(),
                 "Mock upload log created with " + mappedColumnCount + " mapped columns. DB persistence is disabled in mock mode."
         );
     }
 
     @Override
-    public List<UploadLogSummary> recentLogs() {
+    public List<UploadLogSummary> recentLogs(int limit) {
         return List.of(
                 new UploadLogSummary(
                         "MOCK-LOG-001",
@@ -56,6 +61,6 @@ public class MockAdminUploadStore implements AdminUploadStore {
                         Instant.now(),
                         "Frontend sample upload flow verified."
                 )
-        );
+        ).stream().limit(Math.max(1, limit)).toList();
     }
 }

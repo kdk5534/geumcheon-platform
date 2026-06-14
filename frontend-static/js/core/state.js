@@ -6,7 +6,6 @@ export const ADMIN_API_TIMEOUT_MS = 5000;
 export const UPLOAD_LOG_KEY = "geumcheon-upload-logs";
 export const API_LOG_KEY = "geumcheon-api-logs";
 export const DATASET_CONFIG_KEY = "geumcheon-admin-datasets";
-export const ADMIN_AUTH_STORAGE_KEY = "geumcheon-admin-auth";
 export const CSV_EXTENSIONS = new Set(["csv"]);
 export const EXCEL_EXTENSIONS = new Set(["xlsx", "xls"]);
 export const ALLOWED_UPLOAD_MODES = new Set(["CSV", "API", "API/CSV"]);
@@ -119,7 +118,7 @@ export const state = {
   uploadMapping: {},
   adminDatasets: [],
   adminDatasetBase: [],
-  adminAuth: readStoredAdminAuth(),
+  adminAuth: null,
   selectedDatasetKey: "facilities",
   selectedUploadDatasetKey: "facilities",
   mapBoundary: "행정동",
@@ -132,26 +131,3 @@ export const state = {
   apiLogFilter: "전체",
   apiLogSearch: ""
 };
-
-// sessionStorage에서 관리자 인증 정보를 읽는다. state 초기화 시 한 번 호출된다.
-function readStoredAdminAuth() {
-  try {
-    const raw = sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!parsed?.loginId || !parsed?.authHeader) {
-      return null;
-    }
-
-    return {
-      loginId: String(parsed.loginId),
-      authHeader: String(parsed.authHeader),
-      savedAt: parsed.savedAt || new Date().toISOString()
-    };
-  } catch {
-    return null;
-  }
-}

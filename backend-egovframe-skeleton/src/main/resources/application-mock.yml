@@ -19,6 +19,9 @@ geumcheon:
     enabled: false
     retry-count: 1
     retry-delay-seconds: 1
+    store-page-size: 100
+    store-max-pages: 5
+    store-page-delay-millis: 0
     schedule-enabled: false
     cron: 0 0 4 * * *
 

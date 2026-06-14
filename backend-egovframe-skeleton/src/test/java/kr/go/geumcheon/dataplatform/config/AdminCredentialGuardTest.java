@@ -25,6 +25,15 @@ class AdminCredentialGuardTest {
     }
 
     @Test
+    void rejectsBlankAdminPasswordInDbMode() {
+        AdminCredentialGuard guard = new AdminCredentialGuard("db", "   ", "strong-db-password");
+
+        assertThatThrownBy(() -> guard.run(null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("ADMIN_INITIAL_PASSWORD");
+    }
+
+    @Test
     void rejectsUnsafeDbPasswordInDbMode() {
         AdminCredentialGuard guard = new AdminCredentialGuard("db", "strong-admin-password", "change-me");
 

@@ -20,6 +20,11 @@ cd "C:\Users\Kwon dong geun\Desktop\geumcheon-platform"
 .\scripts\sync-public-data.ps1
 ```
 
+- `stores` 수집기는 `pageNo`/`totalCount` 기반으로 전체 페이지를 순회합니다.
+- 필요하면 `COLLECTOR_STORE_PAGE_SIZE`, `COLLECTOR_STORE_MAX_PAGES`, `COLLECTOR_STORE_PAGE_DELAY_MILLIS` 로 호출 크기와 상한을 조정할 수 있습니다.
+- 외부 공공데이터 호출은 모두 `https://` URL을 사용합니다.
+- Geumcheon district-code endpoint migration remains deferred until the official primary path and parameters are confirmed; no code marker is left for this item.
+
 특정 소스만 다시 수집하려면:
 
 ```powershell
@@ -47,7 +52,7 @@ cd "C:\Users\Kwon dong geun\Desktop\geumcheon-platform"
 
 - `dataset_collection_log.request_url`에는 실제 `ServiceKey`와 서울 열린데이터 키를 남기지 않는다.
 - 관리자 동기화 응답의 `requestUrl`도 같은 마스킹 값을 사용한다.
-- 공식 샘플 URL은 현재 문서상 `http://` 형태라서, 호출 경로는 유지하되 비밀값만 가린다.
+- 현재 수집기는 외부 공공데이터 호출도 `https://` 경로로 고정하고, 비밀값은 계속 마스킹한다.
 
 ## 확인 방법
 
@@ -59,6 +64,9 @@ cd "C:\Users\Kwon dong geun\Desktop\geumcheon-platform"
 
 - `COLLECTOR_RETRY_COUNT` controls how many retries happen after the first failed API call.
 - `COLLECTOR_RETRY_DELAY_SECONDS` sets the pause between retry attempts.
+- `COLLECTOR_STORE_PAGE_SIZE` sets the number of store rows requested per page.
+- `COLLECTOR_STORE_MAX_PAGES` caps how many store pages can be collected in one run.
+- `COLLECTOR_STORE_PAGE_DELAY_MILLIS` adds a short pause between store page requests.
 - `COLLECTOR_SCHEDULE_ENABLED=true` turns on scheduled collection runs.
 - `COLLECTOR_CRON` sets the schedule, with a default of `0 0 4 * * *`.
 - In mock mode, scheduling stays off even if the cron values are present.

@@ -8,6 +8,10 @@ $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $DatabaseRoot = Join-Path $ProjectRoot "database"
+$MigrationFiles = @(
+    (Join-Path $DatabaseRoot "migration-20260602-admin-upload.sql"),
+    (Join-Path $DatabaseRoot "migration-20260611-collection-log-index.sql")
+)
 
 function Resolve-PsqlPath {
     $Command = Get-Command psql -ErrorAction SilentlyContinue
@@ -69,13 +73,18 @@ function Invoke-PsqlFile {
 
 if ($Mode -eq "fresh") {
     Invoke-PsqlFile (Join-Path $DatabaseRoot "schema.sql")
+    foreach ($MigrationFile in $MigrationFiles) {
+        Invoke-PsqlFile $MigrationFile
+    }
     if ($WithSeed) {
         Invoke-PsqlFile (Join-Path $DatabaseRoot "seed-mock.sql")
     }
 } elseif ($Mode -eq "seed") {
     Invoke-PsqlFile (Join-Path $DatabaseRoot "seed-mock.sql")
 } else {
-    Invoke-PsqlFile (Join-Path $DatabaseRoot "migration-20260602-admin-upload.sql")
+    foreach ($MigrationFile in $MigrationFiles) {
+        Invoke-PsqlFile $MigrationFile
+    }
 }
 
 Write-Output "db_apply=ok"

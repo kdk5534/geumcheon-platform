@@ -2,8 +2,10 @@ package kr.go.geumcheon.dataplatform.publicdata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,8 @@ public class PublicDataCollectorService {
     private static final String AIR_QUALITY_KEY = "air-quality";
     private static final Logger log = LoggerFactory.getLogger(PublicDataCollectorService.class);
 
-    private final JdbcPublicDataRepository repository;
+    private final PublicDataRepository repository;
+    private final DatasetRegistry datasetRegistry;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
     private final String dataGoKrApiKey;
@@ -37,19 +40,62 @@ public class PublicDataCollectorService {
     private final int timeoutSeconds;
     private final int retryCount;
     private final int retryDelaySeconds;
+    private final int storePageSize;
+    private final int storeMaxPages;
+    private final int storePageDelayMillis;
     private final AtomicBoolean collectorRunning = new AtomicBoolean(false);
 
+    @Autowired
     public PublicDataCollectorService(
-            JdbcPublicDataRepository repository,
+            PublicDataRepository repository,
+            DatasetRegistry datasetRegistry,
             ObjectMapper objectMapper,
             @Value("${geumcheon.api-keys.data-go-kr:}") String dataGoKrApiKey,
             @Value("${geumcheon.api-keys.seoul-open-api:}") String seoulOpenApiKey,
             @Value("${geumcheon.collector.enabled:false}") boolean collectorEnabled,
             @Value("${geumcheon.collector.default-timeout-seconds:20}") int timeoutSeconds,
             @Value("${geumcheon.collector.retry-count:3}") int retryCount,
-            @Value("${geumcheon.collector.retry-delay-seconds:5}") int retryDelaySeconds
+            @Value("${geumcheon.collector.retry-delay-seconds:5}") int retryDelaySeconds,
+            @Value("${geumcheon.collector.store-page-size:100}") int storePageSize,
+            @Value("${geumcheon.collector.store-max-pages:1}") int storeMaxPages,
+            @Value("${geumcheon.collector.store-page-delay-millis:0}") int storePageDelayMillis
+    ) {
+        this(
+                repository,
+                datasetRegistry,
+                objectMapper,
+                dataGoKrApiKey,
+                seoulOpenApiKey,
+                collectorEnabled,
+                timeoutSeconds,
+                retryCount,
+                retryDelaySeconds,
+                storePageSize,
+                storeMaxPages,
+                storePageDelayMillis,
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(Math.max(timeoutSeconds, 5)))
+                        .build()
+        );
+    }
+
+    PublicDataCollectorService(
+            PublicDataRepository repository,
+            DatasetRegistry datasetRegistry,
+            ObjectMapper objectMapper,
+            String dataGoKrApiKey,
+            String seoulOpenApiKey,
+            boolean collectorEnabled,
+            int timeoutSeconds,
+            int retryCount,
+            int retryDelaySeconds,
+            int storePageSize,
+            int storeMaxPages,
+            int storePageDelayMillis,
+            HttpClient httpClient
     ) {
         this.repository = repository;
+        this.datasetRegistry = datasetRegistry;
         this.objectMapper = objectMapper;
         this.dataGoKrApiKey = dataGoKrApiKey;
         this.seoulOpenApiKey = seoulOpenApiKey;
@@ -57,45 +103,20 @@ public class PublicDataCollectorService {
         this.timeoutSeconds = timeoutSeconds;
         this.retryCount = Math.max(0, retryCount);
         this.retryDelaySeconds = Math.max(0, retryDelaySeconds);
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(Math.max(timeoutSeconds, 5)))
-                .build();
+        this.storePageSize = Math.max(1, storePageSize);
+        this.storeMaxPages = Math.max(1, storeMaxPages);
+        this.storePageDelayMillis = Math.max(0, storePageDelayMillis);
+        this.httpClient = httpClient;
     }
 
     public boolean isCollectorEnabled() {
         return collectorEnabled;
     }
 
-    public List<JdbcPublicDataRepository.CollectorSpec> specs() {
+    public List<PublicDataRepository.CollectorSpec> specs() {
         return List.of(
-                new JdbcPublicDataRepository.CollectorSpec(
-                        STATS_STORE_KEY,
-                        "상가업소 정보",
-                        "상권",
-                        "소상공인시장진흥공단",
-                        "https://www.data.go.kr/data/15012005/openapi.do",
-                        "수시",
-                        "POINT",
-                        "API 가능",
-                        true,
-                        "DATA_GO_KR_API_KEY",
-                        hasValue(dataGoKrApiKey),
-                        "상권분석"
-                ),
-                new JdbcPublicDataRepository.CollectorSpec(
-                        AIR_QUALITY_KEY,
-                        "미세먼지/초미세먼지",
-                        "실시간",
-                        "서울 열린데이터광장",
-                        "https://data.seoul.go.kr/dataList/OA-1200/A/1/datasetView.do",
-                        "시간",
-                        "AREA",
-                        "API 가능",
-                        true,
-                        "SEOUL_OPEN_API_KEY",
-                        hasValue(seoulOpenApiKey),
-                        "대기환경"
-                )
+                collectorSpec(STATS_STORE_KEY, hasValue(dataGoKrApiKey)),
+                collectorSpec(AIR_QUALITY_KEY, hasValue(seoulOpenApiKey))
         );
     }
 
@@ -123,7 +144,7 @@ public class PublicDataCollectorService {
     }
 
     public CollectionRunResult syncDataset(String datasetKey, String triggeredBy) {
-        JdbcPublicDataRepository.CollectorSpec spec = specs().stream()
+        PublicDataRepository.CollectorSpec spec = specs().stream()
                 .filter(item -> item.datasetKey().equals(datasetKey))
                 .findFirst()
                 .orElse(null);
@@ -148,7 +169,7 @@ public class PublicDataCollectorService {
             return switch (datasetKey) {
                 case STATS_STORE_KEY -> syncStores(triggeredBy);
                 case AIR_QUALITY_KEY -> syncAirQuality(triggeredBy);
-                default -> busyResult(spec, triggeredBy);
+                default -> missingRoutineResult(spec);
             };
         } finally {
             collectorRunning.set(false);
@@ -156,13 +177,13 @@ public class PublicDataCollectorService {
     }
 
     public CollectionRunResult syncStores(String triggeredBy) {
-        JdbcPublicDataRepository.CollectorSpec spec = specs().stream()
+        PublicDataRepository.CollectorSpec spec = specs().stream()
                 .filter(item -> STATS_STORE_KEY.equals(item.datasetKey()))
                 .findFirst()
                 .orElseThrow();
 
         Instant startedAt = Instant.now();
-        String requestUrl = buildStoreRequestUrl();
+        String requestUrl = buildStoreRequestUrl(1);
         String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
         UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
 
@@ -171,7 +192,7 @@ public class PublicDataCollectorService {
         }
 
         try {
-            List<Map<String, String>> rows = fetchRowsWithRetry(requestUrl, spec.datasetName());
+            List<Map<String, String>> rows = fetchStoreRowsWithRetry(spec.datasetName());
             int saved = repository.replaceStoreBusinesses(result.datasetId(), rows);
             Instant finishedAt = Instant.now();
             repository.recordCollectionLog(
@@ -203,7 +224,7 @@ public class PublicDataCollectorService {
     }
 
     public CollectionRunResult syncAirQuality(String triggeredBy) {
-        JdbcPublicDataRepository.CollectorSpec spec = specs().stream()
+        PublicDataRepository.CollectorSpec spec = specs().stream()
                 .filter(item -> AIR_QUALITY_KEY.equals(item.datasetKey()))
                 .findFirst()
                 .orElseThrow();
@@ -250,7 +271,7 @@ public class PublicDataCollectorService {
     }
 
     private CollectionRunResult finishSkipped(
-            JdbcPublicDataRepository.CollectorSpec spec,
+            PublicDataRepository.CollectorSpec spec,
             Instant startedAt,
             String loggedRequestUrl,
             String message,
@@ -284,7 +305,7 @@ public class PublicDataCollectorService {
     }
 
     private CollectionRunResult finishFailed(
-            JdbcPublicDataRepository.CollectorSpec spec,
+            PublicDataRepository.CollectorSpec spec,
             Instant startedAt,
             String loggedRequestUrl,
             Exception error,
@@ -324,10 +345,14 @@ public class PublicDataCollectorService {
     }
 
     private String buildStoreRequestUrl() {
-        return "http://apis.data.go.kr/B553077/api/open/sdsc2/storeListInRadius"
+        return buildStoreRequestUrl(1);
+    }
+
+    private String buildStoreRequestUrl(int pageNo) {
+        return "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInRadius"
                 + "?ServiceKey=" + normalizeKeyValue(dataGoKrApiKey)
-                + "&pageNo=1"
-                + "&numOfRows=100"
+                + "&pageNo=" + Math.max(1, pageNo)
+                + "&numOfRows=" + storePageSize
                 + "&type=json"
                 + "&cx=126.8954"
                 + "&cy=37.4568"
@@ -337,7 +362,7 @@ public class PublicDataCollectorService {
     }
 
     private String buildAirQualityRequestUrl() {
-        return "http://openAPI.seoul.go.kr:8088/"
+        return "https://openAPI.seoul.go.kr:8088/"
                 + normalizeKeyValue(seoulOpenApiKey)
                 + "/json/ListAirQualityByDistrictService/1/25/";
     }
@@ -372,11 +397,11 @@ public class PublicDataCollectorService {
                 .toList();
     }
 
-    private CollectionRunResult busyResult(JdbcPublicDataRepository.CollectorSpec spec, String triggeredBy) {
+    private CollectionRunResult busyResult(PublicDataRepository.CollectorSpec spec, String triggeredBy) {
         return busyResult(spec, triggeredBy, Instant.now());
     }
 
-    private CollectionRunResult busyResult(JdbcPublicDataRepository.CollectorSpec spec, String triggeredBy, Instant now) {
+    private CollectionRunResult busyResult(PublicDataRepository.CollectorSpec spec, String triggeredBy, Instant now) {
         return new CollectionRunResult(
                 spec.datasetKey(),
                 "skipped",
@@ -390,22 +415,153 @@ public class PublicDataCollectorService {
         );
     }
 
+    private CollectionRunResult missingRoutineResult(PublicDataRepository.CollectorSpec spec) {
+        Instant now = Instant.now();
+        return new CollectionRunResult(
+                spec.datasetKey(),
+                "skipped",
+                0,
+                0,
+                "No collector routine for datasetKey: " + spec.datasetKey(),
+                "-",
+                now,
+                now,
+                Duration.ZERO
+        );
+    }
+
     private boolean beginCollectorRun() {
         return collectorRunning.compareAndSet(false, true);
     }
 
+    private List<Map<String, String>> fetchStoreRowsWithRetry(String datasetName) throws Exception {
+        List<Map<String, String>> allRows = new ArrayList<>();
+        Integer totalCount = null;
+
+        for (int pageNo = 1; pageNo <= storeMaxPages; pageNo += 1) {
+            JsonNode root = executeJsonWithRetry(buildStoreRequestUrl(pageNo), datasetName + " page " + pageNo);
+            List<Map<String, String>> pageRows = extractRows(root);
+            if (pageRows.isEmpty()) {
+                if (pageNo == 1) {
+                    throw new IllegalStateException("No " + datasetName + " records were returned from the API.");
+                }
+                break;
+            }
+
+            allRows.addAll(pageRows);
+            if (totalCount == null) {
+                totalCount = extractTotalCount(root);
+                failIfStorePageLimitExceeded(totalCount);
+            }
+            if (!hasMoreStorePages(pageNo, allRows.size(), pageRows.size(), totalCount)) {
+                break;
+            }
+            sleepBeforeStorePage();
+        }
+
+        return allRows;
+    }
+
+    private void failIfStorePageLimitExceeded(Integer totalCount) {
+        if (totalCount == null || totalCount <= 0) {
+            return;
+        }
+        int requiredPages = (int) Math.ceil((double) totalCount / storePageSize);
+        if (requiredPages > storeMaxPages) {
+            throw new IllegalStateException(
+                    "API returned totalCount " + totalCount
+                            + " requiring " + requiredPages
+                            + " page(s), exceeding configured max pages " + storeMaxPages
+                            + " before replacing stored rows."
+            );
+        }
+    }
+
+    private boolean hasMoreStorePages(int pageNo, int collectedCount, int pageRowCount, Integer totalCount) {
+        if (pageNo >= storeMaxPages) {
+            return false;
+        }
+        if (pageRowCount < storePageSize) {
+            return false;
+        }
+        return totalCount == null || collectedCount < totalCount;
+    }
+
+    private Integer extractTotalCount(JsonNode node) {
+        JsonNode countNode = findCountNode(node);
+        if (countNode == null || countNode.isNull()) {
+            return null;
+        }
+        if (countNode.isInt() || countNode.isLong()) {
+            return countNode.asInt();
+        }
+        String text = countNode.asText("").trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(text.replace(",", ""));
+        } catch (NumberFormatException error) {
+            return null;
+        }
+    }
+
+    private JsonNode findCountNode(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (node.isObject()) {
+            for (String key : List.of("totalCount", "totalCnt", "list_total_count")) {
+                JsonNode direct = node.get(key);
+                if (direct != null && !direct.isNull()) {
+                    return direct;
+                }
+            }
+            for (JsonNode child : node) {
+                JsonNode nested = findCountNode(child);
+                if (nested != null) {
+                    return nested;
+                }
+            }
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                JsonNode nested = findCountNode(child);
+                if (nested != null) {
+                    return nested;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void sleepBeforeStorePage() throws InterruptedException {
+        if (storePageDelayMillis <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(storePageDelayMillis);
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw error;
+        }
+    }
+
     private List<Map<String, String>> fetchRowsWithRetry(String requestUrl, String datasetName) throws Exception {
+        JsonNode root = executeJsonWithRetry(requestUrl, datasetName);
+        List<Map<String, String>> rows = extractRows(root);
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("No " + datasetName + " records were returned from the API.");
+        }
+        return rows;
+    }
+
+    private JsonNode executeJsonWithRetry(String requestUrl, String datasetName) throws Exception {
         int attempts = Math.max(1, retryCount + 1);
         Exception lastError = null;
 
         for (int attempt = 1; attempt <= attempts; attempt += 1) {
             try {
-                JsonNode root = executeJson(requestUrl);
-                List<Map<String, String>> rows = extractRows(root);
-                if (rows.isEmpty()) {
-                    throw new IllegalStateException("No " + datasetName + " records were returned from the API.");
-                }
-                return rows;
+                return executeJson(requestUrl);
             } catch (Exception error) {
                 lastError = error;
                 if (attempt >= attempts) {
@@ -526,6 +682,10 @@ public class PublicDataCollectorService {
             return node.asText("");
         }
         return node.toString();
+    }
+
+    private PublicDataRepository.CollectorSpec collectorSpec(String datasetKey, boolean apiKeyPresent) {
+        return datasetRegistry.getRequired(datasetKey).toCollectorSpec(apiKeyPresent);
     }
 
     private record UUIDResult(java.util.UUID datasetId) {

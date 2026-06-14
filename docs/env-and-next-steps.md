@@ -6,7 +6,7 @@
 
 - 프론트 정적 파일에는 API 키를 두지 않는다.
 - `DATA_GO_KR_API_KEY`, `SEOUL_OPEN_API_KEY`, `VWORLD_API_KEY`, `SGIS_API_KEY`, `KOSIS_API_KEY`, `WORKNET_API_KEY` 는 서버 환경변수 또는 Secret Manager에서만 주입한다.
-- `ADMIN_INITIAL_LOGIN_ID`, `ADMIN_INITIAL_PASSWORD` 도 운영에서는 기본값을 그대로 사용하지 않는다.
+- `ADMIN_INITIAL_LOGIN_ID`, `ADMIN_INITIAL_PASSWORD` 를 포함한 `ADMIN_INITIAL_*` 값도 운영에서는 기본값을 그대로 사용하지 않는다.
 
 ```env
 # Application
@@ -32,18 +32,30 @@ WORKNET_API_KEY=
 # Admin
 ADMIN_INITIAL_LOGIN_ID=admin
 ADMIN_INITIAL_PASSWORD=replace-with-a-strong-password
+ADMIN_INITIAL_NAME=초기 관리자
+ADMIN_INITIAL_EMAIL=
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
 # File upload
 # CSV originals are stored under UPLOAD_BASE_PATH/admin-csv/{datasetKey}/{yyyyMMdd}/
 UPLOAD_BASE_PATH=./uploads
 MAX_UPLOAD_SIZE_MB=50
+UPLOAD_PREVIEW_TTL_MINUTES=15
+UPLOAD_MAX_PREVIEW_DRAFTS=5
 
 # Batch collection
 COLLECTOR_ENABLED=false
 COLLECTOR_DEFAULT_TIMEOUT_SECONDS=20
 COLLECTOR_RETRY_COUNT=3
+COLLECTOR_RETRY_DELAY_SECONDS=5
+COLLECTOR_STORE_PAGE_SIZE=500
+COLLECTOR_STORE_MAX_PAGES=200
+COLLECTOR_STORE_PAGE_DELAY_MILLIS=200
+COLLECTOR_SCHEDULE_ENABLED=false
+COLLECTOR_CRON=0 0 4 * * *
 ```
+
+`application.yml` 에서 참조하는 `${...}` 환경변수는 위 예시에 모두 반영했다. DB 모드에서는 Flyway가 시작 시 `V1__baseline`, `V2__admin_upload`, `V3__collection_log_indexes` 를 자동 확인한다.
 
 ## 2. API 키 발급 대상
 
@@ -130,7 +142,7 @@ COLLECTOR_RETRY_COUNT=3
 - 상단 배너와 데이터 스탬프는 현재 모드를 보여준다.
 ## Verification loop
 
-- `node --check frontend-static/app.js`
+- `Get-ChildItem -Path frontend-static\js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }; node --check frontend-static\serve-static.mjs`
 - `.\scripts\check-admin-upload.ps1`
 - `.\scripts\check-admin-excel-upload.ps1`
 - `.\scripts\check-local-status.ps1`

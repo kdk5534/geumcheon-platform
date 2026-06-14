@@ -904,6 +904,7 @@ function bindSearch(container) {
 function buildDashHtml() {
   const { asOf } = getSectionMeta("overview");
   const sourceText = state.data ? sourceModeText(state.data.sourceMode) : "로드 중";
+  const facilityCount = Array.isArray(state.data?.facilities) ? state.data.facilities.length : 0;
   const metricBtns = CHOROPLETH_METRICS.map((m) => `
     <button class="home-map-metric-btn${m === homeChoroplethMetric ? " is-active" : ""}"
             data-metric="${escapeHtml(m)}"
@@ -971,6 +972,8 @@ function buildDashHtml() {
       <div class="home-map-metric-bar" role="group" aria-label="지도 지표 선택">
         <span class="home-map-metric-label">지역 지표</span>
         ${metricBtns}
+        <span class="home-map-metric-spacer"></span>
+        <span class="home-map-metric-info">행정동 3개 · 시설 ${facilityCount || "—"}건</span>
       </div>
       <div id="home-map-pane" class="home-map-pane" role="region" aria-label="금천구 데이터 지도">
         <div id="home-map-legend" class="home-map-legend" aria-label="단계구분도 범례"></div>
@@ -1053,6 +1056,8 @@ function buildDashHtml() {
       <div class="home-insight-chart" id="insight-geo-chart"></div>
     </div>
   </div>
+
+  ${buildDongTable()}
 
   ${buildReportSection()}
 
@@ -1187,6 +1192,58 @@ function buildReportSection() {
       <span>금천구 핵심 데이터 요약</span>
     </div>
     <div class="home-report-row" aria-label="분석 리포트 카드">${html}</div>
+  `;
+}
+
+function buildDongTable() {
+  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const districts  = Array.isArray(state.data?.districts)  ? state.data.districts  : [];
+
+  const DONGS = ["가산동", "독산동", "시흥동"];
+  const rows = DONGS.map((name) => {
+    const pop  = population.find((p) => p.areaName === name);
+    const dist = districts.find((d) => d.name === name);
+    const total   = pop   ? Number(pop.total).toLocaleString()  : "—";
+    const life    = dist?.scores?.생활  ?? "—";
+    const traffic = dist?.scores?.교통  ?? "—";
+    const safety  = dist?.scores?.안전  ?? "—";
+    const fac     = dist?.facilities || "—";
+    const zone    = dist?.zone       || "—";
+    const scoreClass = (v) => Number(v) >= 85 ? "hi" : Number(v) >= 75 ? "mid" : "lo";
+    return `
+      <tr>
+        <td class="home-dt-dong">${escapeHtml(name)}</td>
+        <td><span class="home-dt-badge">${escapeHtml(zone)}</span></td>
+        <td class="home-dt-num">${escapeHtml(total)}명</td>
+        <td class="home-dt-score home-dt-score--${scoreClass(life)}">${escapeHtml(String(life))}</td>
+        <td class="home-dt-score home-dt-score--${scoreClass(traffic)}">${escapeHtml(String(traffic))}</td>
+        <td class="home-dt-score home-dt-score--${scoreClass(safety)}">${escapeHtml(String(safety))}</td>
+        <td class="home-dt-num">${escapeHtml(fac)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="home-section-label reveal" style="margin-top:var(--space-6)">
+      <h2>행정동별 현황 비교</h2>
+      <span>2026년 6월 기준</span>
+    </div>
+    <div class="home-dong-table-wrap reveal" aria-label="행정동별 현황 비교">
+      <table class="home-dong-table">
+        <thead>
+          <tr>
+            <th>행정동</th>
+            <th>특성</th>
+            <th>인구</th>
+            <th>생활 접근성</th>
+            <th>교통 접근성</th>
+            <th>안전 접근성</th>
+            <th>시설 수</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
   `;
 }
 

@@ -430,6 +430,20 @@
 }
 
 /* ─────────────────────────────────────────
+   스크롤 등장 애니메이션 (전역 — 각 페이지 mount에서 revealOnScroll 호출)
+───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.42s ease, transform 0.42s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────
    반응형
 ───────────────────────────────────────── */
 @media (max-width: 1024px) {

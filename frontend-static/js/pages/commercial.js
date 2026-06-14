@@ -1,19 +1,20 @@
 // 상권분석 페이지: 업종 필터 + KPI 카드 + ECharts 가로 막대·도넛·라인 차트
 
 import { state } from "../core/state.js";
-import { escapeHtml } from "../core/dom.js";
+import { escapeHtml, revealOnScroll } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
 import { currentCommercialIndustryData } from "../core/selectors.js";
-import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
 
 const INDUSTRIES = ["카페", "음식점", "편의점", "학원"];
 
 // 모듈-레벨 차트 인스턴스 (unmount 시 dispose)
-let chartBar = null;
+let chartBar   = null;
 let chartDonut = null;
-let chartLine = null;
-let isMounted = false;
+let chartLine  = null;
+let chartCross = null; // 동×업종 교차 누적 막대
+let isMounted  = false;
 
 // ─── CSS 주입 ─────────────────────────────────────────────────
 
@@ -46,13 +47,15 @@ export async function mount(container) {
   if (!isMounted) return;
 
   initCharts();
+  revealOnScroll(container);
 }
 
 export function unmount() {
   isMounted = false;
-  disposeChart(chartBar);   chartBar = null;
+  disposeChart(chartBar);   chartBar   = null;
   disposeChart(chartDonut); chartDonut = null;
-  disposeChart(chartLine);  chartLine = null;
+  disposeChart(chartLine);  chartLine  = null;
+  disposeChart(chartCross); chartCross = null;
 }
 
 // ─── HTML 구조 ────────────────────────────────────────────────
@@ -101,13 +104,21 @@ function buildHtml() {
           <div id="cml-chart-donut" class="cml-echart" aria-label="업종 구성 도넛차트"></div>
         </div>
 
-        <div class="cml-chart-card cml-chart-card--wide">
+        <div class="cml-chart-card cml-chart-card--wide reveal">
           <div class="cml-chart-header">
             <h3>월별 점포 수 추이</h3>
             <span id="cml-line-badge" class="cml-industry-badge">${escapeHtml(state.industry)}</span>
           </div>
           <div id="cml-chart-line" class="cml-echart cml-echart--tall" aria-label="월별 점포 수 추이 라인차트"></div>
           ${renderDataStamp("commercial", `${state.industry} 업종`)}
+        </div>
+
+        <div class="cml-chart-card cml-chart-card--wide reveal">
+          <div class="cml-chart-header">
+            <h3>행정동 × 업종 점포 수 비교</h3>
+            <span class="cml-industry-badge">전체 업종</span>
+          </div>
+          <div id="cml-chart-cross" class="cml-echart cml-echart--tall" aria-label="행정동별 업종 교차 막대차트"></div>
         </div>
       </div>
     </div>
@@ -129,21 +140,30 @@ function renderKpi() {
   const densityColors = { "높음": "var(--amber)", "매우 높음": "var(--red)", "보통": "var(--green)", "낮음": "var(--blue)" };
   const densityColor = densityColors[item.density] || "var(--muted)";
 
+  // 최다 점포 행정동 계산
+  const byDong   = item?.byDong ?? [];
+  const topDong  = byDong.length ? byDong.reduce((a, b) => (a.count >= b.count ? a : b)) : null;
+
   el.innerHTML = `
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:var(--green-wash);color:var(--green)">${icon("bar-chart", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--amber-wash);color:var(--amber)">${icon("bar-chart", { size: 16 })}</div>
       <p>전체 점포</p>
       <strong>${Number(item.total).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:var(--blue-wash);color:var(--blue)">${icon("pin", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--green-wash);color:var(--green)">${icon("pin", { size: 16 })}</div>
       <p>500m 반경</p>
       <strong>${Number(item.radius).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
-      <div class="cml-kpi-icon" style="background:var(--amber-wash);color:var(--amber)">${icon("trending-up", { size: 16 })}</div>
+      <div class="cml-kpi-icon" style="background:var(--blue-wash);color:var(--blue)">${icon("trending-up", { size: 16 })}</div>
       <p>경쟁 밀도</p>
       <strong style="color:${densityColor}">${escapeHtml(item.density)}</strong>
+    </article>
+    <article class="cml-kpi-card">
+      <div class="cml-kpi-icon" style="background:var(--teal-wash);color:var(--teal)">${icon("map", { size: 16 })}</div>
+      <p>최다 점포 동</p>
+      <strong style="font-size:var(--text-xl)">${topDong ? escapeHtml(topDong.name) : "—"}</strong>
     </article>
   `;
 }
@@ -154,11 +174,13 @@ function initCharts() {
   const barEl   = document.getElementById("cml-chart-bar");
   const donutEl = document.getElementById("cml-chart-donut");
   const lineEl  = document.getElementById("cml-chart-line");
+  const crossEl = document.getElementById("cml-chart-cross");
   if (!barEl || !donutEl || !lineEl) return;
 
   chartBar   = createChart(barEl,   buildBarOption());
   chartDonut = createChart(donutEl, buildDonutOption());
   chartLine  = createChart(lineEl,  buildLineOption());
+  if (crossEl) chartCross = createChart(crossEl, buildCrossOption());
 }
 
 // ─── 차트 옵션 빌더 ───────────────────────────────────────────
@@ -265,6 +287,80 @@ function buildLineOption() {
       areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1,
         colorStops: [{ offset: 0, color: "rgba(20,107,74,0.2)" }, { offset: 1, color: "rgba(20,107,74,0)" }] } },
     }],
+  };
+}
+
+/** 행정동 × 업종 교차 누적 막대 */
+function buildCrossOption() {
+  const commercial = state.data?.commercial ?? {};
+  const DONGS = ["가산동", "독산동", "시흥동"];
+
+  const series = INDUSTRIES.map((ind, idx) => {
+    const values = DONGS.map((dong) => {
+      const byDong = commercial[ind]?.byDong ?? [];
+      const found  = byDong.find((d) => d.name === dong);
+      return found ? Number(found.count || 0) : 0;
+    });
+    return {
+      name: ind,
+      type: "bar",
+      stack: "dong",
+      data: values,
+      itemStyle: { color: CHART_PALETTE[idx % CHART_PALETTE.length] },
+      label: {
+        show: true,
+        position: "inside",
+        fontSize: 10,
+        color: "#fff",
+        formatter: (p) => p.value > 0 ? Number(p.value).toLocaleString() : "",
+      },
+      barMaxWidth: 56,
+    };
+  });
+
+  return {
+    ...BASE_OPTION,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        const dong = params[0]?.axisValue || "";
+        const rows = params.map((p) =>
+          `<div style="display:flex;justify-content:space-between;gap:16px">` +
+          `<span style="color:#65736d">${p.seriesName}</span>` +
+          `<strong>${Number(p.value).toLocaleString()}개</strong></div>`
+        ).join("");
+        const total = params.reduce((s, p) => s + Number(p.value || 0), 0);
+        return `<div style="font-size:12px;min-width:160px">` +
+          `<div style="font-weight:800;margin-bottom:4px;border-bottom:1px solid #e8edeb;padding-bottom:4px">${dong}</div>` +
+          rows +
+          `<div style="border-top:1px solid #e8edeb;margin-top:4px;padding-top:4px;font-weight:800">합계 ${Number(total).toLocaleString()}개</div>` +
+          `</div>`;
+      },
+    },
+    legend: {
+      right: 0,
+      top: 0,
+      textStyle: { color: CHART_COLORS.ink, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily },
+      itemWidth: 10, itemHeight: 10,
+    },
+    grid: { top: 32, bottom: 8, left: 8, right: 8, containLabel: true },
+    xAxis: {
+      type: "category",
+      data: DONGS,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.ink, fontSize: 12, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    yAxis: {
+      type: "value",
+      splitLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11,
+                   formatter: (v) => v >= 1000 ? (v / 1000).toFixed(0) + "k" : v },
+      axisLine: { show: false },
+    },
+    series,
+    animation: true,
   };
 }
 

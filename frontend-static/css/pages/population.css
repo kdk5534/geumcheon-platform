@@ -66,8 +66,8 @@
 /* ─── KPI 행 ─── */
 .pop-kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-3);
   margin-bottom: var(--space-6);
 }
 
@@ -85,6 +85,8 @@
 .pop-kpi-card:nth-child(2) { border-top-color: var(--blue); }
 .pop-kpi-card:nth-child(3) { border-top-color: var(--teal); }
 .pop-kpi-card:nth-child(4) { border-top-color: var(--amber); }
+.pop-kpi-card:nth-child(5) { border-top-color: var(--red); }
+.pop-kpi-card:nth-child(6) { border-top-color: var(--violet); }
 
 .pop-kpi-card:hover {
   box-shadow: var(--shadow-md);
@@ -171,6 +173,77 @@
   height: 360px;
 }
 
+/* ─── 3동 연령구조 비교 차트 컨테이너 ─── */
+.pop-echart--age {
+  height: 300px;
+}
+
+.pop-chart-card--wide {
+  width: 100%;
+}
+
+/* ─── 인구 통계 테이블 ─── */
+.pop-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.pop-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+
+.pop-table-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.pop-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.pop-table th {
+  padding: var(--space-3) var(--space-5);
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pop-table td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pop-table td:first-child {
+  font-weight: 700;
+}
+
+.pop-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pop-table tbody tr:hover td {
+  background: var(--hover-fill);
+}
+
 /* ─── 반응형 ─── */
 @media (max-width: 900px) {
   .pop-charts-grid {
@@ -178,7 +251,7 @@
   }
 
   .pop-kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

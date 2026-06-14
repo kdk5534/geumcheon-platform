@@ -81,7 +81,7 @@
 ───────────────────────────────────────── */
 .cml-kpi-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
@@ -98,6 +98,7 @@
 .cml-kpi-card:nth-child(1) { border-top-color: var(--amber); }
 .cml-kpi-card:nth-child(2) { border-top-color: var(--green); }
 .cml-kpi-card:nth-child(3) { border-top-color: var(--blue); }
+.cml-kpi-card:nth-child(4) { border-top-color: var(--teal); }
 
 .cml-kpi-icon {
   display: grid;
@@ -242,15 +243,15 @@
   .cml-chart-card--wide {
     grid-column: 1;
   }
+
+  .cml-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 780px) {
   .cml-page {
     padding: var(--space-4);
-  }
-
-  .cml-kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

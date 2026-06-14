@@ -2,6 +2,7 @@
 
 import { state, categoryColor, categoryInitial } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
+import { icon } from "../core/icons.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
 const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전"];
@@ -133,16 +134,40 @@ function buildHtml() {
     >${escapeHtml(m)}</button>
   `).join("");
 
+  const facilityCount = Array.isArray(state.data?.facilities) ? state.data.facilities.length : 0;
+  const catCounts = CATEGORIES.filter((c) => c !== "전체").map((cat) => ({
+    cat,
+    count: Array.isArray(state.data?.facilities)
+      ? state.data.facilities.filter((f) => f.category === cat).length
+      : 0,
+  }));
+  const topCat = [...catCounts].sort((a, b) => b.count - a.count)[0];
+
   return `
     <div class="map-page">
       <div class="map-header">
-        <div class="page-header">
-          <div class="page-header-copy">
-            <p class="eyebrow">생활지도</p>
-            <h2>금천구 생활시설 지도</h2>
-            <p class="page-header-sub">병원·약국·주차장·안전시설 위치와 행정동별 접근성을 지도에서 확인합니다.</p>
+        <div class="page-banner" style="--banner-from:#0d4a47;--banner-to:#197982;margin-bottom:var(--space-4)">
+          <div class="page-banner-icon">${icon("map", { size: 26 })}</div>
+          <div class="page-banner-copy">
+            <p class="page-banner-eyebrow">생활지도</p>
+            <h2 class="page-banner-title">금천구 생활시설 지도</h2>
+            <p class="page-banner-desc">병원·약국·주차장·안전시설 위치와 행정동별 접근성을 지도에서 확인합니다.</p>
           </div>
-          <a class="page-back" href="#/home">← 홈으로</a>
+          <div class="page-banner-stats">
+            <div class="page-banner-stat">
+              <span class="page-banner-stat-val">${facilityCount || "—"}</span>
+              <span class="page-banner-stat-label">등록 시설</span>
+            </div>
+            <div class="page-banner-stat">
+              <span class="page-banner-stat-val">${CATEGORIES.length - 1}</span>
+              <span class="page-banner-stat-label">카테고리</span>
+            </div>
+            <div class="page-banner-stat">
+              <span class="page-banner-stat-val">${topCat ? escapeHtml(topCat.cat) : "—"}</span>
+              <span class="page-banner-stat-label">최다 시설</span>
+            </div>
+          </div>
+          <a class="page-banner-back" href="#/home">◀ 홈으로</a>
         </div>
         <div class="map-toolbar">
           <div class="map-filter-bar" role="group" aria-label="시설 카테고리 필터">

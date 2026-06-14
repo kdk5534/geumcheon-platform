@@ -1134,7 +1134,7 @@ function buildDashHtml() {
     <span>업종·인구·접근성 핵심 지표</span>
   </div>
 
-  <div class="home-insight-row home-insight-row--3" aria-label="데이터 인사이트">
+  <div class="home-insight-row home-insight-row--2col" aria-label="데이터 인사이트">
     <div class="home-insight-card">
       <div class="home-insight-header">
         <div class="home-insight-icon amber">${icon("bar-chart", { size: 18 })}</div>
@@ -1151,22 +1151,25 @@ function buildDashHtml() {
         <div class="home-insight-icon green">${icon("users", { size: 18 })}</div>
         <div>
           <p class="home-insight-label">인구 현황</p>
-          <p class="home-insight-sub">행정동별 총인구</p>
+          <p class="home-insight-sub">행정동별 총인구 및 고령화율</p>
         </div>
         <a class="home-insight-link" href="#/population">자세히 ${icon("arrow-right", { size: 14 })}</a>
       </div>
       <div class="home-insight-chart" id="insight-population-chart"></div>
     </div>
+  </div>
+
+  <div class="home-insight-row home-insight-row--1col" aria-label="집계구 접근성 인사이트">
     <div class="home-insight-card">
       <div class="home-insight-header">
         <div class="home-insight-icon teal">${icon("map", { size: 18 })}</div>
         <div>
-          <p class="home-insight-label">집계구 접근성</p>
-          <p class="home-insight-sub">행정동별 평균 접근성 지수</p>
+          <p class="home-insight-label">집계구 접근성 지수</p>
+          <p class="home-insight-sub">행정동별 생활·교통·안전 접근성 누적 비교</p>
         </div>
         <a class="home-insight-link" href="#/geo">자세히 ${icon("arrow-right", { size: 14 })}</a>
       </div>
-      <div class="home-insight-chart" id="insight-geo-chart"></div>
+      <div class="home-insight-chart home-insight-chart--wide" id="insight-geo-chart"></div>
     </div>
   </div>
 

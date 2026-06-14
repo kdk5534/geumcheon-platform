@@ -750,11 +750,25 @@ a.home-mini-notice-title:hover {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
-  margin: var(--space-4) 0;
+  margin: var(--space-3) 0;
 }
 
 .home-insight-row--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 2열 인사이트 (1.4fr 1fr) */
+.home-insight-row--2col {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+/* 1열 인사이트 (wide 차트용) */
+.home-insight-row--1col {
+  grid-template-columns: 1fr;
+}
+
+.home-insight-chart--wide {
+  height: 200px;
 }
 
 .home-insight-card {

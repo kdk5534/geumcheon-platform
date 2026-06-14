@@ -149,6 +149,14 @@ function buildHtml() {
           </div>
           <div id="cml-chart-cross" class="cml-echart cml-echart--tall" aria-label="행정동별 업종 교차 막대차트"></div>
         </div>
+
+        <div class="cml-chart-card cml-chart-card--wide reveal">
+          <div class="cml-chart-header">
+            <h3>행정동별 업종 현황 데이터</h3>
+            <span class="cml-industry-badge">전체 업종</span>
+          </div>
+          ${buildCrossTable()}
+        </div>
       </div>
     </div>
   `;
@@ -317,6 +325,65 @@ function buildLineOption() {
         colorStops: [{ offset: 0, color: "rgba(20,107,74,0.2)" }, { offset: 1, color: "rgba(20,107,74,0)" }] } },
     }],
   };
+}
+
+/** 행정동 × 업종 데이터 테이블 */
+function buildCrossTable() {
+  const commercial = state.data?.commercial ?? {};
+  const DONGS = ["가산동", "독산동", "시흥동"];
+
+  const rows = DONGS.map((dong) => {
+    const cells = INDUSTRIES.map((ind) => {
+      const byDong = commercial[ind]?.byDong ?? [];
+      const found  = byDong.find((d) => d.name === dong);
+      const v      = found ? Number(found.count || 0) : 0;
+      return `<td class="cml-dt-val">${v.toLocaleString()}</td>`;
+    });
+    const total = INDUSTRIES.reduce((s, ind) => {
+      const byDong = commercial[ind]?.byDong ?? [];
+      const found  = byDong.find((d) => d.name === dong);
+      return s + (found ? Number(found.count || 0) : 0);
+    }, 0);
+    return `<tr><td class="cml-dt-dong">${escapeHtml(dong)}</td>${cells.join("")}<td class="cml-dt-total">${total.toLocaleString()}</td></tr>`;
+  });
+
+  const footCells = INDUSTRIES.map((ind) => {
+    const total = DONGS.reduce((s, dong) => {
+      const byDong = commercial[ind]?.byDong ?? [];
+      const found  = byDong.find((d) => d.name === dong);
+      return s + (found ? Number(found.count || 0) : 0);
+    }, 0);
+    return `<td class="cml-dt-total">${total.toLocaleString()}</td>`;
+  });
+  const grandTotal = INDUSTRIES.reduce((s, ind) => {
+    return s + DONGS.reduce((s2, dong) => {
+      const byDong = commercial[ind]?.byDong ?? [];
+      const found  = byDong.find((d) => d.name === dong);
+      return s2 + (found ? Number(found.count || 0) : 0);
+    }, 0);
+  }, 0);
+
+  return `
+    <div class="cml-table-wrap">
+      <table class="cml-table" aria-label="행정동 업종 현황">
+        <thead>
+          <tr>
+            <th>행정동</th>
+            ${INDUSTRIES.map((ind) => `<th>${escapeHtml(ind)}</th>`).join("")}
+            <th>합계</th>
+          </tr>
+        </thead>
+        <tbody>${rows.join("")}</tbody>
+        <tfoot>
+          <tr>
+            <td class="cml-dt-foot">소계</td>
+            ${footCells.join("")}
+            <td class="cml-dt-foot cml-dt-total">${grandTotal.toLocaleString()}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
 }
 
 /** 행정동 × 업종 교차 누적 막대 */

@@ -516,7 +516,7 @@
 /* 지도 본체 */
 .home-map-pane {
   flex: 1;
-  min-height: 520px;
+  min-height: 560px;
   position: relative;
 }
 

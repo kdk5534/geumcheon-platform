@@ -978,14 +978,41 @@ function buildDashHtml() {
             aria-pressed="${m === homeChoroplethMetric}">${escapeHtml(m)}</button>
   `).join("");
 
+  const pop          = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const totalSources = Array.isArray(state.apiSources) ? state.apiSources.length : 6;
+
   return `
 <div class="home-dash">
 
   <!-- ─ 상단 타이틀 띠 ─ -->
   <header class="home-dash-header">
+    <div class="home-dash-emblem" aria-hidden="true">
+      <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+        <rect width="42" height="42" rx="10" fill="rgba(255,255,255,0.12)"/>
+        <circle cx="21" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/>
+        <path d="M9 34c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <circle cx="21" cy="16" r="3" fill="#5ef0a5"/>
+      </svg>
+    </div>
+
     <div class="home-dash-brand">
       <p class="home-dash-eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
       <h1 class="home-dash-title-text">금천구 도시·생활 데이터플랫폼</h1>
+    </div>
+
+    <div class="home-dash-header-stats" aria-label="주요 통계">
+      <div class="home-hdr-stat">
+        <span class="home-hdr-stat-val">${pop ? (pop / 10000).toFixed(1) + "만" : "—"}</span>
+        <span class="home-hdr-stat-label">총인구</span>
+      </div>
+      <div class="home-hdr-stat">
+        <span class="home-hdr-stat-val">${facilityCount || "—"}</span>
+        <span class="home-hdr-stat-label">등록 시설</span>
+      </div>
+      <div class="home-hdr-stat">
+        <span class="home-hdr-stat-val">${totalSources}</span>
+        <span class="home-hdr-stat-label">데이터 소스</span>
+      </div>
     </div>
 
     <form class="home-search-form home-dash-search" role="search" aria-label="화면 검색">

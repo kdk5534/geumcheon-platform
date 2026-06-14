@@ -23,8 +23,51 @@
   box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.06) inset;
 }
 
+.home-dash-emblem {
+  flex-shrink: 0;
+}
+
 .home-dash-brand {
   flex-shrink: 0;
+}
+
+/* 헤더 인라인 통계 배지 */
+.home-dash-header-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.home-hdr-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius-lg);
+  min-width: 64px;
+  text-align: center;
+}
+
+.home-hdr-stat-val {
+  font-size: var(--text-lg);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-hdr-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.62);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .home-dash-eyebrow {
@@ -1092,6 +1135,8 @@
     flex-wrap: wrap;
     gap: var(--space-4);
   }
+
+  .home-dash-header-stats { display: none; }
 
   .home-dash-body {
     grid-template-columns: 1fr 1fr;

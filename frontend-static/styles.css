@@ -220,6 +220,12 @@ select {
   outline: none;
 }
 
+.nav a.is-active {
+  background: var(--green);
+  color: #fff;
+  font-weight: 700;
+}
+
 .nav-icon {
   display: inline-flex;
   align-items: center;

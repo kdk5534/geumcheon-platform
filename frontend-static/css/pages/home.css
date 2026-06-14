@@ -414,31 +414,33 @@
 }
 
 .home-stat-card {
-  padding: var(--space-4) var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  padding: var(--space-3) var(--space-3);
+  background: linear-gradient(135deg, rgba(20,107,74,0.06) 0%, rgba(25,121,130,0.06) 100%);
+  border: 1px solid rgba(20,107,74,0.14);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  text-align: center;
 }
 
 .home-stat-card:hover {
-  background: var(--hover-fill);
+  background: linear-gradient(135deg, rgba(20,107,74,0.10) 0%, rgba(25,121,130,0.10) 100%);
+  border-color: rgba(20,107,74,0.25);
 }
 
 .home-stat-card span {
   display: block;
   margin-bottom: var(--space-1);
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .home-stat-card strong {
   display: block;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.02em;

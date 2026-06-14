@@ -93,14 +93,36 @@ function buildHtml() {
     >${escapeHtml(f)}</button>
   `).join("");
 
+  const logs    = Array.isArray(state.apiLogs) ? state.apiLogs : [];
+  const success = logs.filter((l) => l.status === "success").length;
+  const failed  = logs.filter((l) => l.status === "failed").length;
+
   return `
     <div class="api-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">수집 로그</p>
-          <h2>API 수집 실행 내역</h2>
+      <div class="page-banner" style="--banner-from:#1a2c1a;--banner-to:#146b4a">
+        <div class="page-banner-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">수집 로그</p>
+          <h2 class="page-banner-title">API 수집 실행 내역</h2>
+          <p class="page-banner-desc">API 수집 실행 내역을 상태·소스별로 필터링하고 수동 재수집을 실행합니다.</p>
+        </div>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${logs.length || "—"}</span>
+            <span class="page-banner-stat-label">전체 로그</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${success || "0"}</span>
+            <span class="page-banner-stat-label">성공</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${failed || "0"}</span>
+            <span class="page-banner-stat-label">실패</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div id="api-log-summary" class="api-summary-row" aria-live="polite"></div>
@@ -145,10 +167,10 @@ function renderApiLogs() {
   }, {});
 
   summaryEl.innerHTML = `
-    <article class="api-summary-kpi"><span>성공</span><strong>${counts.success || 0}</strong></article>
-    <article class="api-summary-kpi"><span>실패</span><strong>${counts.fail || 0}</strong></article>
-    <article class="api-summary-kpi"><span>대기</span><strong>${counts.queued || 0}</strong></article>
-    <article class="api-summary-kpi"><span>수동</span><strong>${counts.manual || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--green"><span>성공</span><strong>${counts.success || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--amber"><span>실패</span><strong>${counts.fail || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--blue"><span>대기</span><strong>${counts.queued || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--muted"><span>수동</span><strong>${counts.manual || 0}</strong></article>
   `;
 
   if (filtered.length === 0) {

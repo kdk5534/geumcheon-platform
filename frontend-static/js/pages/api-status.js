@@ -3,6 +3,7 @@
 import { state } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
+import { icon } from "../core/icons.js";
 
 const FILTER_OPTIONS = ["전체", "준비됨", "Mock", "키 필요", "확인 필요"];
 
@@ -78,14 +79,34 @@ function buildHtml() {
     >${escapeHtml(f)}</button>
   `).join("");
 
+  const sources = state.apiSources || [];
+  const readyCount = sources.filter((s) => s.status === "ready").length;
+  const mockCount  = sources.filter((s) => s.status === "mock").length;
+
   return `
     <div class="api-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">API 수집 현황</p>
-          <h2>공공데이터 연동 상태</h2>
+      <div class="page-banner" style="--banner-from:#1f3a5f;--banner-to:#245b9e">
+        <div class="page-banner-icon">${icon("activity", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">API 수집 현황</p>
+          <h2 class="page-banner-title">공공데이터 연동 상태</h2>
+          <p class="page-banner-desc">공공데이터 API 연결 상태와 수집 주기를 소스별로 모니터링합니다.</p>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${sources.length || "—"}</span>
+            <span class="page-banner-stat-label">전체 소스</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${readyCount || "0"}</span>
+            <span class="page-banner-stat-label">정상 연결</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${mockCount || "0"}</span>
+            <span class="page-banner-stat-label">Mock 데이터</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div id="api-status-summary" class="api-summary-row" aria-live="polite"></div>
@@ -113,10 +134,22 @@ function renderApiStatus() {
   }, {});
 
   summaryEl.innerHTML = `
-    <article class="api-summary-kpi"><span>준비됨</span><strong>${counts.ready || 0}</strong></article>
-    <article class="api-summary-kpi"><span>Mock</span><strong>${counts.mock || 0}</strong></article>
-    <article class="api-summary-kpi"><span>키 필요</span><strong>${counts["key-needed"] || 0}</strong></article>
-    <article class="api-summary-kpi"><span>확인 필요</span><strong>${counts["check-required"] || 0}</strong></article>
+    <article class="api-summary-kpi api-summary-kpi--green">
+      <div class="api-kpi-icon">${icon("check", { size: 15 })}</div>
+      <span>준비됨</span><strong>${counts.ready || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--blue">
+      <div class="api-kpi-icon">${icon("database", { size: 15 })}</div>
+      <span>Mock</span><strong>${counts.mock || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--amber">
+      <div class="api-kpi-icon">${icon("alert", { size: 15 })}</div>
+      <span>키 필요</span><strong>${counts["key-needed"] || 0}</strong>
+    </article>
+    <article class="api-summary-kpi api-summary-kpi--muted">
+      <div class="api-kpi-icon">${icon("refresh-cw", { size: 15 })}</div>
+      <span>확인 필요</span><strong>${counts["check-required"] || 0}</strong>
+    </article>
   `;
 
   const activeFilter = state.apiSourceFilter || "전체";

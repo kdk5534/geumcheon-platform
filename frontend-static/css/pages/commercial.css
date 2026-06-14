@@ -4,6 +4,7 @@
    페이지 래퍼
 ───────────────────────────────────────── */
 .cml-page {
+  --page-accent: var(--amber);
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-8);
@@ -28,27 +29,48 @@
 }
 
 .cml-filter-btn {
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-full);
   background: var(--wash);
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .cml-filter-btn:hover {
-  background: #e7efec;
+  background: var(--green-wash);
   color: var(--ink);
-  border-color: var(--green);
+  border-color: rgba(20, 107, 74, 0.4);
 }
 
 .cml-filter-btn.is-active {
   background: var(--green);
   color: #fff;
   border-color: var(--green);
+  font-weight: 700;
+}
+
+.cml-filter-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.cml-kpi-card {
+  border-radius: var(--radius-xl);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.cml-kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
 }
 
 /* ─────────────────────────────────────────
@@ -56,7 +78,7 @@
 ───────────────────────────────────────── */
 .cml-kpi-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
@@ -65,8 +87,23 @@
   padding: var(--space-6);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-top: 3px solid var(--line-strong);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
+}
+
+.cml-kpi-card:nth-child(1) { border-top-color: var(--amber); }
+.cml-kpi-card:nth-child(2) { border-top-color: var(--green); }
+.cml-kpi-card:nth-child(3) { border-top-color: var(--blue); }
+.cml-kpi-card:nth-child(4) { border-top-color: var(--teal); }
+
+.cml-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
 }
 
 .cml-kpi-card p {
@@ -125,6 +162,11 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
+  transition: box-shadow var(--transition-fast);
+}
+
+.cml-chart-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .cml-chart-header {
@@ -143,7 +185,7 @@
 
 .cml-industry-badge {
   padding: var(--space-1) var(--space-3);
-  background: #e6f1ed;
+  background: var(--green-wash);
   color: var(--green);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
@@ -193,6 +235,71 @@
 }
 
 /* ─────────────────────────────────────────
+   행정동 × 업종 데이터 테이블
+───────────────────────────────────────── */
+.cml-table-wrap {
+  overflow-x: auto;
+}
+
+.cml-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cml-table th {
+  padding: var(--space-3) var(--space-5);
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.cml-table td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.cml-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cml-table tbody tr:hover td {
+  background: var(--hover-fill);
+}
+
+.cml-dt-dong {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cml-dt-val {
+  text-align: right;
+}
+
+.cml-dt-total {
+  text-align: right;
+  font-weight: 800;
+  color: var(--green);
+}
+
+.cml-dt-foot {
+  font-weight: 800;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--wash);
+}
+
+/* ─────────────────────────────────────────
    반응형
 ───────────────────────────────────────── */
 @media (max-width: 900px) {
@@ -203,15 +310,15 @@
   .cml-chart-card--wide {
     grid-column: 1;
   }
+
+  .cml-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 780px) {
   .cml-page {
     padding: var(--space-4);
-  }
-
-  .cml-kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

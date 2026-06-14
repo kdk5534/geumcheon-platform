@@ -10,6 +10,8 @@ import {
   defaultGeoRecommendation
 } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
+import { revealOnScroll } from "../core/dom.js";
+import { icon } from "../core/icons.js";
 
 // 모듈-레벨 차트 인스턴스
 let chartRadar = null;
@@ -47,6 +49,7 @@ export async function mount(container) {
   if (!isMounted) return;
 
   initAllCharts();
+  revealOnScroll(container);
 }
 
 export function unmount() {
@@ -63,14 +66,43 @@ function buildHtml() {
     `<option value="${escapeHtml(m)}"${state.geoMetric === m ? " selected" : ""}>${escapeHtml(m)}</option>`
   ).join("");
 
+  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
+  const avgScore  = districts.length
+    ? Math.round(districts.reduce((s, d) => {
+        const vals = Object.values(d.scores || {}).filter((v) => v > 0);
+        return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+      }, 0) / districts.length * 10) / 10
+    : 0;
+  const bestDistrict = districts.length
+    ? districts.reduce((best, cur) =>
+        Number(cur.scores?.[state.geoMetric] || 0) > Number(best.scores?.[state.geoMetric] || 0) ? cur : best
+      , districts[0])
+    : null;
+
   return `
     <div class="geo-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">집계구 분석</p>
-          <h2>금천구 생활권 비교</h2>
+      <div class="page-banner" style="--banner-from:#0e2a52;--banner-to:#245b9e">
+        <div class="page-banner-icon">${icon("pin", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">집계구 분석</p>
+          <h2 class="page-banner-title">금천구 생활권 비교</h2>
+          <p class="page-banner-desc">행정동·집계구 단위 생활·교통·안전 접근성 지표를 비교·분석합니다.</p>
         </div>
-        <a class="page-back" href="#/home">← 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${districts.length || "—"}</span>
+            <span class="page-banner-stat-label">권역 수</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${avgScore ? avgScore + "점" : "—"}</span>
+            <span class="page-banner-stat-label">평균 접근성</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${bestDistrict ? escapeHtml(bestDistrict.name.replace("동", "")) : "—"}</span>
+            <span class="page-banner-stat-label">최고 권역</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="geo-filter-bar">
@@ -80,9 +112,9 @@ function buildHtml() {
         </select>
       </div>
 
-      <div id="geo-summary" class="geo-summary-row" aria-live="polite"></div>
+      <div id="geo-summary" class="geo-summary-row reveal" aria-live="polite"></div>
 
-      <div class="geo-main-grid">
+      <div class="geo-main-grid reveal">
         <div class="geo-district-panel">
           <div class="geo-district-panel-header" id="districtListHelp">
             권역 선택 (키보드: ↑↓ 이동, Enter 선택)
@@ -95,11 +127,74 @@ function buildHtml() {
         </div>
       </div>
 
-      <div class="geo-bottom-row">
+      <div class="geo-bottom-row reveal">
         <div id="geoRadius"></div>
         <div class="geo-card">
           <h3 class="geo-card-title">생활 접근성 지수</h3>
           <div id="geo-access-chart" class="geo-echart geo-echart--access" aria-label="접근성 지수 가로 막대차트"></div>
+        </div>
+      </div>
+
+      ${buildGeoTable(districts)}
+    </div>
+  `;
+}
+
+// ─── 집계구 비교 데이터 테이블 ───────────────────────────────
+
+function buildGeoTable(districts) {
+  if (!districts.length) return "";
+
+  const SCORE_KEYS = ["생활", "교통", "안전"];
+
+  function scoreClass(v) {
+    if (v >= 80) return "geo-dt-score--hi";
+    if (v >= 65) return "geo-dt-score--mid";
+    return "geo-dt-score--lo";
+  }
+
+  const commercial = state.data?.commercial ?? {};
+  function dongTotal(name) {
+    return Object.values(commercial).reduce((s, cat) => {
+      const found = (cat?.byDong ?? []).find((d) => d.name === name);
+      return s + (found ? Number(found.count || 0) : 0);
+    }, 0);
+  }
+
+  const rows = districts.map((d) => {
+    const scores = SCORE_KEYS.map((k) => Number(d.scores?.[k] || 0));
+    const avg    = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const total  = dongTotal(d.name);
+    return `
+      <tr>
+        <td class="geo-dt-name">${escapeHtml(d.name)}</td>
+        ${scores.map((v) => `<td class="geo-dt-val ${scoreClass(v)}">${v}</td>`).join("")}
+        <td class="geo-dt-avg">${avg}점</td>
+        <td class="geo-dt-stores">${total ? total.toLocaleString() : "—"}</td>
+        <td class="geo-dt-zone">${escapeHtml(d.zone || "—")}</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <div class="geo-table-section reveal">
+      <div class="geo-card">
+        <h3 class="geo-card-title">권역별 접근성 지표 상세</h3>
+        <div class="geo-table-wrap">
+          <table class="geo-table" aria-label="권역별 접근성 지표">
+            <thead>
+              <tr>
+                <th>행정동</th>
+                <th>생활</th>
+                <th>교통</th>
+                <th>안전</th>
+                <th>평균</th>
+                <th>상권 점포</th>
+                <th>용도지구</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -149,14 +244,17 @@ function renderGeoSummary() {
 
   el.innerHTML = `
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e6edf8;color:#245b9e">${icon("filter", { size: 15 })}</div>
       <span>비교 기준</span>
       <strong>${escapeHtml(state.geoMetric)}</strong>
     </article>
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e4f2f4;color:#197982">${icon("activity", { size: 15 })}</div>
       <span>권역 평균 점수</span>
       <strong>${avgScore}점</strong>
     </article>
     <article class="geo-summary-kpi">
+      <div class="geo-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("trending-up", { size: 15 })}</div>
       <span>최고 권역</span>
       <strong>${escapeHtml(bestDistrict?.name || "-")}</strong>
     </article>
@@ -456,7 +554,23 @@ function initRadarChart() {
   const districtScores = GEO_METRICS.map((m) => Number(district.scores?.[m] || 0));
 
   chartRadar = createChart(el, {
-    tooltip: {},
+    tooltip: {
+      formatter: (params) => {
+        if (!params || !params.value) return "";
+        const vals = params.value;
+        const rows = GEO_METRICS.map((m, i) =>
+          `<div style="display:flex;justify-content:space-between;gap:12px;padding:1px 0">` +
+          `<span style="color:#65736d">${m}</span>` +
+          `<strong>${vals[i] != null ? vals[i] + "점" : "—"}</strong>` +
+          `</div>`
+        ).join("");
+        return (
+          `<div style="font-size:12px;min-width:148px">` +
+          `<div style="font-weight:800;margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid #e8edeb">` +
+          escapeHtml(params.name) + `</div>` + rows + `</div>`
+        );
+      },
+    },
     legend: {
       data: [escapeHtml(district.name), "구 평균"],
       bottom: 0,
@@ -558,7 +672,7 @@ function initComparisonChart() {
         name: "최고",
         type: "bar",
         data: metricRows.map((r) => r.leader),
-        itemStyle: { color: "#d8e0dd", borderRadius: [4, 4, 0, 0] },
+        itemStyle: { color: CHART_COLORS.line, borderRadius: [4, 4, 0, 0] },
         barMaxWidth: 36,
         label: { show: true, position: "top", color: CHART_COLORS.muted, fontSize: 11,
                  formatter: (p) => p.value },

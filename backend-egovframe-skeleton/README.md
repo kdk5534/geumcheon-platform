@@ -49,7 +49,7 @@ ADMIN_INITIAL_PASSWORD
 GET  http://localhost:8080/api/admin/datasets
 POST http://localhost:8080/api/admin/uploads/preview
 POST http://localhost:8080/api/admin/uploads/commit
-GET  http://localhost:8080/api/admin/collection-logs
+GET  http://localhost:8080/api/admin/collection-logs?limit=20
 ```
 
 ## DB 연결 모드

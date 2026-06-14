@@ -23,7 +23,7 @@ export const CHART_COLORS = {
 // 모든 ECharts 차트에 적용할 기본 테마 옵션
 export const BASE_OPTION = {
   backgroundColor: "transparent",
-  textStyle: { fontFamily: '"Segoe UI", "Malgun Gothic", Arial, sans-serif', color: CHART_COLORS.text },
+  textStyle: { fontFamily: '"Pretendard", "Pretendard Variable", "Noto Sans KR", "Malgun Gothic", sans-serif', color: CHART_COLORS.text, fontSize: 12 },
   color: CHART_PALETTE,
 };
 
@@ -93,4 +93,23 @@ export function disposeChart(chart) {
     }
   }
   chart.dispose();
+}
+
+/**
+ * ECharts 세로 선형 그라디언트 colorStop 객체를 반환한다.
+ * areaStyle.color / series itemStyle.color 에 직접 전달한다.
+ * @param {string} hex — 상단 진한 색상 hex (예: "#146b4a")
+ * @param {number} [alpha=0.85] — 상단 알파 (0~1)
+ */
+export function makeGradient(hex, alpha = 0.85) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return {
+    type: "linear", x: 0, y: 0, x2: 0, y2: 1,
+    colorStops: [
+      { offset: 0, color: `rgba(${r},${g},${b},${alpha})` },
+      { offset: 1, color: `rgba(${r},${g},${b},0)` }
+    ]
+  };
 }

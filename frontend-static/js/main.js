@@ -3,7 +3,9 @@
 import { state } from "./core/state.js";
 import { loadLocalData, loadBackendData, loadApiSources, loadApiLogsRaw } from "./core/api.js";
 import { init as initRouter } from "./core/router.js";
+import { icon } from "./core/icons.js";
 import * as homePage from "./pages/home.js";
+import * as catalogPage from "./pages/catalog.js";
 import * as mapPage from "./pages/map.js";
 import * as commercialPage from "./pages/commercial.js";
 import * as geoPage from "./pages/geo.js";
@@ -11,21 +13,84 @@ import * as apiStatusPage from "./pages/api-status.js";
 import * as apiLogsPage from "./pages/api-logs.js";
 import * as adminPage from "./pages/admin.js";
 import * as populationPage from "./pages/population.js";
-import { createStub } from "./pages/stub.js";
+
+// ─── 네비 아이콘 주입 ────────────────────────────────────────
+
+(function initNavIcons() {
+  const NAV_ICONS = {
+    home:       "home",
+    catalog:    "database",
+    map:        "map",
+    commercial: "bar-chart",
+    geo:        "filter",
+    population: "users",
+    api:        "activity",
+    "api-logs": "list",
+    admin:      "settings"
+  };
+  document.querySelectorAll(".nav a[data-route]").forEach((link) => {
+    const routeKey = link.dataset.route;
+    const iconName = NAV_ICONS[routeKey];
+    if (!iconName) return;
+    const svg = icon(iconName, { size: 15 });
+    link.insertAdjacentHTML("afterbegin", `<span class="nav-icon" aria-hidden="true">${svg}</span>`);
+  });
+}());
+
+// ─── 유틸리티 바 날짜 표시 ───────────────────────────────────
+
+(function initUtilDate() {
+  const el = document.getElementById("util-date");
+  if (!el) return;
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric", month: "long", day: "numeric", weekday: "short"
+  });
+  el.textContent = fmt.format(now);
+}());
+
+// ─── 모바일 네비 햄버거 토글 ─────────────────────────────────
+
+(function initNavToggle() {
+  const toggle = document.getElementById("nav-toggle");
+  const nav    = document.getElementById("main-nav");
+  if (!toggle || !nav) return;
+
+  toggle.addEventListener("click", () => {
+    const isOpen = nav.classList.toggle("is-open");
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.setAttribute("aria-label", isOpen ? "메뉴 닫기" : "메뉴 열기");
+  });
+
+  // 메뉴 외부 클릭 시 닫기
+  document.addEventListener("click", (e) => {
+    if (!toggle.contains(e.target) && !nav.contains(e.target)) {
+      nav.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  // 라우트 이동 시 메뉴 닫기
+  nav.addEventListener("click", () => {
+    nav.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+  });
+}());
 
 // ─── 라우터 초기화 ────────────────────────────────────────────
 
 const viewContainer = document.getElementById("view");
 
 initRouter(viewContainer, {
-  home: homePage,
-  map: mapPage,
-  commercial: commercialPage,
-  geo: geoPage,
-  population: populationPage,
-  api: apiStatusPage,
-  "api-logs": apiLogsPage,
-  admin: adminPage
+  home:        homePage,
+  catalog:     catalogPage,
+  map:         mapPage,
+  commercial:  commercialPage,
+  geo:         geoPage,
+  population:  populationPage,
+  api:         apiStatusPage,
+  "api-logs":  apiLogsPage,
+  admin:       adminPage
 }, "home");
 
 // ─── 공통 데이터 로드 ─────────────────────────────────────────
@@ -44,7 +109,7 @@ async function bootData() {
   state.data = localData;
   refreshHomeIfVisible();
 
-  // 2. API 소스/로그 로드 (stub 페이지들이 사용할 예정)
+  // 2. API 소스/로그 로드
   const [apiSourcesRaw, apiLogsRaw] = await Promise.all([
     loadApiSources(),
     loadApiLogsRaw()
@@ -62,6 +127,7 @@ async function bootData() {
 function refreshHomeIfVisible() {
   if (!document.getElementById("home-metrics")) return;
   homePage.renderMetrics();
+  homePage.renderStatsStrip();
   homePage.renderHeroMode();
   // ECharts가 이미 로드된 경우 스파크라인도 함께 갱신
   if (window.echarts && typeof homePage.refreshSparklines === "function") {

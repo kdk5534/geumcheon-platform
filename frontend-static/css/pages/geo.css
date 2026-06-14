@@ -4,6 +4,7 @@
    페이지 래퍼
 ───────────────────────────────────────── */
 .geo-page {
+  --page-accent: var(--blue);
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-8);
@@ -51,15 +52,32 @@
   padding: var(--space-5) var(--space-6);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.geo-summary-kpi:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--line-strong);
+}
+
+.geo-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
 }
 
 .geo-summary-kpi span {
   display: block;
-  font-size: var(--text-sm);
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: 800;
   color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   margin-bottom: var(--space-2);
 }
 
@@ -119,7 +137,7 @@
 
 .district-card.is-active {
   border-color: var(--green) !important;
-  background: #f0f7f4 !important;
+  background: var(--hover-fill) !important;
 }
 
 /* ─────────────────────────────────────────
@@ -147,6 +165,11 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
+  transition: box-shadow var(--transition-fast);
+}
+
+.geo-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .geo-card-title {
@@ -221,6 +244,82 @@
   font-size: var(--text-xs);
   color: var(--muted);
   margin: 0;
+}
+
+/* ─────────────────────────────────────────
+   집계구 비교 데이터 테이블
+───────────────────────────────────────── */
+.geo-table-section {
+  margin-top: var(--space-6);
+}
+
+.geo-table-wrap {
+  overflow-x: auto;
+  margin-top: var(--space-4);
+}
+
+.geo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.geo-table th {
+  padding: var(--space-3) var(--space-5);
+  background: var(--wash);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.geo-table td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.geo-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.geo-table tbody tr:hover td {
+  background: var(--hover-fill);
+}
+
+.geo-dt-name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.geo-dt-val {
+  text-align: right;
+  font-weight: 700;
+}
+
+.geo-dt-score--hi  { color: #0a6641; }
+.geo-dt-score--mid { color: var(--amber); }
+.geo-dt-score--lo  { color: var(--red); }
+
+.geo-dt-avg {
+  text-align: right;
+  font-weight: 900;
+  color: var(--blue);
+}
+
+.geo-dt-stores {
+  text-align: right;
+  font-weight: 700;
+}
+
+.geo-dt-zone {
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 /* ─────────────────────────────────────────

@@ -42,13 +42,16 @@ export function unmount() {}
 function buildHtml() {
   return `
     <div class="admin-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">관리자</p>
-          <h2>데이터셋 관리 · CSV 업로드</h2>
-          <p class="page-header-sub">데이터셋 메타데이터 관리, CSV·Excel 업로드, 컬럼 매핑 및 검증을 지원합니다.</p>
+      <div class="page-banner" style="--banner-from:#1f2a1f;--banner-to:#21342f">
+        <div class="page-banner-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">관리자</p>
+          <h2 class="page-banner-title">데이터셋 관리 · CSV 업로드</h2>
+          <p class="page-banner-desc">데이터셋 메타데이터 관리, CSV·Excel 업로드, 컬럼 매핑 및 검증을 지원합니다.</p>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <!-- 관리자 인증 -->

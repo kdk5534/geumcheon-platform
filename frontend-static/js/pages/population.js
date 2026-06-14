@@ -68,15 +68,44 @@ function buildHtml() {
     >${escapeHtml(p.areaName)}</button>
   `).join("");
 
+  const totalPop     = population.reduce((s, p) => s + Number(p.total || 0), 0);
+  const ELDERLY_BANDS = ["60~69세", "70세 이상"];
+  const YOUTH_BANDS   = ["0~9세", "10~19세"];
+  let elderlyCount = 0, youthCount = 0, totalAgeCount = 0;
+  population.forEach((p) => {
+    (p.byAge || []).forEach((b) => {
+      const n = Number(b.count || 0);
+      if (ELDERLY_BANDS.includes(b.band)) elderlyCount += n;
+      if (YOUTH_BANDS.includes(b.band))   youthCount   += n;
+      totalAgeCount += n;
+    });
+  });
+  const elderlyRatio = totalAgeCount ? Math.round(elderlyCount / totalAgeCount * 100 * 10) / 10 : 0;
+
   return `
     <div class="pop-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">인구 분석</p>
-          <h2>금천구 인구 현황</h2>
-          <p class="page-header-sub">행정동별 인구 피라미드와 연령대·성별 분포를 시각화합니다.</p>
+      <div class="page-banner" style="--banner-from:#0d5c42;--banner-to:#197982">
+        <div class="page-banner-icon">${icon("users", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">인구 분석</p>
+          <h2 class="page-banner-title">금천구 인구 현황</h2>
+          <p class="page-banner-desc">행정동별 인구 피라미드와 연령대·성별 분포를 시각화합니다.</p>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${totalPop ? (totalPop / 10000).toFixed(1) + "만" : "—"}</span>
+            <span class="page-banner-stat-label">총인구</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${population.length || "—"}</span>
+            <span class="page-banner-stat-label">행정동</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${elderlyRatio ? elderlyRatio + "%" : "—"}</span>
+            <span class="page-banner-stat-label">고령화율</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="pop-filter-bar" role="group" aria-label="행정동 선택">

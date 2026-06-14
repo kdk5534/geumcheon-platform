@@ -167,6 +167,120 @@
 }
 
 /* ─────────────────────────────────────────
+   페이지 배너 (분석 페이지 상단 그라디언트 헤더)
+───────────────────────────────────────── */
+.page-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-8);
+  background: linear-gradient(135deg, var(--banner-from, #0b3d26) 0%, var(--banner-to, #146b4a) 100%);
+  border-radius: var(--radius-xl);
+  color: #fff;
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  flex-wrap: wrap;
+}
+
+.page-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  background: rgba(255,255,255,0.14);
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.page-banner-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-banner-eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 var(--space-1);
+}
+
+.page-banner-title {
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 var(--space-1);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.page-banner-desc {
+  font-size: var(--text-sm);
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.page-banner-stats {
+  display: flex;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+}
+
+.page-banner-stat {
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: var(--radius-lg);
+  min-width: 72px;
+}
+
+.page-banner-stat-val {
+  display: block;
+  font-size: var(--text-xl);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.page-banner-stat-label {
+  display: block;
+  font-size: 10px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 700;
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.page-banner-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-full);
+  color: rgba(255,255,255,0.85);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.page-banner-back:hover {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────
    Stub(준비 중) 페이지
 ───────────────────────────────────────── */
 .stub-page {

@@ -66,15 +66,43 @@ function buildHtml() {
     `<option value="${escapeHtml(m)}"${state.geoMetric === m ? " selected" : ""}>${escapeHtml(m)}</option>`
   ).join("");
 
+  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
+  const avgScore  = districts.length
+    ? Math.round(districts.reduce((s, d) => {
+        const vals = Object.values(d.scores || {}).filter((v) => v > 0);
+        return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+      }, 0) / districts.length * 10) / 10
+    : 0;
+  const bestDistrict = districts.length
+    ? districts.reduce((best, cur) =>
+        Number(cur.scores?.[state.geoMetric] || 0) > Number(best.scores?.[state.geoMetric] || 0) ? cur : best
+      , districts[0])
+    : null;
+
   return `
     <div class="geo-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">집계구 분석</p>
-          <h2>금천구 생활권 비교</h2>
-          <p class="page-header-sub">행정동·집계구 단위 생활·교통·안전 접근성 지표를 비교·분석합니다.</p>
+      <div class="page-banner" style="--banner-from:#0e2a52;--banner-to:#245b9e">
+        <div class="page-banner-icon">${icon("pin", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">집계구 분석</p>
+          <h2 class="page-banner-title">금천구 생활권 비교</h2>
+          <p class="page-banner-desc">행정동·집계구 단위 생활·교통·안전 접근성 지표를 비교·분석합니다.</p>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${districts.length || "—"}</span>
+            <span class="page-banner-stat-label">권역 수</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${avgScore ? avgScore + "점" : "—"}</span>
+            <span class="page-banner-stat-label">평균 접근성</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${bestDistrict ? escapeHtml(bestDistrict.name.replace("동", "")) : "—"}</span>
+            <span class="page-banner-stat-label">최고 권역</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="geo-filter-bar">

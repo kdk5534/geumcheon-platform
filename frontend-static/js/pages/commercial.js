@@ -69,15 +69,44 @@ function buildHtml() {
     >${escapeHtml(ind)}</button>
   `).join("");
 
+  const commercial = state.data?.commercial || {};
+  const industryCount = Object.keys(commercial).length;
+  const totalStores = Object.values(commercial).reduce((s, cat) => {
+    const byDong = cat?.byDong;
+    return s + (byDong ? byDong.reduce((t, d) => t + (d.count ?? 0), 0) : Number(cat.total || 0));
+  }, 0);
+  const byDongAll = {};
+  Object.values(commercial).forEach((cat) => {
+    (cat?.byDong || []).forEach((d) => {
+      byDongAll[d.dong] = (byDongAll[d.dong] || 0) + (d.count ?? 0);
+    });
+  });
+  const topDong = Object.entries(byDongAll).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+
   return `
     <div class="cml-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">상권분석</p>
-          <h2>금천구 상권 현황</h2>
-          <p class="page-header-sub">업종별 점포 분포와 월별 추이를 행정동 단위로 비교합니다.</p>
+      <div class="page-banner" style="--banner-from:#5c3a0a;--banner-to:#b56b17">
+        <div class="page-banner-icon">${icon("bar-chart", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">상권분석</p>
+          <h2 class="page-banner-title">금천구 상권 현황</h2>
+          <p class="page-banner-desc">업종별 점포 분포와 월별 추이를 행정동 단위로 비교합니다.</p>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${totalStores ? totalStores.toLocaleString() : "—"}</span>
+            <span class="page-banner-stat-label">총 점포</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${industryCount || "—"}</span>
+            <span class="page-banner-stat-label">업종 분류</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${escapeHtml(topDong.replace("동", ""))}</span>
+            <span class="page-banner-stat-label">최다 점포 동</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <div class="cml-filter-bar" role="group" aria-label="업종 선택">

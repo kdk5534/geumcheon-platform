@@ -47,34 +47,39 @@
   --shadow-xl: 0 8px 20px rgba(20, 32, 27, 0.09), 0 20px 50px rgba(20, 32, 27, 0.12);
 
   /* 포커스 링 */
-  --focus-ring: 0 0 0 3px rgba(20, 107, 74, 0.28);
+  --focus-ring: 0 0 0 3px rgba(12, 127, 184, 0.28);
 
   /* 카드 호버 색 */
-  --hover-fill: rgba(20, 107, 74, 0.05);
+  --hover-fill: rgba(12, 127, 184, 0.05);
 
   /* 아이콘·배지 배경 (색상 세탁 — 연한 파스텔) */
-  --green-wash:  #e6f1ed;
-  --blue-wash:   #e6edf8;
-  --teal-wash:   #e4f2f4;
-  --amber-wash:  #fef3e2;
-  --red-wash:    #fdeeed;
-  --violet-wash: #ece8f6;
-  --navy-wash:   #e6ecea;
+  --green-wash:   #ddf0fc;
+  --blue-wash:    #e6edf8;
+  --teal-wash:    #d9f0fb;
+  --magenta-wash: #fbe6f1;
+  --amber-wash:   #fef3e2;
+  --red-wash:     #fdeeed;
+  --violet-wash:  #ece8f6;
+  --navy-wash:    #e0eaf2;
 
   /* ─── 대담·컬러풀 시스템 ─── */
-  /* Vivid 채도 높은 액센트 (그라디언트 진한 쪽) */
-  --vivid-green:  #0b9e5c;
-  --vivid-teal:   #0fa9b8;
-  --vivid-blue:   #1e7fe0;
-  --vivid-violet: #7a5ce8;
-  --vivid-amber:  #de7b12;
-  --vivid-red:    #e84040;
+  /* Vivid 채도 높은 액센트 */
+  --vivid-green:   #0d93cf;
+  --vivid-teal:    #0c7fb8;
+  --vivid-blue:    #1e7fe0;
+  --vivid-magenta: #bd1d77;
+  --vivid-violet:  #7a5ce8;
+  --vivid-amber:   #de7b12;
+  --vivid-red:     #e84040;
 
   /* 2색 그라디언트 (리포트 카드 헤더·주제 아이콘 등) */
-  --grad-green:  linear-gradient(135deg, #0b9e5c 0%, #0fa9b8 100%);
+  /* 금천 공식 브랜드 그라디언트: 시안 → 마젠타 */
+  --grad-brand:  linear-gradient(90deg, #0d93cf 0%, #7a3a9e 55%, #bd1d77 100%);
+  --grad-green:  linear-gradient(135deg, #0d93cf 0%, #0c7fb8 100%);
   --grad-blue:   linear-gradient(135deg, #1e7fe0 0%, #7a5ce8 100%);
   --grad-amber:  linear-gradient(135deg, #de7b12 0%, #e84040 100%);
-  --grad-teal:   linear-gradient(135deg, #0fa9b8 0%, #1e7fe0 100%);
-  --grad-violet: linear-gradient(135deg, #7a5ce8 0%, #1e7fe0 100%);
-  --grad-navy:   linear-gradient(135deg, #21342f 0%, #197982 100%);
+  --grad-teal:   linear-gradient(135deg, #0c7fb8 0%, #1e7fe0 100%);
+  --grad-violet: linear-gradient(135deg, #7a5ce8 0%, #bd1d77 100%);
+  --grad-navy:   linear-gradient(135deg, #0d2a45 0%, #0c7fb8 100%);
+  --grad-magenta:linear-gradient(135deg, #bd1d77 0%, #7a3a9e 100%);
 }

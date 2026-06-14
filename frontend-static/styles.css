@@ -4,16 +4,18 @@
   --line: #d8e0dd;
   --line-strong: #bbc8c4;
   --surface: #ffffff;
-  --wash: #f3f6f5;
-  --panel: #f9fbfa;
-  --green: #146b4a;
+  --wash: #f0f7fc;
+  --panel: #f7fbfe;
+  --green: #0c7fb8;
   --blue: #245b9e;
-  --teal: #197982;
+  --teal: #0d93cf;
+  --magenta: #bd1d77;
+  --magenta-wash: #fbe6f1;
   --amber: #b56b17;
   --red: #bd493c;
   --violet: #6556a3;
-  --navy: #21342f;
-  --shadow: 0 14px 32px rgba(32, 45, 40, 0.09);
+  --navy: #0d2a45;
+  --shadow: 0 14px 32px rgba(12, 40, 70, 0.09);
 }
 
 * {
@@ -73,7 +75,7 @@ select {
 .skip-link:focus-visible {
   transform: translateY(0);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(20, 107, 74, 0.2);
+  box-shadow: 0 0 0 4px rgba(12, 127, 184, 0.2);
 }
 
 /* ─── 유틸리티 바 (topbar 위, 스크롤 시 사라짐) ──────────────── */
@@ -137,8 +139,8 @@ select {
   border-bottom: none;
   box-shadow:
     0 1px 0 var(--line),
-    0 2px 0 rgba(20, 107, 74, 0),
-    0 3px 12px rgba(20, 107, 74, 0.04);
+    0 2px 0 rgba(12, 127, 184, 0),
+    0 3px 12px rgba(12, 127, 184, 0.04);
 }
 
 /* topbar 하단 그라디언트 강조 바 */
@@ -148,13 +150,9 @@ select {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: linear-gradient(90deg,
-    var(--green) 0%,
-    #1d8a61 30%,
-    #245b9e 70%,
-    #197982 100%);
-  opacity: 0.7;
+  height: 3px;
+  background: var(--grad-brand);
+  opacity: 0.9;
 }
 
 .brand {
@@ -164,20 +162,43 @@ select {
   min-width: 250px;
 }
 
+.brand-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
 .brand-mark {
   display: grid;
   width: 42px;
   height: 42px;
   place-items: center;
   color: #fff;
-  background: linear-gradient(135deg, #1a845c 0%, #0f5238 100%);
+  background: var(--grad-green);
   border-radius: 10px;
   font-size: 20px;
   font-weight: 900;
   letter-spacing: -0.02em;
-  box-shadow: 0 2px 8px rgba(20, 107, 74, 0.35);
+  box-shadow: 0 2px 8px rgba(12, 127, 184, 0.35);
 }
 
+.brand-name strong,
+.brand-name small {
+  display: block;
+}
+
+.brand-name strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.brand-name small {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* 이전 호환 */
 .brand strong,
 .brand small {
   display: block;
@@ -191,6 +212,13 @@ select {
   margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.site-footer-logo {
+  height: 32px;
+  width: auto;
+  margin-bottom: 8px;
+  opacity: 0.85;
 }
 
 .nav {

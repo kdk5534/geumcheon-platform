@@ -1,18 +1,18 @@
-/* Shoelace 2.x 테마 브리지: green 팔레트·Pretendard·radius 토큰을 --sl-* 변수에 매핑 */
+/* Shoelace 2.x 테마 브리지: 금천 시안블루 팔레트·Pretendard·radius 토큰을 --sl-* 변수에 매핑 */
 
 :root {
-  /* ─── Primary 색상 → green 스케일 (--green: #146b4a 기준) ───────── */
-  --sl-color-primary-50:  #f0f9f5;
-  --sl-color-primary-100: #e6f1ed;
-  --sl-color-primary-200: #c2ddd2;
-  --sl-color-primary-300: #9ecab8;
-  --sl-color-primary-400: #6aad93;
-  --sl-color-primary-500: #3a9074;
-  --sl-color-primary-600: #146b4a;
-  --sl-color-primary-700: #0e5c3d;
-  --sl-color-primary-800: #0a4a30;
-  --sl-color-primary-900: #063821;
-  --sl-color-primary-950: #021e12;
+  /* ─── Primary 색상 → 금천 시안블루 스케일 (--green: #0c7fb8 기준) ─── */
+  --sl-color-primary-50:  #e3f4fd;
+  --sl-color-primary-100: #c7e9fb;
+  --sl-color-primary-200: #9dd6f7;
+  --sl-color-primary-300: #63bcef;
+  --sl-color-primary-400: #2da3e0;
+  --sl-color-primary-500: #0d93cf;
+  --sl-color-primary-600: #0c7fb8;
+  --sl-color-primary-700: #0a679a;
+  --sl-color-primary-800: #07527c;
+  --sl-color-primary-900: #053d5e;
+  --sl-color-primary-950: #022639;
 
   /* ─── 폰트 → Pretendard ─────────────────────────────────────────── */
   --sl-font-sans: "Pretendard", "Pretendard Variable", "Noto Sans KR", "Malgun Gothic", sans-serif;
@@ -30,7 +30,7 @@
   --sl-input-border-radius-large:  var(--radius-lg);
 
   /* ─── 포커스 링 ─────────────────────────────────────────────────── */
-  --sl-focus-ring-color: rgba(20, 107, 74, 0.28);
+  --sl-focus-ring-color: rgba(12, 127, 184, 0.28);
   --sl-focus-ring-width: 3px;
 
   /* ─── 그림자 → 기존 shadow 토큰 ────────────────────────────────── */

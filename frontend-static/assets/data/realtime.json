@@ -1,0 +1,38 @@
+{
+  "updatedAt": "2026-06-14T19:30:00+09:00",
+  "summary": {
+    "critical": 0,
+    "warning": 3,
+    "normal": 12
+  },
+  "hourlyTrend": [
+    { "hour": "08시", "fire": 0, "accident": 1, "environment": 2, "safety": 1 },
+    { "hour": "09시", "fire": 0, "accident": 2, "environment": 1, "safety": 0 },
+    { "hour": "10시", "fire": 1, "accident": 1, "environment": 3, "safety": 1 },
+    { "hour": "11시", "fire": 0, "accident": 0, "environment": 2, "safety": 2 },
+    { "hour": "12시", "fire": 0, "accident": 3, "environment": 1, "safety": 0 },
+    { "hour": "13시", "fire": 0, "accident": 2, "environment": 2, "safety": 1 },
+    { "hour": "14시", "fire": 1, "accident": 1, "environment": 1, "safety": 0 },
+    { "hour": "15시", "fire": 0, "accident": 2, "environment": 3, "safety": 2 },
+    { "hour": "16시", "fire": 0, "accident": 1, "environment": 2, "safety": 1 },
+    { "hour": "17시", "fire": 0, "accident": 3, "environment": 1, "safety": 0 },
+    { "hour": "18시", "fire": 0, "accident": 2, "environment": 2, "safety": 1 },
+    { "hour": "19시", "fire": 0, "accident": 1, "environment": 1, "safety": 0 }
+  ],
+  "events": [
+    { "id": 1, "time": "19:22", "category": "교통", "location": "가산동 디지털단지역 인근", "level": "warning", "status": "처리중", "detail": "도로 정체 발생 – 우회도로 이용 안내" },
+    { "id": 2, "time": "18:55", "category": "환경", "location": "독산동 전역", "level": "warning", "status": "처리중", "detail": "미세먼지 '나쁨' 단계 – 취약계층 외출 자제 권고" },
+    { "id": 3, "time": "17:40", "category": "안전", "location": "시흥5동 공원 인근", "level": "warning", "status": "처리완료", "detail": "노후 보도블록 파손 신고 접수 – 현장 조치 완료" },
+    { "id": 4, "time": "16:30", "category": "화재", "location": "가산동 공장 지구", "level": "normal", "status": "처리완료", "detail": "소방 훈련 연기로 인한 오신고 – 이상 없음 확인" },
+    { "id": 5, "time": "15:10", "category": "교통", "location": "독산동 시흥대로", "level": "normal", "status": "처리완료", "detail": "교통 신호 점검 – 정상 복구 완료" },
+    { "id": 6, "time": "14:22", "category": "환경", "location": "가산동 일대", "level": "normal", "status": "처리완료", "detail": "생활 소음 민원 접수 – 현장 확인 후 시정" },
+    { "id": 7, "time": "12:48", "category": "안전", "location": "시흥동 어린이 보호구역", "level": "normal", "status": "처리완료", "detail": "불법 주정차 단속 완료" },
+    { "id": 8, "time": "11:05", "category": "교통", "location": "독산역 사거리", "level": "normal", "status": "처리완료", "detail": "신호등 점멸 오류 – 긴급 복구 완료" }
+  ],
+  "indicators": {
+    "temperature": { "value": "28.3", "unit": "°C", "status": "normal" },
+    "pm10": { "value": "78", "unit": "㎍/㎥", "label": "미세먼지", "status": "warning" },
+    "traffic": { "value": "보통", "unit": "", "label": "교통 혼잡", "status": "normal" },
+    "safety": { "value": "주의 3건", "unit": "", "label": "안전 알림", "status": "warning" }
+  }
+}

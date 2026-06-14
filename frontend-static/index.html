@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>금천 데이터플랫폼</title>
     <meta name="description" content="서울특별시 금천구 도시·생활 데이터 통합 플랫폼. 생활시설, 교통, 상권, 인구 지표를 한 화면에서 확인하세요.">
+    <link rel="icon" type="image/png" href="./assets/brand/ci-symbol.png">
 
     <!-- Pretendard: 한글 최적화 웹폰트 (FOUT 최소화) -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -44,16 +45,9 @@
 
     <header class="topbar" role="banner">
       <a class="brand" href="#/home" aria-label="금천 데이터플랫폼 홈으로 이동">
-        <span class="brand-mark" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <rect x="1" y="12" width="4" height="9" rx="1.5" fill="white" opacity="0.75"/>
-            <rect x="7.5" y="6" width="4" height="15" rx="1.5" fill="white"/>
-            <rect x="14" y="9" width="4" height="12" rx="1.5" fill="white" opacity="0.85"/>
-            <circle cx="19.5" cy="4" r="2" fill="#5ef0a5"/>
-          </svg>
-        </span>
-        <span>
-          <strong>금천 데이터플랫폼</strong>
+        <img src="./assets/brand/bi-signature-h.png" alt="좋은도시 금천" class="brand-logo">
+        <span class="brand-name">
+          <strong>데이터플랫폼</strong>
           <small>Geumcheon Data Platform</small>
         </span>
       </a>
@@ -67,15 +61,16 @@
       </button>
 
       <nav class="nav" id="main-nav" aria-label="주요 메뉴">
-        <a href="#/home"       data-route="home"      >상황판</a>
-        <a href="#/catalog"    data-route="catalog"   >데이터 카탈로그</a>
-        <a href="#/map"        data-route="map"       >생활지도</a>
-        <a href="#/commercial" data-route="commercial">상권분석</a>
-        <a href="#/geo"        data-route="geo"       >집계구</a>
-        <a href="#/population" data-route="population">인구분석</a>
-        <a href="#/api"        data-route="api"       >API 상태</a>
-        <a href="#/api-logs"   data-route="api-logs"  >API 로그</a>
-        <a href="#/admin"      data-route="admin"     >관리자</a>
+        <a href="#/home"        data-route="home"       >상황판</a>
+        <a href="#/realtime"    data-route="realtime"   >실시간 도시현황</a>
+        <a href="#/indicators"  data-route="indicators" >분야별 지표</a>
+        <a href="#/map"         data-route="map"        >생활지도</a>
+        <a href="#/commercial"  data-route="commercial" >상권분석</a>
+        <a href="#/catalog"     data-route="catalog"    >데이터 카탈로그</a>
+        <a href="#/about"       data-route="about"      >이용안내</a>
+        <a href="#/api"         data-route="api"        >API 상태</a>
+        <a href="#/api-logs"    data-route="api-logs"   >API 로그</a>
+        <a href="#/admin"       data-route="admin"      >관리자</a>
       </nav>
     </header>
 
@@ -85,7 +80,7 @@
     <footer class="site-footer" role="contentinfo">
       <div class="site-footer-inner">
         <div class="site-footer-col">
-          <p class="site-footer-brand">금천 데이터플랫폼</p>
+          <img src="./assets/brand/bi-signature-h.png" alt="좋은도시 금천" class="site-footer-logo">
           <p class="site-footer-org">서울특별시 금천구청 스마트도시과</p>
           <p class="site-footer-addr">서울특별시 금천구 시흥대로73길 70</p>
         </div>

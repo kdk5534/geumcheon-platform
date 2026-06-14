@@ -5,6 +5,8 @@ import { loadLocalData, loadBackendData, loadApiSources, loadApiLogsRaw } from "
 import { init as initRouter } from "./core/router.js";
 import { icon } from "./core/icons.js";
 import * as homePage from "./pages/home.js";
+import * as realtimePage from "./pages/realtime.js";
+import * as indicatorsPage from "./pages/indicators.js";
 import * as catalogPage from "./pages/catalog.js";
 import * as mapPage from "./pages/map.js";
 import * as commercialPage from "./pages/commercial.js";
@@ -13,20 +15,24 @@ import * as apiStatusPage from "./pages/api-status.js";
 import * as apiLogsPage from "./pages/api-logs.js";
 import * as adminPage from "./pages/admin.js";
 import * as populationPage from "./pages/population.js";
+import * as aboutPage from "./pages/about.js";
 
 // ─── 네비 아이콘 주입 ────────────────────────────────────────
 
 (function initNavIcons() {
   const NAV_ICONS = {
-    home:       "home",
-    catalog:    "database",
-    map:        "map",
-    commercial: "bar-chart",
-    geo:        "filter",
-    population: "users",
-    api:        "activity",
-    "api-logs": "list",
-    admin:      "settings"
+    home:        "home",
+    realtime:    "activity",
+    indicators:  "bar-chart",
+    catalog:     "database",
+    map:         "map",
+    commercial:  "shopping-bag",
+    geo:         "filter",
+    population:  "users",
+    about:       "info",
+    api:         "server",
+    "api-logs":  "list",
+    admin:       "settings"
   };
   document.querySelectorAll(".nav a[data-route]").forEach((link) => {
     const routeKey = link.dataset.route;
@@ -83,11 +89,14 @@ const viewContainer = document.getElementById("view");
 
 initRouter(viewContainer, {
   home:        homePage,
+  realtime:    realtimePage,
+  indicators:  indicatorsPage,
   catalog:     catalogPage,
   map:         mapPage,
   commercial:  commercialPage,
   geo:         geoPage,
   population:  populationPage,
+  about:       aboutPage,
   api:         apiStatusPage,
   "api-logs":  apiLogsPage,
   admin:       adminPage

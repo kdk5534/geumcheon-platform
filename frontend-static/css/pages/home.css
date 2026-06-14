@@ -10,17 +10,17 @@
 }
 
 /* ─────────────────────────────────────────
-   상단 타이틀 띠 (딥 green→teal 그라디언트)
+   상단 타이틀 띠 (금천 공식 시안→마젠타 그라디언트)
 ───────────────────────────────────────── */
 .home-dash-header {
   display: flex;
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-5) var(--space-8);
-  background: linear-gradient(135deg, #0b3d26 0%, #0e5c40 45%, #0d7377 100%);
+  background: var(--grad-brand);
   border-radius: var(--radius-xl);
   color: #fff;
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.06) inset;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.10) inset;
 }
 
 .home-dash-emblem {
@@ -208,7 +208,7 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: #5ef0a5;
+  background: #0d93cf;
   border-radius: 50%;
   animation: pulse-dot 2.5s ease-in-out infinite;
 }
@@ -224,7 +224,7 @@
 .home-clock-widget {
   padding: var(--space-4) var(--space-4) var(--space-3);
   margin-bottom: var(--space-4);
-  background: linear-gradient(135deg, #0b3d26 0%, #197982 100%);
+  background: var(--grad-navy);
   border-radius: var(--radius-xl);
   color: #fff;
   text-align: center;

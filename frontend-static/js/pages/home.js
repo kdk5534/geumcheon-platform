@@ -987,12 +987,7 @@ function buildDashHtml() {
   <!-- ─ 상단 타이틀 띠 ─ -->
   <header class="home-dash-header">
     <div class="home-dash-emblem" aria-hidden="true">
-      <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
-        <rect width="42" height="42" rx="10" fill="rgba(255,255,255,0.12)"/>
-        <circle cx="21" cy="16" r="7" fill="none" stroke="#fff" stroke-width="2"/>
-        <path d="M9 34c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
-        <circle cx="21" cy="16" r="3" fill="#5ef0a5"/>
-      </svg>
+      <img src="./assets/brand/emblem-30th.png" alt="" width="64" height="64" style="object-fit:contain;display:block">
     </div>
 
     <div class="home-dash-brand">
@@ -1401,19 +1396,24 @@ function buildDataStatusSection() {
 
 function buildTopicCards() {
   const topics = [
-    { route: "catalog",    iconName: "database",  iconClass: "green",  title: "데이터 카탈로그", desc: "금천구·서울시·국가기관의 공공데이터 24종을 검색·분류·열람합니다.", label: "카탈로그 보기" },
-    { route: "map",        iconName: "map",       iconClass: "teal",   title: "생활지도",        desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 권역별 비교 지원.",   label: "시설 지도 보기" },
-    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",        desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다.",           label: "상권 분석 보기" },
-    { route: "geo",        iconName: "pin",       iconClass: "blue",   title: "집계구 분석",     desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다.",          label: "집계구 분석 보기" },
-    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",       desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다.",                  label: "인구 분석 보기" },
-    { route: "api",        iconName: "activity",  iconClass: "violet", title: "API 수집 현황",   desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다.",                   label: "API 현황 보기" },
-    { route: "api-logs",   iconName: "list",      iconClass: "blue",   title: "수집 로그",       desc: "API 수집 실행 내역을 필터링하고 검색합니다.",                         label: "로그 보기" },
-    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",          desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다.",          label: "관리 화면 열기" },
+    { route: "realtime",   iconName: "activity",       iconClass: "teal",   title: "실시간 도시현황", desc: "재난·교통·환경·안전 현황을 지도와 차트로 실시간 모니터링합니다.", label: "현황 보기" },
+    { route: "indicators", iconName: "bar-chart",      iconClass: "green",  title: "분야별 지표",     desc: "인구·경제·복지·보건·환경·교통·안전 7개 분야 핵심 지표 대시보드.", label: "지표 보기" },
+    { route: "catalog",    iconName: "database",       iconClass: "green",  title: "데이터 카탈로그", desc: "금천구·서울시·국가기관의 공공데이터 24종을 검색·분류·열람합니다.", label: "카탈로그 보기" },
+    { route: "map",        iconName: "map",            iconClass: "teal",   title: "생활지도",        desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 권역별 비교 지원.", label: "시설 지도 보기" },
+    { route: "commercial", iconName: "shopping-bag",   iconClass: "amber",  title: "상권분석",        desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다.", label: "상권 분석 보기" },
+    { route: "geo",        iconName: "pin",            iconClass: "blue",   title: "집계구 분석",     desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다.", label: "집계구 분석 보기" },
+    { route: "population", iconName: "users",          iconClass: "teal",   title: "인구 분석",       desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다.", label: "인구 분석 보기" },
+    { route: "about",      iconName: "info",           iconClass: "violet", title: "이용안내",        desc: "플랫폼 소개·데이터 출처·관련 사이트를 안내합니다.", label: "안내 보기" },
   ];
   const ACCENT_MAP = {
-    catalog: "#146b4a", map: "#197982", commercial: "#b56b17",
-    geo: "#245b9e", population: "#197982", api: "#6556a3",
-    "api-logs": "#245b9e", admin: "#21342f"
+    realtime:   "#0d93cf",
+    indicators: "#0c7fb8",
+    catalog:    "#0c7fb8",
+    map:        "#0d93cf",
+    commercial: "#b56b17",
+    geo:        "#245b9e",
+    population: "#0d93cf",
+    about:      "#6556a3",
   };
   return topics.map((topic) => {
     const accent = ACCENT_MAP[topic.route] || "#146b4a";

@@ -1,0 +1,189 @@
+/* 분야별 지표 대시보드 페이지 레이아웃 및 컴포넌트 스타일 */
+
+/* ─── 탭 바 ─────────────────────────────────────────────────── */
+.ind-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-5);
+}
+
+.ind-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ind-tab:hover {
+  background: var(--green-wash);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.ind-tab.is-active {
+  background: var(--tab-color, var(--green));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ─── 패널 ──────────────────────────────────────────────────── */
+.ind-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ─── KPI 그리드 ─────────────────────────────────────────────── */
+.ind-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-3);
+}
+
+.ind-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.ind-kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.ind-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.ind-kpi-value {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.ind-kpi-unit {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: -2px;
+}
+
+.ind-kpi-change {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.ind-change-up   { color: var(--teal); }
+.ind-change-down { color: var(--magenta); }
+.ind-change-flat { color: var(--muted); }
+
+/* ─── 차트 카드 ─────────────────────────────────────────────── */
+.ind-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.ind-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.ind-chart-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ind-detail-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ind-detail-link:hover { text-decoration: underline; }
+
+/* ─── 데이터 테이블 ─────────────────────────────────────────── */
+.ind-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.ind-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ind-table th,
+.ind-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.ind-table th {
+  background: var(--wash);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.ind-table tbody tr:last-child td { border-bottom: none; }
+
+.ind-table tbody tr:hover td { background: var(--green-wash); }
+
+.ind-loading {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.page-header-updated {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ─── 반응형 ─────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .ind-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .ind-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ind-tab { font-size: 12px; padding: 6px 12px; }
+}

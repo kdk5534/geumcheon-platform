@@ -2,13 +2,14 @@
 
 const ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js";
 
-// styles.css 색상 변수 기반 팔레트 (강남·서초 톤)
+// 금천구 공식 브랜드 색상 기반 팔레트 (시안→마젠타 계열 우선)
 export const CHART_PALETTE = [
-  "#146b4a", // --green
-  "#197982", // --teal
-  "#245b9e", // --blue
+  "#0d93cf", // --teal (금천 시안블루)
+  "#bd1d77", // --magenta
+  "#0c7fb8", // --green (딥 시안)
   "#6556a3", // --violet
   "#b56b17", // --amber
+  "#245b9e", // --blue
   "#bd493c", // --red
 ];
 

@@ -1095,9 +1095,23 @@ function buildDashHtml() {
       <div class="home-right-panel home-right-panel--notice">
         <div class="home-right-panel-hdr">
           <span>최신 공지</span>
-          <a class="home-right-link" href="#">더보기</a>
+          <a class="home-right-link" href="#/catalog">더보기</a>
         </div>
         ${buildMiniNotices()}
+      </div>
+
+      <div class="home-right-panel">
+        <div class="home-right-panel-hdr">
+          <span>분석 바로가기</span>
+        </div>
+        <div class="home-quick-links">
+          <a class="home-quick-link" href="#/commercial">${icon("bar-chart",{ size:14 })} 상권분석</a>
+          <a class="home-quick-link" href="#/population">${icon("users",    { size:14 })} 인구분석</a>
+          <a class="home-quick-link" href="#/geo">${icon("pin",        { size:14 })} 집계구</a>
+          <a class="home-quick-link" href="#/map">${icon("map",        { size:14 })} 생활지도</a>
+          <a class="home-quick-link" href="#/catalog">${icon("database",  { size:14 })} 카탈로그</a>
+          <a class="home-quick-link" href="#/api">${icon("activity",  { size:14 })} API 현황</a>
+        </div>
       </div>
     </aside>
   </div>
@@ -1178,16 +1192,18 @@ function buildDashHtml() {
 
 function buildMiniNotices() {
   const notices = [
-    { type: "공지", title: "2026년 2분기 상권 데이터 업데이트 완료", date: "06.13" },
-    { type: "안내", title: "금천구 집계구 GIS 데이터 신규 추가",      date: "06.01" },
-    { type: "새소식", title: "행안부 주민등록 API 연동 시범 운영",      date: "05.15" },
+    { type: "공지", title: "2026년 2분기 상권 데이터 업데이트 완료", date: "06.13", href: "#/commercial" },
+    { type: "안내", title: "금천구 집계구 GIS 데이터 신규 추가",      date: "06.01", href: "#/geo" },
+    { type: "새소식", title: "행안부 주민등록 API 연동 시범 운영",     date: "05.15", href: "#/api" },
+    { type: "공지", title: "생활지도 시설 데이터 214건 갱신",          date: "05.10", href: "#/map" },
+    { type: "안내", title: "카탈로그 신규 데이터셋 4종 등록",          date: "05.01", href: "#/catalog" },
   ];
   const cls = { "공지": "notice-badge--green", "안내": "notice-badge--blue", "새소식": "notice-badge--amber" };
   return `<ul class="home-mini-notice-list">
     ${notices.map((n) => `
       <li class="home-mini-notice-item">
         <span class="home-notice-badge ${cls[n.type] || ""}">${escapeHtml(n.type)}</span>
-        <span class="home-mini-notice-title">${escapeHtml(n.title)}</span>
+        <a class="home-mini-notice-title" href="${escapeHtml(n.href)}">${escapeHtml(n.title)}</a>
         <time class="home-mini-notice-date">${escapeHtml(n.date)}</time>
       </li>
     `).join("")}

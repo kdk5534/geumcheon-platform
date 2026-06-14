@@ -768,32 +768,53 @@ function renderInsightCommercial() {
   if (!el) return;
   const commercial = state.data.commercial;
   if (!commercial) return;
-  const categories = [], values = [];
+  const categories = [], values = [], ratios = [];
   Object.keys(commercial).forEach((ind) => {
     const byDong = commercial[ind]?.byDong;
     if (!byDong?.length) return;
+    const total = byDong.reduce((s, d) => s + (d.count ?? 0), 0);
     categories.push(ind);
-    values.push(byDong.reduce((s, d) => s + (d.count ?? 0), 0));
+    values.push(total);
   });
   if (!categories.length) return;
+  const grandTotal = values.reduce((s, v) => s + v, 0);
+  values.forEach((v) => ratios.push(grandTotal ? +(v / grandTotal * 100).toFixed(1) : 0));
+
   insightChartLeft = createChart(el, {
     ...BASE_OPTION,
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
+    tooltip: {
+      trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0]; if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">${Number(p.value).toLocaleString()}개 점포</div></div>`;
+        const bar  = params.find((p) => p.seriesType === "bar");
+        const line = params.find((p) => p.seriesType === "line");
+        if (!bar) return "";
+        return `<div style="font-size:12px"><strong>${bar.name}</strong>` +
+          `<div style="color:#65736d">${Number(bar.value).toLocaleString()}개` +
+          (line ? ` · <span style="color:#b56b17">${line.value}%</span>` : "") + `</div></div>`;
       }
     },
-    grid: { top: 4, bottom: 4, left: 52, right: 36 },
-    xAxis: { type: "value", show: false },
-    yAxis: { type: "category", data: categories, axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
-    series: [{ type: "bar", data: values, barMaxWidth: 16,
-      itemStyle: { color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length], borderRadius: [0, 4, 4, 0] },
-      label: { show: true, position: "right", color: CHART_COLORS.text, fontSize: 10,
-               formatter: (p) => Number(p.value).toLocaleString() }
-    }],
-    animation: true
+    legend: { show: false },
+    grid: { top: 8, bottom: 28, left: 8, right: 40 },
+    xAxis: {
+      type: "category", data: categories,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } }, axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 10, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    yAxis: [
+      { type: "value", show: false },
+      { type: "value", show: true, max: 100, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false },
+        axisLabel: { color: CHART_COLORS.text, fontSize: 9, formatter: "{value}%", fontFamily: BASE_OPTION.textStyle.fontFamily } },
+    ],
+    series: [
+      { type: "bar", data: values, yAxisIndex: 0, barMaxWidth: 36,
+        itemStyle: { color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length], borderRadius: [4, 4, 0, 0] },
+        label: { show: true, position: "top", color: CHART_COLORS.text, fontSize: 9,
+                 formatter: (p) => Number(p.value).toLocaleString() } },
+      { type: "line", data: ratios, yAxisIndex: 1, smooth: true,
+        lineStyle: { color: "#b56b17", width: 2 }, symbol: "circle", symbolSize: 5,
+        itemStyle: { color: "#b56b17" } },
+    ],
+    animation: true,
   });
 }
 
@@ -804,24 +825,49 @@ function renderInsightPopulation() {
   if (!population?.length) return;
   const names  = population.map((d) => d.areaName);
   const totals = population.map((d) => d.total ?? 0);
+  const ELDERLY = ["60~69세", "70세 이상"];
+  const elderlyRates = population.map((d) => {
+    const byAge = d.byAge || [];
+    const elderly = byAge.filter((b) => ELDERLY.includes(b.ageBand))
+      .reduce((s, b) => s + (b.male || 0) + (b.female || 0), 0);
+    return d.total ? +(elderly / d.total * 100).toFixed(1) : 0;
+  });
+
   insightChartRight = createChart(el, {
     ...BASE_OPTION,
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
+    tooltip: {
+      trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0]; if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">총 ${Number(p.value).toLocaleString()}명</div></div>`;
+        const bar  = params.find((p) => p.seriesType === "bar");
+        const line = params.find((p) => p.seriesType === "line");
+        if (!bar) return "";
+        return `<div style="font-size:12px"><strong>${bar.name}</strong>` +
+          `<div style="color:#65736d">총 ${Number(bar.value).toLocaleString()}명` +
+          (line ? ` · <span style="color:#197982">고령 ${line.value}%</span>` : "") + `</div></div>`;
       }
     },
-    grid: { top: 4, bottom: 28, left: 8, right: 8 },
-    xAxis: { type: "category", data: names, axisLine: { lineStyle: { color: CHART_COLORS.line } },
-      axisTick: { show: false }, axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
-    yAxis: { type: "value", show: false },
-    series: [{ type: "bar", data: totals, barMaxWidth: 48,
-      itemStyle: { color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length], borderRadius: [6, 6, 0, 0] },
-      label: { show: true, position: "top", formatter: (p) => (p.value / 10000).toFixed(1) + "만",
-               color: CHART_COLORS.text, fontSize: 11 }
-    }],
-    animation: true
+    legend: { show: false },
+    grid: { top: 8, bottom: 28, left: 8, right: 40 },
+    xAxis: {
+      type: "category", data: names,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } }, axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    yAxis: [
+      { type: "value", show: false },
+      { type: "value", show: true, max: 30, splitLine: { show: false }, axisLine: { show: false }, axisTick: { show: false },
+        axisLabel: { color: CHART_COLORS.text, fontSize: 9, formatter: "{value}%", fontFamily: BASE_OPTION.textStyle.fontFamily } },
+    ],
+    series: [
+      { type: "bar", data: totals, yAxisIndex: 0, barMaxWidth: 56,
+        itemStyle: { color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]), borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: "top", formatter: (p) => (p.value / 10000).toFixed(1) + "만",
+                 color: CHART_COLORS.text, fontSize: 11 } },
+      { type: "line", data: elderlyRates, yAxisIndex: 1, smooth: true,
+        lineStyle: { color: "#197982", width: 2 }, symbol: "circle", symbolSize: 5,
+        itemStyle: { color: "#197982" } },
+    ],
+    animation: true,
   });
 }
 
@@ -831,28 +877,49 @@ function renderInsightGeo() {
   const districts = state.data?.districts;
   if (!districts?.length) return;
   const names  = districts.map((d) => d.name);
-  const scores = districts.map((d) => {
-    const s = d.scores || {};
-    const vals = [s["생활"] || 0, s["교통"] || 0, s["안전"] || 0].filter((v) => v > 0);
-    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10 : 0;
-  });
+  const lifeScores    = districts.map((d) => d.scores?.생활  || 0);
+  const trafficScores = districts.map((d) => d.scores?.교통  || 0);
+  const safetyScores  = districts.map((d) => d.scores?.안전  || 0);
+
   insightChartGeo = createChart(el, {
     ...BASE_OPTION,
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
+    tooltip: {
+      trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0]; if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">접근성 ${p.value}점</div></div>`;
+        const name = params[0]?.name || "";
+        const parts = params.map((p) => `<span style="color:${p.color}">■</span> ${p.seriesName}: <strong>${p.value}</strong>점`).join("<br>");
+        return `<div style="font-size:11px"><strong>${name}</strong><br>${parts}</div>`;
       }
     },
-    grid: { top: 4, bottom: 28, left: 8, right: 8 },
-    xAxis: { type: "category", data: names, axisLine: { lineStyle: { color: CHART_COLORS.line } },
-      axisTick: { show: false }, axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
+    legend: {
+      bottom: 0, itemWidth: 8, itemHeight: 8,
+      textStyle: { color: CHART_COLORS.text, fontSize: 10, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    grid: { top: 8, bottom: 36, left: 8, right: 8 },
+    xAxis: {
+      type: "category", data: names,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } }, axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
     yAxis: { type: "value", show: false, max: 100 },
-    series: [{ type: "bar", data: scores, barMaxWidth: 48,
-      itemStyle: { color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]), borderRadius: [6, 6, 0, 0] },
-      label: { show: true, position: "top", formatter: (p) => p.value + "점", color: CHART_COLORS.text, fontSize: 11 }
-    }],
-    animation: true
+    series: [
+      { name: "생활", type: "bar", data: lifeScores, stack: "score", barMaxWidth: 36,
+        itemStyle: { color: "#146b4a" },
+        label: { show: false } },
+      { name: "교통", type: "bar", data: trafficScores, stack: "score",
+        itemStyle: { color: "#197982" },
+        label: { show: false } },
+      { name: "안전", type: "bar", data: safetyScores, stack: "score",
+        itemStyle: { color: "#245b9e", borderRadius: [4, 4, 0, 0] },
+        label: { show: true, position: "top", fontSize: 10, color: CHART_COLORS.text,
+                 formatter: (p) => {
+                   const d = districts[p.dataIndex];
+                   const sc = d?.scores || {};
+                   const avg = Math.round(([sc.생활, sc.교통, sc.안전].filter(Boolean).reduce((a, b) => a + b, 0)) / 3);
+                   return avg + "점";
+                 } } },
+    ],
+    animation: true,
   });
 }
 

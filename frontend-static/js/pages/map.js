@@ -146,7 +146,7 @@ function buildHtml() {
   return `
     <div class="map-page">
       <div class="map-header">
-        <div class="page-banner" style="--banner-from:#0d4a47;--banner-to:#197982;margin-bottom:var(--space-4)">
+        <div class="page-banner" style="--banner-from:#0d2a45;--banner-to:#0d93cf;margin-bottom:var(--space-4)">
           <div class="page-banner-icon">${icon("map", { size: 26 })}</div>
           <div class="page-banner-copy">
             <p class="page-banner-eyebrow">생활지도</p>
@@ -239,17 +239,17 @@ function getDistrictValue(name) {
 function choroplethColor(value, metric) {
   if (metric === "인구") {
     // 인구는 절대값 스케일 (금천구 3개 동 기준)
-    if (value >= 55000) return "#0a4a34";
-    if (value >= 45000) return "#146b4a";
-    if (value >= 35000) return "#2a9068";
-    return "#6fc4a0";
+    if (value >= 55000) return "#0a4570";
+    if (value >= 45000) return "#0c7fb8";
+    if (value >= 35000) return "#0d93cf";
+    return "#63bde3";
   }
   // 점수 스케일 (0~100)
-  if (value >= 85) return "#0a4a34";
-  if (value >= 75) return "#146b4a";
-  if (value >= 65) return "#2a9068";
-  if (value >= 55) return "#6fc4a0";
-  return "#b8dfd1";
+  if (value >= 85) return "#0a4570";
+  if (value >= 75) return "#0c7fb8";
+  if (value >= 65) return "#0d93cf";
+  if (value >= 55) return "#63bde3";
+  return "#c5e8f7";
 }
 
 function initChoropleth(geojson) {
@@ -330,11 +330,11 @@ function renderLegend() {
   if (!el) return;
 
   const steps = choroplethMetric === "인구"
-    ? [{ color: "#0a4a34", label: "55,000명 이상" }, { color: "#146b4a", label: "45,000명 이상" },
-       { color: "#2a9068", label: "35,000명 이상" }, { color: "#6fc4a0", label: "35,000명 미만" }]
-    : [{ color: "#0a4a34", label: "85점 이상" }, { color: "#146b4a", label: "75점 이상" },
-       { color: "#2a9068", label: "65점 이상" }, { color: "#6fc4a0", label: "55점 이상" },
-       { color: "#b8dfd1", label: "55점 미만" }];
+    ? [{ color: "#0a4570", label: "55,000명 이상" }, { color: "#0c7fb8", label: "45,000명 이상" },
+       { color: "#0d93cf", label: "35,000명 이상" }, { color: "#63bde3", label: "35,000명 미만" }]
+    : [{ color: "#0a4570", label: "85점 이상" }, { color: "#0c7fb8", label: "75점 이상" },
+       { color: "#0d93cf", label: "65점 이상" }, { color: "#63bde3", label: "55점 이상" },
+       { color: "#c5e8f7", label: "55점 미만" }];
 
   el.innerHTML = `
     <div class="map-legend-title">${escapeHtml(choroplethMetric)} 지수</div>

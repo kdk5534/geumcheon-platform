@@ -13,10 +13,10 @@ const CHOROPLETH_METRICS = ["생활", "교통", "안전", "인구"];
 
 /** metric 인덱스별 아이콘·테마 (기존 호환) */
 const METRIC_CONFIG = [
-  { iconName: "activity",  color: "#146b4a", bgColor: "#e6f1ed", tip: "실시간 환경·기상 지표 (기상청 금천구 관측)" },
+  { iconName: "activity",  color: "#0c7fb8", bgColor: "#ddf0fc", tip: "실시간 환경·기상 지표 (기상청 금천구 관측)" },
   { iconName: "filter",    color: "#b56b17", bgColor: "#fef3e2", tip: "상권·유동인구 현황 (유동인구 분석 기준)" },
   { iconName: "alert",     color: "#bd493c", bgColor: "#fdeeed", tip: "안전·재난 경보 발령 건수 (행안부 집계)" },
-  { iconName: "bar-chart", color: "#245b9e", bgColor: "#e6edf8", tip: "주민등록 인구 통계 (행정안전부 기준)" },
+  { iconName: "bar-chart", color: "#0d93cf", bgColor: "#d9f0fb", tip: "주민등록 인구 통계 (행정안전부 기준)" },
 ];
 
 // ─── 모듈-레벨 상태 ───────────────────────────────────────────
@@ -107,7 +107,12 @@ export async function mount(container) {
   } catch (e) {
     const pane = document.getElementById("home-map-pane");
     if (pane && isMounted) {
-      pane.innerHTML = `<div class="home-map-error">지도를 불러올 수 없습니다.<br>인터넷 연결을 확인해 주세요.</div>`;
+      pane.innerHTML = `<div class="home-map-error">
+        <span class="home-map-error-icon">🗺️</span>
+        <span class="home-map-error-title">금천구 생활지도</span>
+        <span class="home-map-error-desc">지도를 불러오는 중입니다.<br>인터넷 연결을 확인하거나 잠시 후 새로고침하세요.</span>
+        <a href="#/map" style="margin-top:8px;font-size:12px;color:#7dd3fa;text-decoration:underline">생활지도 바로가기 →</a>
+      </div>`;
     }
   }
 
@@ -208,7 +213,7 @@ function renderEnvWidgets() {
 
 // ─── KPI 타일 (6개 빽빽한 타일) ─────────────────────────────
 
-function renderKpiTiles() {
+export function renderKpiTiles() {
   const grid = document.getElementById("home-kpi-grid");
   if (!grid) return;
 
@@ -237,12 +242,12 @@ function renderKpiTiles() {
     : 0;
 
   const tiles = [
-    { label: "금천구 총인구",    value: pop ? (pop / 10000).toFixed(1) + "만명" : "—", accent: "#146b4a", bg: "#e6f1ed", iconName: "users" },
-    { label: "등록 생활시설",    value: facilities ? facilities + "건"          : "—", accent: "#197982", bg: "#e4f2f4", iconName: "pin" },
-    { label: "상권 점포",        value: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "—", accent: "#b56b17", bg: "#fef3e2", iconName: "bar-chart" },
+    { label: "금천구 총인구",    value: pop ? (pop / 10000).toFixed(1) + "만명" : "—", accent: "#0c7fb8", bg: "#ddf0fc", iconName: "users" },
+    { label: "등록 생활시설",    value: facilities ? facilities + "건"          : "—", accent: "#0d93cf", bg: "#d9f0fb", iconName: "pin" },
+    { label: "상권 점포",        value: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "—", accent: "#bd1d77", bg: "#fbe6f1", iconName: "bar-chart" },
     { label: "평균 접근성 지수", value: avgScore ? avgScore + "점"              : "—", accent: "#245b9e", bg: "#e6edf8", iconName: "activity" },
     { label: "데이터 소스",      value: sources + "종",                               accent: "#6556a3", bg: "#ece8f6", iconName: "database" },
-    { label: "수집 정상",        value: ready > 0 ? ready + "종" : "대기",            accent: "#146b4a", bg: "#e6f1ed", iconName: "check" },
+    { label: "수집 정상",        value: ready > 0 ? ready + "종" : "대기",            accent: "#0c7fb8", bg: "#ddf0fc", iconName: "check" },
   ];
 
   grid.innerHTML = tiles.map((t) => `
@@ -291,16 +296,16 @@ function getHomeDistrictValue(name) {
 
 function choroplethColor(value, metric) {
   if (metric === "인구") {
-    if (value >= 55000) return "#0a4a34";
-    if (value >= 45000) return "#146b4a";
-    if (value >= 35000) return "#2a9068";
-    return "#6fc4a0";
+    if (value >= 55000) return "#0a4570";
+    if (value >= 45000) return "#0c7fb8";
+    if (value >= 35000) return "#0d93cf";
+    return "#63bde3";
   }
-  if (value >= 85) return "#0a4a34";
-  if (value >= 75) return "#146b4a";
-  if (value >= 65) return "#2a9068";
-  if (value >= 55) return "#6fc4a0";
-  return "#b8dfd1";
+  if (value >= 85) return "#0a4570";
+  if (value >= 75) return "#0c7fb8";
+  if (value >= 65) return "#0d93cf";
+  if (value >= 55) return "#63bde3";
+  return "#c5e8f7";
 }
 
 function initHomeChoropleth(geojson) {
@@ -367,11 +372,11 @@ function renderHomeMapLegend() {
   if (!el) return;
 
   const steps = homeChoroplethMetric === "인구"
-    ? [{ color: "#0a4a34", label: "55,000명↑" }, { color: "#146b4a", label: "45,000명↑" },
-       { color: "#2a9068", label: "35,000명↑" }, { color: "#6fc4a0", label: "35,000명↓" }]
-    : [{ color: "#0a4a34", label: "85점↑" }, { color: "#146b4a", label: "75점↑" },
-       { color: "#2a9068", label: "65점↑" }, { color: "#6fc4a0", label: "55점↑" },
-       { color: "#b8dfd1", label: "55점↓" }];
+    ? [{ color: "#0a4570", label: "55,000명↑" }, { color: "#0c7fb8", label: "45,000명↑" },
+       { color: "#0d93cf", label: "35,000명↑" }, { color: "#63bde3", label: "35,000명↓" }]
+    : [{ color: "#0a4570", label: "85점↑" }, { color: "#0c7fb8", label: "75점↑" },
+       { color: "#0d93cf", label: "65점↑" }, { color: "#63bde3", label: "55점↑" },
+       { color: "#c5e8f7", label: "55점↓" }];
 
   el.innerHTML = `
     <div class="home-map-legend-title">${escapeHtml(homeChoroplethMetric)} 지수</div>
@@ -387,7 +392,7 @@ function renderHomeMapLegend() {
 function buildHomeMarkers() {
   if (!window.L || !homeMap) return;
   const L = window.L;
-  const catColor = { "병원": "#197982", "약국": "#146b4a", "주차장": "#b56b17", "안전": "#bd493c" };
+  const catColor = { "병원": "#0d93cf", "약국": "#0c7fb8", "주차장": "#b56b17", "안전": "#bd493c" };
   const catInit  = { "병원": "병", "약국": "약", "주차장": "P", "안전": "안" };
 
   const facilities = Array.isArray(state.data?.facilities) ? state.data.facilities : [];
@@ -843,7 +848,7 @@ function renderInsightPopulation() {
         if (!bar) return "";
         return `<div style="font-size:12px"><strong>${bar.name}</strong>` +
           `<div style="color:#65736d">총 ${Number(bar.value).toLocaleString()}명` +
-          (line ? ` · <span style="color:#197982">고령 ${line.value}%</span>` : "") + `</div></div>`;
+          (line ? ` · <span style="color:#bd1d77">고령 ${line.value}%</span>` : "") + `</div></div>`;
       }
     },
     legend: { show: false },
@@ -864,8 +869,8 @@ function renderInsightPopulation() {
         label: { show: true, position: "top", formatter: (p) => (p.value / 10000).toFixed(1) + "만",
                  color: CHART_COLORS.text, fontSize: 11 } },
       { type: "line", data: elderlyRates, yAxisIndex: 1, smooth: true,
-        lineStyle: { color: "#197982", width: 2 }, symbol: "circle", symbolSize: 5,
-        itemStyle: { color: "#197982" } },
+        lineStyle: { color: "#bd1d77", width: 2 }, symbol: "circle", symbolSize: 5,
+        itemStyle: { color: "#bd1d77" } },
     ],
     animation: true,
   });
@@ -904,10 +909,10 @@ function renderInsightGeo() {
     yAxis: { type: "value", show: false, max: 100 },
     series: [
       { name: "생활", type: "bar", data: lifeScores, stack: "score", barMaxWidth: 36,
-        itemStyle: { color: "#146b4a" },
+        itemStyle: { color: "#0c7fb8" },
         label: { show: false } },
       { name: "교통", type: "bar", data: trafficScores, stack: "score",
-        itemStyle: { color: "#197982" },
+        itemStyle: { color: "#0d93cf" },
         label: { show: false } },
       { name: "안전", type: "bar", data: safetyScores, stack: "score",
         itemStyle: { color: "#245b9e", borderRadius: [4, 4, 0, 0] },
@@ -1416,7 +1421,7 @@ function buildTopicCards() {
     about:      "#6556a3",
   };
   return topics.map((topic) => {
-    const accent = ACCENT_MAP[topic.route] || "#146b4a";
+    const accent = ACCENT_MAP[topic.route] || "#0c7fb8";
     return `
     <a class="topic-card" href="#/${escapeHtml(topic.route)}"
        aria-label="${escapeHtml(topic.title)} 화면으로 이동"

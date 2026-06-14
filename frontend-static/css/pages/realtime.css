@@ -3,10 +3,10 @@
 /* ─── 전체 바디: 지도 | 사이드 패널 2단 ─────────────────────── */
 .rt-body {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: 1fr 400px;
   gap: var(--space-5);
   align-items: start;
-  min-height: 600px;
+  min-height: 640px;
 }
 
 /* ─── 지도 패널 ─────────────────────────────────────────────── */
@@ -46,7 +46,7 @@
 }
 
 .rt-map-container {
-  height: 480px;
+  height: 520px;
 }
 
 .rt-map-legend {
@@ -102,8 +102,8 @@
 }
 
 .rt-env-value {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
   color: var(--ink);
   line-height: 1.1;
 }
@@ -154,7 +154,7 @@
 }
 
 .rt-summary-count {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 900;
   line-height: 1;
 }
@@ -205,8 +205,8 @@
   border: 1px solid var(--line);
   border-left: 4px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: 11px 14px;
+  font-size: 13px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-fast);
 }

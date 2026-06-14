@@ -302,7 +302,7 @@
   font-weight: 700;
 }
 
-.geo-dt-score--hi  { color: #0a6641; }
+.geo-dt-score--hi  { color: #0a6095; }
 .geo-dt-score--mid { color: var(--amber); }
 .geo-dt-score--lo  { color: var(--red); }
 

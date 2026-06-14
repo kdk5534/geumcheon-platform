@@ -415,8 +415,8 @@
 
 .home-stat-card {
   padding: var(--space-3) var(--space-3);
-  background: linear-gradient(135deg, rgba(20,107,74,0.06) 0%, rgba(25,121,130,0.06) 100%);
-  border: 1px solid rgba(20,107,74,0.14);
+  background: linear-gradient(135deg, rgba(12,127,184,0.06) 0%, rgba(13,147,207,0.06) 100%);
+  border: 1px solid rgba(12,127,184,0.14);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   transition: background var(--transition-fast), border-color var(--transition-fast);
@@ -424,8 +424,8 @@
 }
 
 .home-stat-card:hover {
-  background: linear-gradient(135deg, rgba(20,107,74,0.10) 0%, rgba(25,121,130,0.10) 100%);
-  border-color: rgba(20,107,74,0.25);
+  background: linear-gradient(135deg, rgba(12,127,184,0.10) 0%, rgba(13,147,207,0.10) 100%);
+  border-color: rgba(12,127,184,0.25);
 }
 
 .home-stat-card span {
@@ -447,7 +447,7 @@
   color: var(--green);
 }
 
-.home-stat-card strong.ok      { color: #14804a; }
+.home-stat-card strong.ok      { color: var(--green); }
 .home-stat-card strong.pending { color: var(--amber); }
 
 /* ─────────────────────────────────────────
@@ -528,14 +528,33 @@
 
 .home-map-error {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   height: 100%;
   padding: var(--space-8);
-  color: var(--muted);
+  background: linear-gradient(160deg, #0d2a45 0%, #0c4a7a 50%, #0d93cf 100%);
+  color: rgba(255,255,255,0.75);
   font-size: var(--text-sm);
   text-align: center;
   line-height: 1.6;
+}
+
+.home-map-error-icon {
+  font-size: 36px;
+  opacity: 0.6;
+}
+
+.home-map-error-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+
+.home-map-error-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
 }
 
 /* 범례 (지도 위 절대 위치) */
@@ -703,7 +722,7 @@ a.home-mini-notice-title:hover {
 .home-quick-link:hover {
   background: var(--green-wash);
   color: var(--green);
-  border-color: rgba(20,107,74,0.22);
+  border-color: rgba(12,127,184,0.22);
 }
 
 .home-mini-notice-date {
@@ -783,7 +802,7 @@ a.home-mini-notice-title:hover {
 .home-insight-card:hover {
   box-shadow: var(--shadow-lg);
   transform: translateY(-3px);
-  border-color: rgba(20,107,74,0.2);
+  border-color: rgba(12,127,184,0.2);
 }
 
 .home-insight-header {
@@ -1114,7 +1133,7 @@ a.home-mini-notice-title:hover {
 .home-popular-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
-  border-color: rgba(20,107,74,0.25);
+  border-color: rgba(12,127,184,0.25);
 }
 
 .home-popular-cat {
@@ -1396,6 +1415,6 @@ a.home-mini-notice-title:hover {
   margin-left: 1px;
 }
 
-.home-dt-score--hi  { color: #0a6641; }
+.home-dt-score--hi  { color: #0a6095; }
 .home-dt-score--mid { color: var(--amber); }
 .home-dt-score--lo  { color: var(--red); }

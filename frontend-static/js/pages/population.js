@@ -84,7 +84,7 @@ function buildHtml() {
 
   return `
     <div class="pop-page">
-      <div class="page-banner" style="--banner-from:#0d5c42;--banner-to:#197982">
+      <div class="page-banner" style="--banner-from:#0d2a45;--banner-to:#0d93cf">
         <div class="page-banner-icon">${icon("users", { size: 26 })}</div>
         <div class="page-banner-copy">
           <p class="page-banner-eyebrow">인구 분석</p>

@@ -99,7 +99,7 @@ function buildHtml() {
 
   return `
     <div class="api-page">
-      <div class="page-banner" style="--banner-from:#1a2c1a;--banner-to:#146b4a">
+      <div class="page-banner" style="--banner-from:#0d2a45;--banner-to:#0c7fb8">
         <div class="page-banner-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         </div>

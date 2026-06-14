@@ -51,6 +51,28 @@ export function mount(container) {
           <p class="about-hero-desc">금천구민의 일상과 가장 가까운 도시 데이터를<br>한 화면에서 확인하고 분석할 수 있는<br>공공 빅데이터 통합 플랫폼입니다.</p>
         </div>
       </div>
+      <div class="about-hero-stats">
+        <div class="about-hero-stat">
+          <strong class="about-hero-stat-val">7</strong>
+          <span class="about-hero-stat-label">분야</span>
+        </div>
+        <div class="about-hero-stat">
+          <strong class="about-hero-stat-val">24종</strong>
+          <span class="about-hero-stat-label">데이터셋</span>
+        </div>
+        <div class="about-hero-stat">
+          <strong class="about-hero-stat-val">8개</strong>
+          <span class="about-hero-stat-label">수집 기관</span>
+        </div>
+        <div class="about-hero-stat">
+          <strong class="about-hero-stat-val">247,483</strong>
+          <span class="about-hero-stat-label">금천구 인구</span>
+        </div>
+        <div class="about-hero-stat">
+          <strong class="about-hero-stat-val">실시간</strong>
+          <span class="about-hero-stat-label">갱신 데이터</span>
+        </div>
+      </div>
     </div>
 
     <section class="about-section">

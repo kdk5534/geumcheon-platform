@@ -249,12 +249,12 @@ function renderGeoSummary() {
       <strong>${escapeHtml(state.geoMetric)}</strong>
     </article>
     <article class="geo-summary-kpi">
-      <div class="geo-kpi-icon" style="background:#e4f2f4;color:#197982">${icon("activity", { size: 15 })}</div>
+      <div class="geo-kpi-icon" style="background:#d9f0fb;color:#0d93cf">${icon("activity", { size: 15 })}</div>
       <span>권역 평균 점수</span>
       <strong>${avgScore}점</strong>
     </article>
     <article class="geo-summary-kpi">
-      <div class="geo-kpi-icon" style="background:#e6f1ed;color:#146b4a">${icon("trending-up", { size: 15 })}</div>
+      <div class="geo-kpi-icon" style="background:#ddf0fc;color:#0c7fb8">${icon("trending-up", { size: 15 })}</div>
       <span>최고 권역</span>
       <strong>${escapeHtml(bestDistrict?.name || "-")}</strong>
     </article>

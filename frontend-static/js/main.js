@@ -135,6 +135,7 @@ async function bootData() {
 /** 현재 홈 페이지가 마운트된 상태면 KPI와 히어로를 갱신한다. */
 function refreshHomeIfVisible() {
   if (!document.getElementById("home-metrics")) return;
+  homePage.renderKpiTiles();
   homePage.renderMetrics();
   homePage.renderStatsStrip();
   homePage.renderHeroMode();

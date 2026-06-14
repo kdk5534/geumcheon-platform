@@ -174,7 +174,7 @@
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-5) var(--space-8);
-  background: linear-gradient(135deg, var(--banner-from, #0b3d26) 0%, var(--banner-to, #146b4a) 100%);
+  background: linear-gradient(135deg, var(--banner-from, #0d2a45) 0%, var(--banner-to, #0c7fb8) 100%);
   border-radius: var(--radius-xl);
   color: #fff;
   margin-bottom: var(--space-5);

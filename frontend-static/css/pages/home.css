@@ -546,7 +546,9 @@
   gap: var(--space-3);
   min-width: 0;
   overflow-y: auto;
-  max-height: 540px;
+  max-height: 580px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 .home-right-panel {
@@ -684,8 +686,9 @@
 }
 
 .home-insight-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  border-color: rgba(20,107,74,0.2);
 }
 
 .home-insight-header {
@@ -741,7 +744,7 @@
 .home-insight-link:hover { gap: var(--space-1); }
 
 .home-insight-chart {
-  height: 180px;
+  height: 200px;
   padding: var(--space-3);
 }
 

@@ -1908,11 +1908,16 @@ button {
   min-height: 148px;
   border-top: 3px solid transparent;
   border-radius: var(--radius-xl);
-  transition: box-shadow var(--transition-fast);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top-width: 3px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
 }
 
 .metric-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .metric-card:nth-child(1) { border-top-color: var(--green); }

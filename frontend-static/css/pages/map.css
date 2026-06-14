@@ -4,6 +4,7 @@
    페이지 컨테이너
 ───────────────────────────────────────── */
 .map-page {
+  --page-accent: var(--teal);
   display: flex;
   flex-direction: column;
   height: calc(100vh - 56px); /* 56px = topbar 높이 */

@@ -86,9 +86,9 @@ select {
 }
 
 .util-bar-inner {
-  max-width: var(--container, 1200px);
+  max-width: var(--container);
   margin: 0 auto;
-  padding: 6px 32px;
+  padding: 6px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -129,7 +129,7 @@ select {
   justify-content: space-between;
   gap: 24px;
   min-height: 68px;
-  padding: 0 32px;
+  padding: 0 max(var(--gutter, 24px), calc((100% - 1440px) / 2));
   background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -242,9 +242,9 @@ select {
 }
 
 .shell {
-  width: min(1440px, calc(100% - 56px));
+  width: var(--container);
   margin: 0 auto;
-  padding: 24px 0 56px;
+  padding: 20px 0 48px;
 }
 
 .eyebrow {
@@ -294,26 +294,7 @@ h3 {
   margin-top: var(--space-4);
 }
 
-.metric-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 1px 0 rgba(23, 33, 29, 0.03);
-}
-
-.metric-card {
-  min-height: 126px;
-  padding: 18px;
-  border-top: 4px solid var(--green);
-}
-
-.metric-card:nth-child(2) {
-  border-top-color: var(--blue);
-}
-
-.metric-card:nth-child(3) {
-  border-top-color: var(--amber);
-}
+/* metric-card: 최종 정의는 styles.css 하단(1917)에 있음. 이 블록은 제거. */
 
 .metric-card:nth-child(4) {
   border-top-color: var(--violet);

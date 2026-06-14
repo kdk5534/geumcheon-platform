@@ -4,6 +4,7 @@
    페이지 래퍼
 ───────────────────────────────────────── */
 .geo-page {
+  --page-accent: var(--blue);
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-8);

@@ -4,6 +4,7 @@
    페이지 래퍼
 ───────────────────────────────────────── */
 .cml-page {
+  --page-accent: var(--amber);
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-8);

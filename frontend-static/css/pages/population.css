@@ -1,6 +1,7 @@
 /* 인구 분석 페이지 전용 스타일 */
 
 .pop-page {
+  --page-accent: var(--teal);
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-8);

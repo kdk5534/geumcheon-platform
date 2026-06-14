@@ -8,8 +8,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--line);
 }
 
@@ -18,7 +18,7 @@
   flex-direction: column;
   gap: 0;
   padding-left: var(--space-4);
-  border-left: 4px solid var(--green);
+  border-left: 4px solid var(--page-accent, var(--green));
 }
 
 .page-header-copy .eyebrow {
@@ -353,7 +353,7 @@
    사이트 푸터
 ───────────────────────────────────────── */
 .site-footer {
-  margin-top: var(--space-16);
+  margin-top: var(--space-10);
   border-top: 1px solid var(--line);
   background: var(--navy);
   color: rgba(255, 255, 255, 0.65);
@@ -365,9 +365,9 @@
   display: grid;
   grid-template-columns: 2fr 2fr 1.5fr;
   gap: var(--space-8);
-  max-width: 1200px;
+  max-width: var(--container);
   margin: 0 auto;
-  padding: var(--space-10) var(--space-8);
+  padding: var(--space-8) 0;
 }
 
 .site-footer-brand {

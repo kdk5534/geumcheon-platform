@@ -71,13 +71,14 @@ async function loadDatasets() {
 function buildSkeleton() {
   return `
     <div class="cat-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">데이터 카탈로그</p>
-          <h2>금천구 공공데이터</h2>
-          <p class="page-header-sub">금천구 및 서울시 공공데이터를 검색·열람할 수 있습니다.</p>
+      <div class="page-banner" style="--banner-from:#1a1c3a;--banner-to:#2c3e7a">
+        <div class="page-banner-icon">${icon("database", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">데이터 카탈로그</p>
+          <h2 class="page-banner-title">금천구 공공데이터</h2>
+          <p class="page-banner-desc">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
       <div class="cat-toolbar">
         <div class="skeleton" style="height:40px;width:320px;border-radius:var(--radius-md)"></div>
@@ -99,13 +100,28 @@ function render(container) {
 
   container.innerHTML = `
     <div class="cat-page">
-      <div class="page-header">
-        <div class="page-header-copy">
-          <p class="eyebrow">데이터 카탈로그</p>
-          <h2>금천구 공공데이터</h2>
-          <p class="page-header-sub">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
+      <div class="page-banner" style="--banner-from:#1a1c3a;--banner-to:#2c3e7a">
+        <div class="page-banner-icon">${icon("database", { size: 26 })}</div>
+        <div class="page-banner-copy">
+          <p class="page-banner-eyebrow">데이터 카탈로그</p>
+          <h2 class="page-banner-title">금천구 공공데이터</h2>
+          <p class="page-banner-desc">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
         </div>
-        <a class="page-back" href="#/home">◀ 홈으로</a>
+        <div class="page-banner-stats">
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${total}</span>
+            <span class="page-banner-stat-label">전체 데이터셋</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${catCount}</span>
+            <span class="page-banner-stat-label">카테고리</span>
+          </div>
+          <div class="page-banner-stat">
+            <span class="page-banner-stat-val">${apiCount}</span>
+            <span class="page-banner-stat-label">Open API</span>
+          </div>
+        </div>
+        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
       <!-- 통계 요약 스트립 -->

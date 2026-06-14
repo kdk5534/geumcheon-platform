@@ -90,6 +90,7 @@ export async function mount(container) {
   container.innerHTML = buildDashHtml();
   bindSearch(container);
   renderKpiTiles();
+  renderEnvWidgets();
   renderHeroStats();
   bindMapMetricToggle(container);
 
@@ -177,6 +178,32 @@ function startClock() {
 
   tick();
   clockInterval = setInterval(tick, 1000);
+}
+
+// ─── 환경 지표 미니 위젯 (좌 패널) ──────────────────────────
+
+function renderEnvWidgets() {
+  const el = document.getElementById("home-env-widgets");
+  if (!el) return;
+
+  const metrics = state.data?.metrics;
+  if (!metrics?.length) { el.innerHTML = ""; return; }
+
+  const ENV = [
+    { label: metrics[0]?.label || "기온",     value: metrics[0]?.value || "—", icon: "☀", color: "#b56b17" },
+    { label: metrics[1]?.label || "미세먼지", value: metrics[1]?.value || "—", icon: "💨", color: "#245b9e" },
+    { label: metrics[2]?.label || "교통 알림", value: metrics[2]?.value || "—", icon: "🚦", color: "#bd493c" },
+  ];
+
+  el.innerHTML = ENV.map((e) => `
+    <div class="home-env-item">
+      <span class="home-env-icon" aria-hidden="true">${e.icon}</span>
+      <div class="home-env-body">
+        <span class="home-env-label">${escapeHtml(e.label)}</span>
+        <span class="home-env-val" style="color:${e.color}">${escapeHtml(e.value)}</span>
+      </div>
+    </div>
+  `).join("");
 }
 
 // ─── KPI 타일 (6개 빽빽한 타일) ─────────────────────────────
@@ -922,7 +949,10 @@ function buildDashHtml() {
         <div class="home-clock-label">금천구 데이터플랫폼 · 실시간</div>
       </div>
 
-      <div class="home-panel-hdr-label">주요 지표</div>
+      <div class="home-panel-hdr-label">실시간 환경</div>
+      <div class="home-env-widgets" id="home-env-widgets"></div>
+
+      <div class="home-panel-hdr-label" style="margin-top:var(--space-4)">주요 지표</div>
       <div class="home-kpi-grid" id="home-kpi-grid">
         ${Array(6).fill(`<div class="home-kpi-tile skeleton" style="height:52px"></div>`).join("")}
       </div>

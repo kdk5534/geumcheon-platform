@@ -302,6 +302,63 @@
   line-height: 1;
 }
 
+/* ─────────────────────────────────────────
+   실시간 환경 위젯 (좌 패널)
+───────────────────────────────────────── */
+.home-env-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: 0;
+}
+
+.home-env-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition-fast);
+}
+
+.home-env-item:hover {
+  background: var(--hover-fill);
+}
+
+.home-env-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.home-env-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.home-env-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.home-env-val {
+  font-size: var(--text-base);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
 /* 현황 stat 카드 (2×2 그리드) */
 .home-hero-stats {
   display: grid;

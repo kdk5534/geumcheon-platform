@@ -825,8 +825,8 @@ a.home-mini-notice-title:hover {
 .home-insight-link:hover { gap: var(--space-1); }
 
 .home-insight-chart {
-  height: 200px;
-  padding: var(--space-3);
+  height: 220px;
+  padding: var(--space-2) var(--space-3);
 }
 
 /* ─────────────────────────────────────────

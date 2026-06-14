@@ -1129,6 +1129,11 @@ function buildDashHtml() {
     <div class="skeleton-card"></div>
   </section>
 
+  <div class="home-section-label" style="margin-top:var(--space-6)">
+    <h2>데이터 인사이트</h2>
+    <span>업종·인구·접근성 핵심 지표</span>
+  </div>
+
   <div class="home-insight-row home-insight-row--3" aria-label="데이터 인사이트">
     <div class="home-insight-card">
       <div class="home-insight-header">

@@ -259,7 +259,7 @@
 ───────────────────────────────────────── */
 .home-dash-body {
   display: grid;
-  grid-template-columns: 264px 1fr 264px;
+  grid-template-columns: 248px 1fr 252px;
   gap: var(--space-4);
   min-height: 580px;
 }

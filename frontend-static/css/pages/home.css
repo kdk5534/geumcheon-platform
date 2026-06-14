@@ -176,13 +176,49 @@
 }
 
 /* ─────────────────────────────────────────
+   실시간 시계 위젯
+───────────────────────────────────────── */
+.home-clock-widget {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  margin-bottom: var(--space-4);
+  background: linear-gradient(135deg, #0b3d26 0%, #197982 100%);
+  border-radius: var(--radius-xl);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+
+.home-clock-time {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: var(--space-1);
+}
+
+.home-clock-date {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: rgba(180, 230, 220, 0.9);
+  margin-bottom: 3px;
+}
+
+.home-clock-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────────────────────────
    대시보드 본문 3단 그리드
 ───────────────────────────────────────── */
 .home-dash-body {
   display: grid;
-  grid-template-columns: 236px 1fr 236px;
+  grid-template-columns: 264px 1fr 264px;
   gap: var(--space-4);
-  min-height: 540px;
+  min-height: 580px;
 }
 
 /* ─────────────────────────────────────────
@@ -375,7 +411,7 @@
 /* 지도 본체 */
 .home-map-pane {
   flex: 1;
-  min-height: 460px;
+  min-height: 520px;
   position: relative;
 }
 
@@ -486,7 +522,7 @@
 }
 
 .home-right-chart {
-  height: 140px;
+  height: 160px;
   padding: var(--space-2) var(--space-1);
 }
 
@@ -973,10 +1009,17 @@
    반응형
 ───────────────────────────────────────── */
 
-/* 1200px: 패널 좁힘 */
-@media (max-width: 1200px) {
+/* 1300px: 패널 좁힘 */
+@media (max-width: 1300px) {
   .home-dash-body {
-    grid-template-columns: 210px 1fr 210px;
+    grid-template-columns: 230px 1fr 230px;
+  }
+}
+
+/* 1100px: 패널 더 좁힘 */
+@media (max-width: 1100px) {
+  .home-dash-body {
+    grid-template-columns: 200px 1fr 200px;
   }
 }
 

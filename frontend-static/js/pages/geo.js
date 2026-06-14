@@ -84,9 +84,9 @@ function buildHtml() {
         </select>
       </div>
 
-      <div id="geo-summary" class="geo-summary-row" aria-live="polite"></div>
+      <div id="geo-summary" class="geo-summary-row reveal" aria-live="polite"></div>
 
-      <div class="geo-main-grid">
+      <div class="geo-main-grid reveal">
         <div class="geo-district-panel">
           <div class="geo-district-panel-header" id="districtListHelp">
             권역 선택 (키보드: ↑↓ 이동, Enter 선택)
@@ -99,7 +99,7 @@ function buildHtml() {
         </div>
       </div>
 
-      <div class="geo-bottom-row">
+      <div class="geo-bottom-row reveal">
         <div id="geoRadius"></div>
         <div class="geo-card">
           <h3 class="geo-card-title">생활 접근성 지수</h3>

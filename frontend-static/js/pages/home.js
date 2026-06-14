@@ -35,6 +35,7 @@ let homeMarkerLayers  = {};
 let homeAllMarkers    = [];
 let homeChoroplethMetric = "생활";
 
+let clockInterval = null;
 let isMounted = false;
 
 // ─── CSS / Leaflet 동적 로드 ─────────────────────────────────
@@ -123,10 +124,14 @@ export async function mount(container) {
 
   renderPopularDatasets(container);
   revealOnScroll(container);
+  startClock();
 }
 
 export function unmount() {
   isMounted = false;
+
+  // 시계 정리
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
 
   // Leaflet 정리
   if (homeMap) {
@@ -144,6 +149,34 @@ export function unmount() {
   disposeChart(insightChartGeo);   insightChartGeo   = null;
   disposeChart(rightChartDonut);   rightChartDonut   = null;
   disposeChart(rightChartPop);     rightChartPop     = null;
+}
+
+// ─── 실시간 시계 ──────────────────────────────────────────────
+
+function startClock() {
+  const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+  function tick() {
+    const el = document.getElementById("home-clock-time");
+    const dateEl = document.getElementById("home-clock-date");
+    if (!el) return;
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    el.textContent = `${hh}:${mm}:${ss}`;
+
+    if (dateEl) {
+      const M  = now.getMonth() + 1;
+      const D  = now.getDate();
+      const wd = DAYS[now.getDay()];
+      dateEl.textContent = `${M}월 ${D}일 (${wd})`;
+    }
+  }
+
+  tick();
+  clockInterval = setInterval(tick, 1000);
 }
 
 // ─── KPI 타일 (6개 빽빽한 타일) ─────────────────────────────
@@ -882,6 +915,13 @@ function buildDashHtml() {
 
     <!-- 좌: KPI 패널 -->
     <aside class="home-dash-left">
+
+      <div class="home-clock-widget">
+        <div class="home-clock-time" id="home-clock-time">--:--:--</div>
+        <div class="home-clock-date" id="home-clock-date">날짜</div>
+        <div class="home-clock-label">금천구 데이터플랫폼 · 실시간</div>
+      </div>
+
       <div class="home-panel-hdr-label">주요 지표</div>
       <div class="home-kpi-grid" id="home-kpi-grid">
         ${Array(6).fill(`<div class="home-kpi-tile skeleton" style="height:52px"></div>`).join("")}

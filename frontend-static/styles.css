@@ -315,8 +315,8 @@ h3 {
 }
 
 .metric-value {
-  margin: 15px 0 4px;
-  font-size: 30px;
+  margin: 10px 0 4px;
+  font-size: 26px;
   font-weight: 900;
 }
 
@@ -1904,8 +1904,8 @@ button {
 .metric-card {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  min-height: 148px;
+  padding: 14px 16px;
+  min-height: 128px;
   border-top: 3px solid transparent;
   border-radius: var(--radius-xl);
   background: var(--surface);
@@ -1935,8 +1935,8 @@ button {
 .metric-icon-wrap {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-md);
   flex-shrink: 0;
 }

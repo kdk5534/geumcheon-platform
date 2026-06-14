@@ -6,7 +6,7 @@
 .home-dash {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 /* ─────────────────────────────────────────
@@ -260,8 +260,8 @@
 .home-dash-body {
   display: grid;
   grid-template-columns: 248px 1fr 252px;
-  gap: var(--space-4);
-  min-height: 580px;
+  gap: var(--space-3);
+  min-height: 600px;
 }
 
 /* ─────────────────────────────────────────
@@ -720,7 +720,7 @@ a.home-mini-notice-title:hover {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin: var(--space-8) 0 var(--space-4);
+  margin: var(--space-6) 0 var(--space-3);
   padding-left: var(--space-4);
   border-left: 4px solid var(--green);
 }
@@ -825,7 +825,7 @@ a.home-mini-notice-title:hover {
 .home-insight-link:hover { gap: var(--space-1); }
 
 .home-insight-chart {
-  height: 220px;
+  height: 250px;
   padding: var(--space-2) var(--space-3);
 }
 

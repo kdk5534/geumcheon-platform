@@ -44,3 +44,32 @@ export function formatAdminAuthSavedAt(savedAt) {
     return "방금 전";
   }
 }
+
+/**
+ * root 내의 .reveal 요소를 IntersectionObserver로 감시해
+ * 뷰포트 진입 시 .is-visible 클래스를 추가한다.
+ * prefers-reduced-motion: reduce 환경에서는 즉시 모든 요소를 표시한다.
+ * @param {Element} [root=document] — 감시 범위 루트 요소
+ */
+export function revealOnScroll(root = document) {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const els = Array.from(root.querySelectorAll(".reveal"));
+  if (!els.length) return;
+
+  if (reduced) {
+    els.forEach((el) => el.classList.add("is-visible"));
+    return;
+  }
+
+  const io = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("is-visible");
+          io.unobserve(e.target);
+        }
+      }),
+    { threshold: 0.1, rootMargin: "0px 0px -32px 0px" }
+  );
+  els.forEach((el) => io.observe(el));
+}

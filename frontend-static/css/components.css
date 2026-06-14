@@ -104,7 +104,7 @@
 }
 
 .topic-card:hover {
-  border-color: rgba(20, 107, 74, 0.35);
+  border-color: var(--card-accent, var(--green));
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
   background: var(--hover-fill, var(--surface));

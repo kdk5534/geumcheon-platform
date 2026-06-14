@@ -1,9 +1,9 @@
 // 홈 대시보드: 히어로 배너 + 검색 + KPI 카드(아이콘+카운터) + 인사이트 차트 + 주제 진입 카드
 
 import { state } from "../core/state.js";
-import { escapeHtml } from "../core/dom.js";
+import { escapeHtml, revealOnScroll } from "../core/dom.js";
 import { getSectionMeta, sourceModeText } from "../core/meta.js";
-import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
+import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
 
 // metric 인덱스별 아이콘·테마 컬러 (ECharts에서 쓰므로 실제 hex 값으로 선언)
@@ -18,6 +18,8 @@ const METRIC_CONFIG = [
 const sparklines = [];
 let insightChartLeft  = null;
 let insightChartRight = null;
+let insightChartGeo   = null;
+let heroDonut         = null;
 let isMounted = false;
 
 function disposeSparklines() {
@@ -61,8 +63,10 @@ export async function mount(container) {
       renderSparklines();
       animateMetricValues();
     }
+    renderHeroDonut();
     renderInsightCharts();
   } catch {}
+  revealOnScroll(container);
 }
 
 export function unmount() {
@@ -70,6 +74,8 @@ export function unmount() {
   disposeSparklines();
   disposeChart(insightChartLeft);  insightChartLeft  = null;
   disposeChart(insightChartRight); insightChartRight = null;
+  disposeChart(insightChartGeo);   insightChartGeo   = null;
+  disposeChart(heroDonut);         heroDonut         = null;
 }
 
 // ─── 카운터 애니메이션 ───────────────────────────────────────
@@ -126,7 +132,7 @@ export function renderMetrics() {
     const hasCounter = !isNaN(numVal) && numVal > 1;
 
     return `
-    <article class="metric-card">
+    <article class="metric-card" style="--metric-accent:${cfg.color}">
       <div class="metric-card-header">
         <sl-tooltip content="${escapeHtml(cfg.tip)}" placement="bottom">
           <div class="metric-icon-wrap" style="background:${cfg.bgColor};color:${cfg.color}">
@@ -324,6 +330,7 @@ function renderInsightCharts() {
   if (!state.data || !window.echarts) return;
   renderInsightCommercial();
   renderInsightPopulation();
+  renderInsightGeo();
 }
 
 function renderInsightCommercial() {
@@ -431,6 +438,123 @@ function renderInsightPopulation() {
   });
 }
 
+function renderHeroDonut() {
+  const el = document.getElementById("home-hero-donut");
+  if (!el) return;
+
+  const commercial = state.data?.commercial;
+  let categories;
+
+  if (commercial) {
+    categories = Object.keys(commercial).map((k) => {
+      const byDong = commercial[k]?.byDong;
+      const total = byDong ? byDong.reduce((s, d) => s + (d.count ?? 0), 0) : (commercial[k].total || 0);
+      return { name: k, value: total };
+    }).filter((c) => c.value > 0);
+  } else {
+    categories = [
+      { name: "카페",   value: 142 },
+      { name: "음식점", value: 387 },
+      { name: "편의점", value: 68 },
+      { name: "학원",   value: 95 },
+    ];
+  }
+
+  heroDonut = createChart(el, {
+    ...BASE_OPTION,
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "item",
+      formatter: (p) =>
+        `<div style="font-size:12px"><strong>${p.name}</strong>` +
+        `<div style="margin-top:3px;color:#65736d">${Number(p.value).toLocaleString()}개 (${p.percent}%)</div></div>`,
+    },
+    legend: {
+      orient: "vertical",
+      right: 8,
+      top: "middle",
+      itemWidth: 8,
+      itemHeight: 8,
+      textStyle: {
+        color: "rgba(255,255,255,0.72)",
+        fontSize: 11,
+        fontFamily: BASE_OPTION.textStyle.fontFamily,
+      },
+    },
+    series: [{
+      type: "pie",
+      radius: ["42%", "68%"],
+      center: ["38%", "50%"],
+      data: categories,
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: 12, fontWeight: "bold", color: "#fff" },
+        itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" },
+      },
+      itemStyle: {
+        borderWidth: 2,
+        borderColor: "rgba(255,255,255,0.10)",
+      },
+    }],
+    animation: true,
+  });
+}
+
+function renderInsightGeo() {
+  const el = document.getElementById("insight-geo-chart");
+  if (!el) return;
+
+  const districts = state.data?.districts;
+  if (!districts?.length) return;
+
+  const names  = districts.map((d) => d.name);
+  const scores = districts.map((d) => {
+    const s = d.scores || {};
+    const vals = [s["생활"] || 0, s["교통"] || 0, s["안전"] || 0].filter((v) => v > 0);
+    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10 : 0;
+  });
+
+  insightChartGeo = createChart(el, {
+    ...BASE_OPTION,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        const p = params[0];
+        if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
+          `<div style="margin-top:3px;color:#65736d">접근성 ${p.value}점</div></div>`;
+      },
+    },
+    grid: { top: 4, bottom: 28, left: 8, right: 8 },
+    xAxis: {
+      type: "category",
+      data: names,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    yAxis: { type: "value", show: false, max: 100 },
+    series: [{
+      type: "bar",
+      data: scores,
+      barMaxWidth: 48,
+      itemStyle: {
+        color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]),
+        borderRadius: [6, 6, 0, 0],
+      },
+      label: {
+        show: true,
+        position: "top",
+        formatter: (p) => p.value + "점",
+        color: CHART_COLORS.text,
+        fontSize: 11,
+      },
+    }],
+    animation: true,
+  });
+}
+
 // ─── 검색 ─────────────────────────────────────────────────────
 
 function bindSearch(container) {
@@ -511,22 +635,26 @@ function buildHomeHtml() {
           </div>
         </div>
 
-        <div class="home-hero-stats" id="home-hero-stats" aria-label="서비스 현황">
-          <div class="home-stat-card">
-            <span>데이터 소스</span>
-            <strong>6종</strong>
-          </div>
-          <div class="home-stat-card">
-            <span>수집 정상</span>
-            <strong class="ok">대기</strong>
-          </div>
-          <div class="home-stat-card">
-            <span>등록 시설</span>
-            <strong>—</strong>
-          </div>
-          <div class="home-stat-card">
-            <span>대표 동 인구</span>
-            <strong>—</strong>
+        <div class="home-hero-panel">
+          <p class="home-hero-panel-label">${icon("activity", { size: 11 })} 라이브 데이터</p>
+          <div id="home-hero-donut" class="home-hero-donut-wrap" aria-hidden="true"></div>
+          <div class="home-hero-stats" id="home-hero-stats" aria-label="서비스 현황">
+            <div class="home-stat-card">
+              <span>데이터 소스</span>
+              <strong>6종</strong>
+            </div>
+            <div class="home-stat-card">
+              <span>수집 정상</span>
+              <strong class="ok">대기</strong>
+            </div>
+            <div class="home-stat-card">
+              <span>등록 시설</span>
+              <strong>—</strong>
+            </div>
+            <div class="home-stat-card">
+              <span>대표 동 인구</span>
+              <strong>—</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -564,10 +692,10 @@ function buildHomeHtml() {
       <div class="skeleton-card"></div>
     </section>
 
-    <div class="home-insight-row" aria-label="데이터 인사이트">
+    <div class="home-insight-row home-insight-row--3" aria-label="데이터 인사이트">
       <div class="home-insight-card">
         <div class="home-insight-header">
-          <div class="home-insight-icon blue">${icon("bar-chart", { size: 18 })}</div>
+          <div class="home-insight-icon amber">${icon("bar-chart", { size: 18 })}</div>
           <div>
             <p class="home-insight-label">상권 현황</p>
             <p class="home-insight-sub">업종별 금천구 점포 수</p>
@@ -587,7 +715,20 @@ function buildHomeHtml() {
         </div>
         <div class="home-insight-chart" id="insight-population-chart"></div>
       </div>
+      <div class="home-insight-card">
+        <div class="home-insight-header">
+          <div class="home-insight-icon teal">${icon("map", { size: 18 })}</div>
+          <div>
+            <p class="home-insight-label">집계구 접근성</p>
+            <p class="home-insight-sub">행정동별 평균 접근성 지수</p>
+          </div>
+          <a class="home-insight-link" href="#/geo">자세히 ${icon("arrow-right", { size: 14 })}</a>
+        </div>
+        <div class="home-insight-chart" id="insight-geo-chart"></div>
+      </div>
     </div>
+
+    ${buildReportSection()}
 
     ${buildDataStatusSection()}
 
@@ -740,6 +881,97 @@ async function renderPopularDatasets(container) {
   } catch {
     /* 로드 실패 시 스켈레톤 유지 */
   }
+}
+
+function buildReportSection() {
+  const commercial = state.data?.commercial;
+  const commercialTotal = commercial
+    ? Object.values(commercial).reduce((s, cat) => {
+        const byDong = cat?.byDong;
+        return s + (byDong ? byDong.reduce((t, d) => t + (d.count ?? 0), 0) : Number(cat.total || 0));
+      }, 0)
+    : 0;
+
+  const pop = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const facilities = state.data?.facilities?.length || 0;
+
+  const districts = state.data?.districts;
+  const avgScore = districts?.length
+    ? Math.round(
+        districts.reduce((s, d) => {
+          const sc = d.scores || {};
+          const vals = Object.values(sc).filter((v) => v > 0);
+          return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+        }, 0) / districts.length * 10
+      ) / 10
+    : 0;
+
+  const cards = [
+    {
+      grad: "var(--grad-green)",
+      iconName: "users",
+      stat: pop ? (pop / 10000).toFixed(1) + "만명" : "24.6만명",
+      statLabel: "주민등록 인구",
+      title: "인구 현황",
+      desc: "연령대·성별·행정동별 인구 구조 분석",
+      link: "#/population",
+      linkLabel: "인구 분석 보기",
+    },
+    {
+      grad: "var(--grad-amber)",
+      iconName: "bar-chart",
+      stat: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "692개",
+      statLabel: "등록 점포 수",
+      title: "상권 분석",
+      desc: "업종별 점포 수·행정동 경쟁 밀도 비교",
+      link: "#/commercial",
+      linkLabel: "상권 분석 보기",
+    },
+    {
+      grad: "var(--grad-blue)",
+      iconName: "pin",
+      stat: avgScore ? avgScore + "점" : "68.4점",
+      statLabel: "평균 접근성 지수",
+      title: "집계구 접근성",
+      desc: "생활·교통·안전 접근성 지수 권역별 비교",
+      link: "#/geo",
+      linkLabel: "집계구 분석 보기",
+    },
+    {
+      grad: "var(--grad-teal)",
+      iconName: "database",
+      stat: facilities ? facilities + "건" : "214건",
+      statLabel: "등록 생활시설",
+      title: "공공데이터",
+      desc: "금천구·서울시·행정기관 24종 데이터셋 열람",
+      link: "#/catalog",
+      linkLabel: "카탈로그 보기",
+    },
+  ];
+
+  const html = cards.map((c) => `
+    <a class="home-report-card reveal" href="${escapeHtml(c.link)}" aria-label="${escapeHtml(c.title)} 분석 화면으로 이동">
+      <div class="home-report-thumb" style="background:${c.grad}">
+        <div class="home-report-icon">${icon(c.iconName, { size: 24 })}</div>
+        <div class="home-report-stat">${escapeHtml(c.stat)}<span>${escapeHtml(c.statLabel)}</span></div>
+      </div>
+      <div class="home-report-body">
+        <h3>${escapeHtml(c.title)}</h3>
+        <p>${escapeHtml(c.desc)}</p>
+        <span class="home-report-link">${escapeHtml(c.linkLabel)} ${icon("arrow-right", { size: 12 })}</span>
+      </div>
+    </a>
+  `).join("");
+
+  return `
+    <div class="home-section-label reveal" style="margin-top:var(--space-8)">
+      <h2>분석 리포트</h2>
+      <span>금천구 핵심 데이터 요약</span>
+    </div>
+    <div class="home-report-row" aria-label="분석 리포트 카드">
+      ${html}
+    </div>
+  `;
 }
 
 function buildHeroDeco() {

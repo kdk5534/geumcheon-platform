@@ -59,4 +59,21 @@
   --red-wash:    #fdeeed;
   --violet-wash: #ece8f6;
   --navy-wash:   #e6ecea;
+
+  /* ─── 대담·컬러풀 시스템 ─── */
+  /* Vivid 채도 높은 액센트 (그라디언트 진한 쪽) */
+  --vivid-green:  #0b9e5c;
+  --vivid-teal:   #0fa9b8;
+  --vivid-blue:   #1e7fe0;
+  --vivid-violet: #7a5ce8;
+  --vivid-amber:  #de7b12;
+  --vivid-red:    #e84040;
+
+  /* 2색 그라디언트 (리포트 카드 헤더·주제 아이콘 등) */
+  --grad-green:  linear-gradient(135deg, #0b9e5c 0%, #0fa9b8 100%);
+  --grad-blue:   linear-gradient(135deg, #1e7fe0 0%, #7a5ce8 100%);
+  --grad-amber:  linear-gradient(135deg, #de7b12 0%, #e84040 100%);
+  --grad-teal:   linear-gradient(135deg, #0fa9b8 0%, #1e7fe0 100%);
+  --grad-violet: linear-gradient(135deg, #7a5ce8 0%, #1e7fe0 100%);
+  --grad-navy:   linear-gradient(135deg, #21342f 0%, #197982 100%);
 }

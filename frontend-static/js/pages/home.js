@@ -131,6 +131,7 @@ export async function mount(container) {
   renderPopularDatasets(container);
   revealOnScroll(container);
   startClock();
+  loadRealtimeSummary();
 }
 
 export function unmount() {
@@ -1076,6 +1077,19 @@ function buildDashHtml() {
 
     <!-- 우: 미니 차트 + 공지 패널 -->
     <aside class="home-dash-right">
+      <div class="home-right-panel home-rt-summary-panel">
+        <div class="home-right-panel-hdr">
+          <span class="home-rt-live-badge">● LIVE</span>
+          <span style="flex:1">도시현황</span>
+          <a class="home-right-link" href="#/realtime">더보기 →</a>
+        </div>
+        <div id="home-rt-summary" class="home-rt-summary">
+          <div class="home-rt-kpi"><strong class="home-rt-kpi-num" id="rt-critical">—</strong><span>위급</span></div>
+          <div class="home-rt-kpi"><strong class="home-rt-kpi-num home-rt-warning" id="rt-warning">—</strong><span>주의</span></div>
+          <div class="home-rt-kpi"><strong class="home-rt-kpi-num home-rt-normal" id="rt-normal">—</strong><span>정상</span></div>
+        </div>
+      </div>
+
       <div class="home-right-panel">
         <div class="home-right-panel-hdr">
           <span>상권 현황</span>
@@ -1397,6 +1411,24 @@ function buildDataStatusSection() {
       ${rows}
     </div>
   `;
+}
+
+// ─── 실시간 현황 요약 (우 패널 상단) ─────────────────────────
+
+async function loadRealtimeSummary() {
+  try {
+    const res = await fetch("./assets/data/realtime.json");
+    if (!res.ok) return;
+    const data = await res.json();
+    const s = data.summary || {};
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val ?? "—";
+    };
+    set("rt-critical", s.critical ?? 0);
+    set("rt-warning",  s.warning  ?? 0);
+    set("rt-normal",   s.normal   ?? 0);
+  } catch { /* 데이터 없으면 — 유지 */ }
 }
 
 function buildTopicCards() {

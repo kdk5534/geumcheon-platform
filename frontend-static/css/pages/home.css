@@ -652,6 +652,54 @@
   padding: var(--space-2) var(--space-1);
 }
 
+/* ─── 실시간 현황 요약 위젯 (우 패널 상단) ────────────────── */
+.home-rt-live-badge {
+  font-size: 10px;
+  font-weight: 900;
+  color: #bd1d77;
+  letter-spacing: 0.04em;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
+}
+
+.home-rt-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.home-rt-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-3) 0;
+  background: var(--wash);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.home-rt-kpi-num {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--red);
+  letter-spacing: -0.02em;
+}
+
+.home-rt-warning { color: var(--amber); }
+.home-rt-normal  { color: var(--green); }
+
+.home-rt-kpi span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* 미니 공지 리스트 */
 .home-mini-notice-list {
   list-style: none;

@@ -1,4 +1,4 @@
-// 홈 대시보드: 히어로 배너 + 검색 + KPI 카드(아이콘+카운터) + 인사이트 차트 + 주제 진입 카드
+// 홈 대시보드: 지도 중심 3단 대시보드 + KPI 타일 + 미니 차트 + 공지 패널
 
 import { state } from "../core/state.js";
 import { escapeHtml, revealOnScroll } from "../core/dom.js";
@@ -6,7 +6,12 @@ import { getSectionMeta, sourceModeText } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
 
-// metric 인덱스별 아이콘·테마 컬러 (ECharts에서 쓰므로 실제 hex 값으로 선언)
+// ─── 상수 ─────────────────────────────────────────────────────
+
+const GEUMCHEON_CENTER = [37.4565, 126.8954];
+const CHOROPLETH_METRICS = ["생활", "교통", "안전", "인구"];
+
+/** metric 인덱스별 아이콘·테마 (기존 호환) */
 const METRIC_CONFIG = [
   { iconName: "activity",  color: "#146b4a", bgColor: "#e6f1ed", tip: "실시간 환경·기상 지표 (기상청 금천구 관측)" },
   { iconName: "filter",    color: "#b56b17", bgColor: "#fef3e2", tip: "상권·유동인구 현황 (유동인구 분석 기준)" },
@@ -14,26 +19,25 @@ const METRIC_CONFIG = [
   { iconName: "bar-chart", color: "#245b9e", bgColor: "#e6edf8", tip: "주민등록 인구 통계 (행정안전부 기준)" },
 ];
 
-// 모듈-레벨 차트 인스턴스
+// ─── 모듈-레벨 상태 ───────────────────────────────────────────
+
 const sparklines = [];
 let insightChartLeft  = null;
 let insightChartRight = null;
 let insightChartGeo   = null;
-let heroDonut         = null;
+let rightChartDonut   = null;
+let rightChartPop     = null;
+
+// 홈 전용 지도 상태
+let homeMap           = null;
+let homeChoropleth    = null;
+let homeMarkerLayers  = {};
+let homeAllMarkers    = [];
+let homeChoroplethMetric = "생활";
+
 let isMounted = false;
 
-function disposeSparklines() {
-  sparklines.forEach((c) => { try { c.dispose(); } catch {} });
-  sparklines.length = 0;
-}
-
-/** hex 색상 문자열 → rgba 문자열 변환. ECharts 그라데이션에서 CSS 변수 대신 사용. */
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+// ─── CSS / Leaflet 동적 로드 ─────────────────────────────────
 
 function injectCss() {
   if (!document.getElementById("css-page-home")) {
@@ -45,90 +49,481 @@ function injectCss() {
   }
 }
 
+function loadLeaflet() {
+  return new Promise((resolve, reject) => {
+    if (window.L) { resolve(); return; }
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    const existing = document.getElementById("leaflet-js");
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", () => reject(new Error("Leaflet 로드 실패")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "leaflet-js";
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Leaflet 로드 실패"));
+    document.head.appendChild(script);
+  });
+}
+
+function loadGeoJson() {
+  return fetch("./assets/data/geumcheon-dong.geojson").then((r) => {
+    if (!r.ok) throw new Error("GeoJSON 로드 실패");
+    return r.json();
+  });
+}
+
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
   injectCss();
-  container.innerHTML = buildHomeHtml();
+  container.innerHTML = buildDashHtml();
   bindSearch(container);
-  renderMetrics();
-  renderStatsStrip();
-  renderPopularDatasets(container); // 비동기, ECharts 로딩을 막지 않음
+  renderKpiTiles();
+  renderHeroStats();
+  bindMapMetricToggle(container);
 
+  // Leaflet 지도 (비동기)
+  try {
+    await loadLeaflet();
+    if (!isMounted) return;
+    initHomeMap();
+
+    const geojson = await loadGeoJson();
+    if (!isMounted) return;
+    initHomeChoropleth(geojson);
+    renderHomeMapLegend();
+  } catch (e) {
+    const pane = document.getElementById("home-map-pane");
+    if (pane && isMounted) {
+      pane.innerHTML = `<div class="home-map-error">지도를 불러올 수 없습니다.<br>인터넷 연결을 확인해 주세요.</div>`;
+    }
+  }
+
+  // ECharts (비동기)
   try {
     await loadECharts();
     if (!isMounted) return;
-    if (document.getElementById("home-metrics")) {
-      renderSparklines();
-      animateMetricValues();
-    }
-    renderHeroDonut();
+    renderRightDonut();
+    renderRightPop();
+    renderMetrics();
+    renderSparklines();
+    animateMetricValues();
     renderInsightCharts();
   } catch {}
+
+  renderPopularDatasets(container);
   revealOnScroll(container);
 }
 
 export function unmount() {
   isMounted = false;
+
+  // Leaflet 정리
+  if (homeMap) {
+    homeMap.remove();
+    homeMap = null;
+  }
+  homeChoropleth   = null;
+  homeMarkerLayers = {};
+  homeAllMarkers   = [];
+
+  // ECharts 정리
   disposeSparklines();
   disposeChart(insightChartLeft);  insightChartLeft  = null;
   disposeChart(insightChartRight); insightChartRight = null;
   disposeChart(insightChartGeo);   insightChartGeo   = null;
-  disposeChart(heroDonut);         heroDonut         = null;
+  disposeChart(rightChartDonut);   rightChartDonut   = null;
+  disposeChart(rightChartPop);     rightChartPop     = null;
 }
 
-// ─── 카운터 애니메이션 ───────────────────────────────────────
+// ─── KPI 타일 (6개 빽빽한 타일) ─────────────────────────────
 
-/** 숫자가 포함된 .metric-value 요소들을 0부터 올려가며 애니메이션한다. */
+function renderKpiTiles() {
+  const grid = document.getElementById("home-kpi-grid");
+  if (!grid) return;
+
+  const pop        = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const facilities = state.data?.facilities?.length || 0;
+  const commercial = state.data?.commercial;
+  const commercialTotal = commercial
+    ? Object.values(commercial).reduce((s, cat) => {
+        const byDong = cat?.byDong;
+        return s + (byDong ? byDong.reduce((t, d) => t + (d.count ?? 0), 0) : Number(cat.total || 0));
+      }, 0)
+    : 0;
+  const districts  = state.data?.districts || [];
+  const avgScore   = districts.length
+    ? Math.round(
+        districts.reduce((s, d) => {
+          const sc  = d.scores || {};
+          const vals = Object.values(sc).filter((v) => v > 0);
+          return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+        }, 0) / districts.length * 10
+      ) / 10
+    : 0;
+  const sources = Array.isArray(state.apiSources) ? state.apiSources.length : 6;
+  const ready   = Array.isArray(state.apiSources)
+    ? state.apiSources.filter((s) => s.status === "ready").length
+    : 0;
+
+  const tiles = [
+    { label: "금천구 총인구",    value: pop ? (pop / 10000).toFixed(1) + "만명" : "—", accent: "#146b4a", bg: "#e6f1ed", iconName: "users" },
+    { label: "등록 생활시설",    value: facilities ? facilities + "건"          : "—", accent: "#197982", bg: "#e4f2f4", iconName: "pin" },
+    { label: "상권 점포",        value: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "—", accent: "#b56b17", bg: "#fef3e2", iconName: "bar-chart" },
+    { label: "평균 접근성 지수", value: avgScore ? avgScore + "점"              : "—", accent: "#245b9e", bg: "#e6edf8", iconName: "activity" },
+    { label: "데이터 소스",      value: sources + "종",                               accent: "#6556a3", bg: "#ece8f6", iconName: "database" },
+    { label: "수집 정상",        value: ready > 0 ? ready + "종" : "대기",            accent: "#146b4a", bg: "#e6f1ed", iconName: "check" },
+  ];
+
+  grid.innerHTML = tiles.map((t) => `
+    <div class="home-kpi-tile" style="--kpi-accent:${t.accent};--kpi-bg:${t.bg}">
+      <div class="home-kpi-icon" aria-hidden="true">${icon(t.iconName, { size: 14 })}</div>
+      <div class="home-kpi-body">
+        <span class="home-kpi-label">${escapeHtml(t.label)}</span>
+        <span class="home-kpi-value">${escapeHtml(t.value)}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ─── 홈 지도 초기화 ──────────────────────────────────────────
+
+function initHomeMap() {
+  const mapEl = document.getElementById("home-map-pane");
+  if (!mapEl || !window.L) return;
+
+  const L = window.L;
+  homeMap = L.map(mapEl, { zoomControl: true, attributionControl: true }).setView(GEUMCHEON_CENTER, 13);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(homeMap);
+
+  // 시설 마커 레이어
+  ["병원", "약국", "주차장", "안전"].forEach((cat) => {
+    homeMarkerLayers[cat] = L.layerGroup().addTo(homeMap);
+  });
+
+  buildHomeMarkers();
+}
+
+function getHomeDistrictValue(name) {
+  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
+  if (homeChoroplethMetric === "인구") {
+    const pop = Array.isArray(state.data?.population) ? state.data.population : [];
+    const found = pop.find((p) => p.areaName === name);
+    return found ? Number(found.total) : 0;
+  }
+  const d = districts.find((d) => d.name === name);
+  return d ? Number(d.scores?.[homeChoroplethMetric] || 0) : 0;
+}
+
+function choroplethColor(value, metric) {
+  if (metric === "인구") {
+    if (value >= 55000) return "#0a4a34";
+    if (value >= 45000) return "#146b4a";
+    if (value >= 35000) return "#2a9068";
+    return "#6fc4a0";
+  }
+  if (value >= 85) return "#0a4a34";
+  if (value >= 75) return "#146b4a";
+  if (value >= 65) return "#2a9068";
+  if (value >= 55) return "#6fc4a0";
+  return "#b8dfd1";
+}
+
+function initHomeChoropleth(geojson) {
+  if (!window.L || !homeMap) return;
+
+  if (homeChoropleth) { homeChoropleth.remove(); homeChoropleth = null; }
+
+  homeChoropleth = window.L.geoJSON(geojson, {
+    style: (feature) => {
+      const name  = feature.properties?.name || "";
+      const value = getHomeDistrictValue(name);
+      return {
+        fillColor:   choroplethColor(value, homeChoroplethMetric),
+        fillOpacity: 0.5,
+        color:       "#ffffff",
+        weight:      2,
+        opacity:     0.9,
+      };
+    },
+    onEachFeature: (feature, layer) => {
+      const name  = feature.properties?.name || "";
+      const value = getHomeDistrictValue(name);
+      const label = homeChoroplethMetric === "인구"
+        ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
+        : `${name}<br><strong>${value}점</strong> (${homeChoroplethMetric})`;
+      layer.bindTooltip(label, { sticky: true, className: "map-tooltip" });
+      layer.on({
+        mouseover: (e) => { e.target.setStyle({ fillOpacity: 0.72, weight: 3 }); e.target.bringToFront(); },
+        mouseout:  (e) => { homeChoropleth?.resetStyle(e.target); },
+        click:     (e) => { homeMap?.fitBounds(e.target.getBounds(), { padding: [30, 30] }); },
+      });
+    },
+  }).addTo(homeMap);
+
+  Object.values(homeMarkerLayers).forEach((l) => l.bringToFront());
+}
+
+function updateHomeChoropleth() {
+  if (!homeChoropleth) return;
+  homeChoropleth.setStyle((feature) => {
+    const name  = feature.properties?.name || "";
+    const value = getHomeDistrictValue(name);
+    return {
+      fillColor:   choroplethColor(value, homeChoroplethMetric),
+      fillOpacity: 0.5,
+      color:       "#ffffff",
+      weight:      2,
+      opacity:     0.9,
+    };
+  });
+  homeChoropleth.eachLayer((layer) => {
+    const name  = layer.feature?.properties?.name || "";
+    const value = getHomeDistrictValue(name);
+    const label = homeChoroplethMetric === "인구"
+      ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
+      : `${name}<br><strong>${value}점</strong> (${homeChoroplethMetric})`;
+    layer.setTooltipContent(label);
+  });
+  renderHomeMapLegend();
+}
+
+function renderHomeMapLegend() {
+  const el = document.getElementById("home-map-legend");
+  if (!el) return;
+
+  const steps = homeChoroplethMetric === "인구"
+    ? [{ color: "#0a4a34", label: "55,000명↑" }, { color: "#146b4a", label: "45,000명↑" },
+       { color: "#2a9068", label: "35,000명↑" }, { color: "#6fc4a0", label: "35,000명↓" }]
+    : [{ color: "#0a4a34", label: "85점↑" }, { color: "#146b4a", label: "75점↑" },
+       { color: "#2a9068", label: "65점↑" }, { color: "#6fc4a0", label: "55점↑" },
+       { color: "#b8dfd1", label: "55점↓" }];
+
+  el.innerHTML = `
+    <div class="home-map-legend-title">${escapeHtml(homeChoroplethMetric)} 지수</div>
+    ${steps.map((s) => `
+      <div class="home-map-legend-item">
+        <span class="home-map-legend-swatch" style="background:${s.color}"></span>
+        <span>${escapeHtml(s.label)}</span>
+      </div>
+    `).join("")}
+  `;
+}
+
+function buildHomeMarkers() {
+  if (!window.L || !homeMap) return;
+  const L = window.L;
+  const catColor = { "병원": "#197982", "약국": "#146b4a", "주차장": "#b56b17", "안전": "#bd493c" };
+  const catInit  = { "병원": "병", "약국": "약", "주차장": "P", "안전": "안" };
+
+  const facilities = Array.isArray(state.data?.facilities) ? state.data.facilities : [];
+  facilities.forEach((f) => {
+    const lat = Number(f.latitude);
+    const lng = Number(f.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const cat   = f.category || "기타";
+    const color = catColor[cat] || "#3d6f99";
+    const init  = catInit[cat]  || "F";
+    const layer = homeMarkerLayers[cat];
+    if (!layer) return;
+
+    const mkIcon = L.divIcon({
+      className: "",
+      html: `<div class="map-marker-pin" style="background:${color}" title="${escapeHtml(f.name)}">${escapeHtml(init)}</div>`,
+      iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
+    });
+    const popup = [
+      `<strong>${escapeHtml(f.name)}</strong>`,
+      `<span class="popup-cat">${escapeHtml(cat)}</span>`,
+      f.address ? `<small>${escapeHtml(f.address)}</small>` : ""
+    ].filter(Boolean).join("<br>");
+
+    layer.addLayer(L.marker([lat, lng], { icon: mkIcon }).bindPopup(popup));
+    homeAllMarkers.push({ marker: L.marker([lat, lng]), f, cat });
+  });
+}
+
+// ─── 지표 토글 바인딩 ─────────────────────────────────────────
+
+function bindMapMetricToggle(container) {
+  container.addEventListener("click", (e) => {
+    const btn = e.target.closest(".home-map-metric-btn");
+    if (!btn) return;
+    homeChoroplethMetric = btn.dataset.metric;
+    container.querySelectorAll(".home-map-metric-btn").forEach((b) => {
+      const active = b.dataset.metric === homeChoroplethMetric;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-pressed", String(active));
+    });
+    updateHomeChoropleth();
+  });
+}
+
+// ─── 우 패널 미니 차트 ────────────────────────────────────────
+
+function renderRightDonut() {
+  const el = document.getElementById("home-right-donut");
+  if (!el || !window.echarts) return;
+
+  const commercial = state.data?.commercial;
+  let categories;
+
+  if (commercial) {
+    categories = Object.keys(commercial).map((k) => {
+      const byDong = commercial[k]?.byDong;
+      const total  = byDong ? byDong.reduce((s, d) => s + (d.count ?? 0), 0) : (commercial[k].total || 0);
+      return { name: k, value: total };
+    }).filter((c) => c.value > 0);
+  } else {
+    categories = [
+      { name: "음식점", value: 387 }, { name: "카페", value: 142 },
+      { name: "학원",   value: 95  }, { name: "편의점", value: 68 },
+    ];
+  }
+
+  rightChartDonut = createChart(el, {
+    ...BASE_OPTION,
+    backgroundColor: "transparent",
+    tooltip: {
+      trigger: "item",
+      formatter: (p) =>
+        `<div style="font-size:11px"><strong>${p.name}</strong>` +
+        `<div style="color:#65736d">${Number(p.value).toLocaleString()}개 (${p.percent}%)</div></div>`,
+    },
+    legend: {
+      orient: "vertical",
+      right: 4,
+      top: "middle",
+      itemWidth: 7,
+      itemHeight: 7,
+      textStyle: { color: CHART_COLORS.text, fontSize: 10, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    series: [{
+      type: "pie",
+      radius: ["40%", "66%"],
+      center: ["38%", "50%"],
+      data: categories,
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 11, fontWeight: "bold" } },
+      itemStyle: { borderWidth: 2, borderColor: "rgba(255,255,255,0.8)" },
+    }],
+    animation: true,
+  });
+}
+
+function renderRightPop() {
+  const el = document.getElementById("home-right-pop");
+  if (!el || !window.echarts) return;
+
+  const population = state.data?.population;
+  if (!population?.length) return;
+
+  const names  = population.map((d) => d.areaName);
+  const totals = population.map((d) => d.total ?? 0);
+
+  rightChartPop = createChart(el, {
+    ...BASE_OPTION,
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params) => {
+        const p = params[0];
+        return `<div style="font-size:11px"><strong>${p.name}</strong>` +
+          `<div style="color:#65736d">총 ${Number(p.value).toLocaleString()}명</div></div>`;
+      },
+    },
+    grid: { top: 4, bottom: 24, left: 4, right: 4 },
+    xAxis: {
+      type: "category",
+      data: names,
+      axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 10, fontFamily: BASE_OPTION.textStyle.fontFamily },
+    },
+    yAxis: { type: "value", show: false },
+    series: [{
+      type: "bar",
+      data: totals,
+      barMaxWidth: 36,
+      itemStyle: {
+        color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]),
+        borderRadius: [4, 4, 0, 0],
+      },
+      label: {
+        show: true, position: "top",
+        formatter: (p) => (p.value / 10000).toFixed(1) + "만",
+        color: CHART_COLORS.text, fontSize: 10,
+      },
+    }],
+    animation: true,
+  });
+}
+
+// ─── 기존 KPI 카드 (하단 섹션) ────────────────────────────────
+
+function disposeSparklines() {
+  sparklines.forEach((c) => { try { c.dispose(); } catch {} });
+  sparklines.length = 0;
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function animateMetricValues() {
   if (!state.data?.metrics) return;
-
   document.querySelectorAll(".metric-value[data-target]").forEach((el) => {
     const target = parseFloat(el.dataset.target);
     if (isNaN(target) || target === 0) return;
-
     const suffix = el.dataset.suffix || "";
     const isDecimal = !Number.isInteger(target);
     const duration = 1000;
     let startTime = null;
-
     function step(ts) {
       if (!startTime) startTime = ts;
       const progress = Math.min((ts - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = eased * target;
-      el.textContent = isDecimal
-        ? current.toFixed(1) + suffix
-        : Math.floor(current).toLocaleString() + suffix;
+      el.textContent = isDecimal ? current.toFixed(1) + suffix : Math.floor(current).toLocaleString() + suffix;
       if (progress < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   });
 }
 
-// ─── 렌더 함수 ────────────────────────────────────────────────
-
 export function renderMetrics() {
   const grid = document.getElementById("home-metrics");
   if (!grid) return;
 
   if (!state.data?.metrics) {
-    grid.innerHTML = Array.from({ length: 4 }).map(() =>
-      `<div class="metric-card skeleton-card"></div>`
-    ).join("");
+    grid.innerHTML = Array.from({ length: 4 }).map(() => `<div class="metric-card skeleton-card"></div>`).join("");
     return;
   }
 
   grid.innerHTML = state.data.metrics.map((metric, idx) => {
-    const cfg = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
+    const cfg     = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
     const trendDir = getTrendDirection(metric.trend);
-
-    // 숫자 추출 (카운터 애니메이션용): "12,840"→12840/"", "24.2℃"→24.2/"℃"
-    const match = String(metric.value).match(/^([\d,]+(?:\.\d+)?)(.*)/);
-    const rawNum = match ? match[1].replace(/,/g, "") : "";
-    const numVal = match ? parseFloat(rawNum) : NaN;
-    const suffix = match ? match[2].trim() : "";
+    const match   = String(metric.value).match(/^([\d,]+(?:\.\d+)?)(.*)/);
+    const rawNum  = match ? match[1].replace(/,/g, "") : "";
+    const numVal  = match ? parseFloat(rawNum) : NaN;
+    const suffix  = match ? match[2].trim() : "";
     const hasCounter = !isNaN(numVal) && numVal > 1;
 
     return `
@@ -157,11 +552,9 @@ export function renderMetrics() {
     `;
   }).join("");
 
-  // 렌더 직후 카운터 실행 (ECharts 없어도 숫자 애니메이션은 항상 동작)
   requestAnimationFrame(() => animateMetricValues());
 }
 
-/** trend 배열에서 상승/하락 방향을 반환한다. */
 function getTrendDirection(trend) {
   if (!trend?.length || trend.length < 2) return null;
   const last = trend[trend.length - 1];
@@ -176,38 +569,27 @@ function getTrendDirection(trend) {
 function renderSparklines() {
   disposeSparklines();
   if (!state.data?.metrics) return;
-
   state.data.metrics.forEach((metric, idx) => {
     if (!metric.trend?.length) return;
     const el = document.querySelector(`.metric-sparkline[data-metric-idx="${idx}"]`);
     if (!el) return;
-
-    const cfg = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
-    const values = metric.trend.map((t) => t.value ?? t);
+    const cfg      = METRIC_CONFIG[idx] || METRIC_CONFIG[0];
+    const values   = metric.trend.map((t) => t.value ?? t);
     const lineColor = cfg.color;
-    const areaTop = hexToRgba(lineColor, 0.18);
-    const areaBot = hexToRgba(lineColor, 0);
-
-    const chart = window.echarts.init(el, null, { renderer: "svg" });
+    const areaTop  = hexToRgba(lineColor, 0.18);
+    const areaBot  = hexToRgba(lineColor, 0);
+    const chart    = window.echarts.init(el, null, { renderer: "svg" });
     chart.setOption({
       backgroundColor: "transparent",
       grid: { top: 2, bottom: 2, left: 2, right: 2 },
       xAxis: { type: "category", show: false, data: values.map((_, i) => i) },
       yAxis: { type: "value", show: false, min: "dataMin", max: "dataMax" },
       series: [{
-        type: "line",
-        data: values,
-        smooth: true,
-        symbol: "none",
+        type: "line", data: values, smooth: true, symbol: "none",
         lineStyle: { color: lineColor, width: 1.8 },
         areaStyle: {
-          color: {
-            type: "linear", x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: areaTop },
-              { offset: 1, color: areaBot }
-            ]
-          }
+          color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [{ offset: 0, color: areaTop }, { offset: 1, color: areaBot }] }
         }
       }],
       animation: false
@@ -222,16 +604,13 @@ export function renderHeroMode() {
   const badge   = document.getElementById("home-mode-badge");
   const eyebrow = document.getElementById("home-eyebrow");
   if (!state.data) return;
-
   const sourceText = sourceModeText(state.data.sourceMode);
   const { asOf } = getSectionMeta("overview");
-
   if (eyebrow) eyebrow.textContent = `${asOf} 기준 · ${sourceText}`;
   if (badge) {
     const hint = state.data.sourceModeError ? " · 일부 지연" : "";
     badge.textContent = `${sourceText}${hint}`;
   }
-  renderHeroStats();
 }
 
 function renderHeroStats() {
@@ -258,56 +637,13 @@ function renderHeroStats() {
       <strong${facilities != null ? ` data-counter="${facilities}" data-suffix="건"` : ""}>${facilities != null ? facilities + "건" : "—"}</strong>
     </div>
     <div class="home-stat-card">
-      <span>대표 동 인구</span>
+      <span>가산동 인구</span>
       <strong${pop ? ` data-counter="${pop}" data-suffix="명"` : ""}>${pop ? pop.toLocaleString() + "명" : "—"}</strong>
     </div>
   `;
-
-  // 카운트 업 애니메이션 실행
   animateHeroCounters(wrap);
 }
 
-/** 풀너비 통계 스트립을 state 데이터로 채운다. */
-export function renderStatsStrip() {
-  if (!state.data) return;
-
-  const pop = state.data.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
-  const commercial = state.data.commercial;
-  const commercialTotal = commercial
-    ? Object.values(commercial).reduce((s, cat) => s + Number(cat.total || 0), 0)
-    : 0;
-  const facilities = state.data.facilities?.length || 0;
-  const sources = (Array.isArray(state.apiSources) ? state.apiSources.length : 0) || 6;
-
-  const animate = (el, target, suffix = "", decimal = false) => {
-    if (!el || !target) return;
-    const duration = 1200;
-    let start = null;
-    const step = (ts) => {
-      if (!start) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const val = eased * target;
-      el.textContent = decimal
-        ? val.toFixed(1) + suffix
-        : Math.floor(val).toLocaleString() + suffix;
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  };
-
-  const popEl  = document.getElementById("strip-population");
-  const comEl  = document.getElementById("strip-commercial");
-  const facEl  = document.getElementById("strip-facilities");
-  const srcEl  = document.getElementById("strip-sources");
-
-  if (pop > 0)              { popEl.textContent  = "0명"; animate(popEl,  pop,            "명"); }
-  if (commercialTotal > 0)  { comEl.textContent  = "0";   animate(comEl,  commercialTotal, "");  }
-  if (facilities > 0)       { facEl.textContent  = "0건"; animate(facEl,  facilities,     "건"); }
-  if (sources > 0)          { srcEl.textContent  = "0종"; animate(srcEl,  sources,        "종"); }
-}
-
-/** hero stat 카드 숫자를 0에서 목표값으로 ease-out 카운트 업한다. */
 function animateHeroCounters(wrap) {
   const duration = 900;
   wrap.querySelectorAll("[data-counter]").forEach((el) => {
@@ -326,6 +662,40 @@ function animateHeroCounters(wrap) {
   });
 }
 
+export function renderStatsStrip() {
+  if (!state.data) return;
+  const pop = state.data.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const commercial = state.data.commercial;
+  const commercialTotal = commercial
+    ? Object.values(commercial).reduce((s, cat) => s + Number(cat.total || 0), 0)
+    : 0;
+  const facilities = state.data.facilities?.length || 0;
+  const sources    = (Array.isArray(state.apiSources) ? state.apiSources.length : 0) || 6;
+
+  const animate = (el, target, suffix = "") => {
+    if (!el || !target) return;
+    const duration = 1200;
+    let start = null;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const popEl = document.getElementById("strip-population");
+  const comEl = document.getElementById("strip-commercial");
+  const facEl = document.getElementById("strip-facilities");
+  const srcEl = document.getElementById("strip-sources");
+  if (pop > 0)             { popEl && (popEl.textContent = "0명"); animate(popEl, pop, "명"); }
+  if (commercialTotal > 0) { comEl && (comEl.textContent = "0");   animate(comEl, commercialTotal, ""); }
+  if (facilities > 0)      { facEl && (facEl.textContent = "0건"); animate(facEl, facilities, "건"); }
+  if (sources > 0)         { srcEl && (srcEl.textContent = "0종"); animate(srcEl, sources, "종"); }
+}
+
 function renderInsightCharts() {
   if (!state.data || !window.echarts) return;
   renderInsightCommercial();
@@ -336,52 +706,30 @@ function renderInsightCharts() {
 function renderInsightCommercial() {
   const el = document.getElementById("insight-commercial-chart");
   if (!el) return;
-
   const commercial = state.data.commercial;
   if (!commercial) return;
-
-  const categories = [];
-  const values = [];
-
+  const categories = [], values = [];
   Object.keys(commercial).forEach((ind) => {
     const byDong = commercial[ind]?.byDong;
     if (!byDong?.length) return;
-    const total = byDong.reduce((s, d) => s + (d.count ?? 0), 0);
     categories.push(ind);
-    values.push(total);
+    values.push(byDong.reduce((s, d) => s + (d.count ?? 0), 0));
   });
-
   if (!categories.length) return;
-
   insightChartLeft = createChart(el, {
     ...BASE_OPTION,
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0];
-        if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
-          `<div style="margin-top:3px;color:#65736d">${Number(p.value).toLocaleString()}개 점포</div></div>`;
-      },
+        const p = params[0]; if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">${Number(p.value).toLocaleString()}개 점포</div></div>`;
+      }
     },
     grid: { top: 4, bottom: 4, left: 52, right: 36 },
     xAxis: { type: "value", show: false },
-    yAxis: {
-      type: "category",
-      data: categories,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily }
-    },
-    series: [{
-      type: "bar",
-      data: values,
-      barMaxWidth: 16,
-      itemStyle: {
-        color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length],
-        borderRadius: [0, 4, 4, 0]
-      },
+    yAxis: { type: "category", data: categories, axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
+    series: [{ type: "bar", data: values, barMaxWidth: 16,
+      itemStyle: { color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length], borderRadius: [0, 4, 4, 0] },
       label: { show: true, position: "right", color: CHART_COLORS.text, fontSize: 10,
                formatter: (p) => Number(p.value).toLocaleString() }
     }],
@@ -392,166 +740,59 @@ function renderInsightCommercial() {
 function renderInsightPopulation() {
   const el = document.getElementById("insight-population-chart");
   if (!el) return;
-
   const population = state.data?.population;
   if (!population?.length) return;
-
   const names  = population.map((d) => d.areaName);
   const totals = population.map((d) => d.total ?? 0);
-
   insightChartRight = createChart(el, {
     ...BASE_OPTION,
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0];
-        if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
-          `<div style="margin-top:3px;color:#65736d">총 ${Number(p.value).toLocaleString()}명</div></div>`;
-      },
+        const p = params[0]; if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">총 ${Number(p.value).toLocaleString()}명</div></div>`;
+      }
     },
     grid: { top: 4, bottom: 28, left: 8, right: 8 },
-    xAxis: {
-      type: "category",
-      data: names,
-      axisLine: { lineStyle: { color: CHART_COLORS.line } },
-      axisTick: { show: false },
-      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily }
-    },
+    xAxis: { type: "category", data: names, axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false }, axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
     yAxis: { type: "value", show: false },
-    series: [{
-      type: "bar",
-      data: totals,
-      barMaxWidth: 48,
-      itemStyle: {
-        color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length],
-        borderRadius: [6, 6, 0, 0]
-      },
-      label: {
-        show: true, position: "top",
-        formatter: (p) => (p.value / 10000).toFixed(1) + "만",
-        color: CHART_COLORS.text, fontSize: 11
-      }
+    series: [{ type: "bar", data: totals, barMaxWidth: 48,
+      itemStyle: { color: (params) => CHART_PALETTE[params.dataIndex % CHART_PALETTE.length], borderRadius: [6, 6, 0, 0] },
+      label: { show: true, position: "top", formatter: (p) => (p.value / 10000).toFixed(1) + "만",
+               color: CHART_COLORS.text, fontSize: 11 }
     }],
     animation: true
-  });
-}
-
-function renderHeroDonut() {
-  const el = document.getElementById("home-hero-donut");
-  if (!el) return;
-
-  const commercial = state.data?.commercial;
-  let categories;
-
-  if (commercial) {
-    categories = Object.keys(commercial).map((k) => {
-      const byDong = commercial[k]?.byDong;
-      const total = byDong ? byDong.reduce((s, d) => s + (d.count ?? 0), 0) : (commercial[k].total || 0);
-      return { name: k, value: total };
-    }).filter((c) => c.value > 0);
-  } else {
-    categories = [
-      { name: "카페",   value: 142 },
-      { name: "음식점", value: 387 },
-      { name: "편의점", value: 68 },
-      { name: "학원",   value: 95 },
-    ];
-  }
-
-  heroDonut = createChart(el, {
-    ...BASE_OPTION,
-    backgroundColor: "transparent",
-    tooltip: {
-      trigger: "item",
-      formatter: (p) =>
-        `<div style="font-size:12px"><strong>${p.name}</strong>` +
-        `<div style="margin-top:3px;color:#65736d">${Number(p.value).toLocaleString()}개 (${p.percent}%)</div></div>`,
-    },
-    legend: {
-      orient: "vertical",
-      right: 8,
-      top: "middle",
-      itemWidth: 8,
-      itemHeight: 8,
-      textStyle: {
-        color: "rgba(255,255,255,0.72)",
-        fontSize: 11,
-        fontFamily: BASE_OPTION.textStyle.fontFamily,
-      },
-    },
-    series: [{
-      type: "pie",
-      radius: ["42%", "68%"],
-      center: ["38%", "50%"],
-      data: categories,
-      label: { show: false },
-      emphasis: {
-        label: { show: true, fontSize: 12, fontWeight: "bold", color: "#fff" },
-        itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" },
-      },
-      itemStyle: {
-        borderWidth: 2,
-        borderColor: "rgba(255,255,255,0.10)",
-      },
-    }],
-    animation: true,
   });
 }
 
 function renderInsightGeo() {
   const el = document.getElementById("insight-geo-chart");
   if (!el) return;
-
   const districts = state.data?.districts;
   if (!districts?.length) return;
-
   const names  = districts.map((d) => d.name);
   const scores = districts.map((d) => {
     const s = d.scores || {};
     const vals = [s["생활"] || 0, s["교통"] || 0, s["안전"] || 0].filter((v) => v > 0);
     return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10 : 0;
   });
-
   insightChartGeo = createChart(el, {
     ...BASE_OPTION,
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const p = params[0];
-        if (!p) return "";
-        return `<div style="font-size:12px"><strong>${p.name}</strong>` +
-          `<div style="margin-top:3px;color:#65736d">접근성 ${p.value}점</div></div>`;
-      },
+        const p = params[0]; if (!p) return "";
+        return `<div style="font-size:12px"><strong>${p.name}</strong><div style="color:#65736d">접근성 ${p.value}점</div></div>`;
+      }
     },
     grid: { top: 4, bottom: 28, left: 8, right: 8 },
-    xAxis: {
-      type: "category",
-      data: names,
-      axisLine: { lineStyle: { color: CHART_COLORS.line } },
-      axisTick: { show: false },
-      axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily },
-    },
+    xAxis: { type: "category", data: names, axisLine: { lineStyle: { color: CHART_COLORS.line } },
+      axisTick: { show: false }, axisLabel: { color: CHART_COLORS.text, fontSize: 11, fontFamily: BASE_OPTION.textStyle.fontFamily } },
     yAxis: { type: "value", show: false, max: 100 },
-    series: [{
-      type: "bar",
-      data: scores,
-      barMaxWidth: 48,
-      itemStyle: {
-        color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]),
-        borderRadius: [6, 6, 0, 0],
-      },
-      label: {
-        show: true,
-        position: "top",
-        formatter: (p) => p.value + "점",
-        color: CHART_COLORS.text,
-        fontSize: 11,
-      },
+    series: [{ type: "bar", data: scores, barMaxWidth: 48,
+      itemStyle: { color: (params) => makeGradient(CHART_PALETTE[params.dataIndex % CHART_PALETTE.length]), borderRadius: [6, 6, 0, 0] },
+      label: { show: true, position: "top", formatter: (p) => p.value + "점", color: CHART_COLORS.text, fontSize: 11 }
     }],
-    animation: true,
+    animation: true
   });
 }
 
@@ -578,8 +819,9 @@ function bindSearch(container) {
     e.preventDefault();
     const query = input.value.trim().toLowerCase().replace(/\s+/g, "");
     if (!query) return;
-
-    const key = Object.keys(ROUTE_MAP).find((k) => k.toLowerCase() === query || k.toLowerCase().includes(query) || query.includes(k.toLowerCase()));
+    const key = Object.keys(ROUTE_MAP).find((k) =>
+      k.toLowerCase() === query || k.toLowerCase().includes(query) || query.includes(k.toLowerCase())
+    );
     if (key) {
       location.hash = `#/${ROUTE_MAP[key]}`;
     } else {
@@ -597,258 +839,205 @@ function bindSearch(container) {
   });
 }
 
-// ─── 템플릿 ───────────────────────────────────────────────────
+// ─── HTML 템플릿 ──────────────────────────────────────────────
 
-function buildHomeHtml() {
+function buildDashHtml() {
   const { asOf } = getSectionMeta("overview");
   const sourceText = state.data ? sourceModeText(state.data.sourceMode) : "로드 중";
+  const metricBtns = CHOROPLETH_METRICS.map((m) => `
+    <button class="home-map-metric-btn${m === homeChoroplethMetric ? " is-active" : ""}"
+            data-metric="${escapeHtml(m)}"
+            aria-pressed="${m === homeChoroplethMetric}">${escapeHtml(m)}</button>
+  `).join("");
 
   return `
-    <section class="home-hero" aria-label="금천 데이터플랫폼 소개">
-      <div class="home-hero-deco" aria-hidden="true">${buildHeroDeco()}</div>
-      <div class="home-hero-inner">
-        <div class="home-hero-copy">
-          <p class="eyebrow hero-eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
-          <h1>금천구<br>도시·생활 데이터플랫폼</h1>
-          <p>생활시설, 교통, 대기, 상권 지표를 한 화면에서 확인하고<br>
-             지도 기반 분석으로 이어지는 구민용 데이터 서비스입니다.</p>
+<div class="home-dash">
 
-          <form class="home-search-form" role="search" aria-label="화면 검색">
-            <label class="sr-only" for="home-search-input">화면 검색</label>
-            <div class="home-search-wrap">
-              <span class="home-search-icon" aria-hidden="true">${icon("search", { size: 16 })}</span>
-              <input
-                id="home-search-input"
-                class="home-search-input"
-                type="search"
-                placeholder="화면 검색 (예: 상권, 지도, 인구…)"
-                autocomplete="off"
-                spellcheck="false">
-              <button class="home-search-btn" type="submit">이동</button>
-            </div>
-          </form>
-
-          <div class="home-hero-badges">
-            <span class="home-mode-badge" id="home-mode-badge" aria-label="현재 데이터 모드">${escapeHtml(sourceText)}</span>
-            <span class="home-hero-tag">${icon("check", { size: 12 })} WCAG AA 준수</span>
-            <span class="home-hero-tag">${icon("refresh-cw", { size: 12 })} 실시간 수집</span>
-          </div>
-        </div>
-
-        <div class="home-hero-panel">
-          <p class="home-hero-panel-label">${icon("activity", { size: 11 })} 라이브 데이터</p>
-          <div id="home-hero-donut" class="home-hero-donut-wrap" aria-hidden="true"></div>
-          <div class="home-hero-stats" id="home-hero-stats" aria-label="서비스 현황">
-            <div class="home-stat-card">
-              <span>데이터 소스</span>
-              <strong>6종</strong>
-            </div>
-            <div class="home-stat-card">
-              <span>수집 정상</span>
-              <strong class="ok">대기</strong>
-            </div>
-            <div class="home-stat-card">
-              <span>등록 시설</span>
-              <strong>—</strong>
-            </div>
-            <div class="home-stat-card">
-              <span>대표 동 인구</span>
-              <strong>—</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 풀너비 통계 스트립 -->
-    <section class="home-stats-strip" id="home-stats-strip" aria-label="금천구 주요 통계">
-      <div class="home-strip-item">
-        <div class="home-strip-num" id="strip-population">—</div>
-        <div class="home-strip-label">금천구 총인구</div>
-      </div>
-      <div class="home-strip-item">
-        <div class="home-strip-num" id="strip-commercial">—</div>
-        <div class="home-strip-label">상권 점포 수</div>
-      </div>
-      <div class="home-strip-item">
-        <div class="home-strip-num" id="strip-facilities">—</div>
-        <div class="home-strip-label">등록 생활시설</div>
-      </div>
-      <div class="home-strip-item">
-        <div class="home-strip-num" id="strip-sources">6종</div>
-        <div class="home-strip-label">데이터 소스</div>
-      </div>
-    </section>
-
-    <div class="home-section-label">
-      <h2>주요 지표</h2>
-      <span>실시간 · Mock 집계</span>
+  <!-- ─ 상단 타이틀 띠 ─ -->
+  <header class="home-dash-header">
+    <div class="home-dash-brand">
+      <p class="home-dash-eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
+      <h1 class="home-dash-title-text">금천구 도시·생활 데이터플랫폼</h1>
     </div>
 
-    <section class="metric-grid" id="home-metrics" aria-label="주요 지표">
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
-      <div class="skeleton-card"></div>
-    </section>
+    <form class="home-search-form home-dash-search" role="search" aria-label="화면 검색">
+      <label class="sr-only" for="home-search-input">화면 검색</label>
+      <div class="home-search-wrap">
+        <span class="home-search-icon" aria-hidden="true">${icon("search", { size: 15 })}</span>
+        <input id="home-search-input" class="home-search-input" type="search"
+               placeholder="화면 검색 (상권, 지도, 인구…)"
+               autocomplete="off" spellcheck="false">
+        <button class="home-search-btn" type="submit">이동</button>
+      </div>
+    </form>
 
-    <div class="home-insight-row home-insight-row--3" aria-label="데이터 인사이트">
-      <div class="home-insight-card">
-        <div class="home-insight-header">
-          <div class="home-insight-icon amber">${icon("bar-chart", { size: 18 })}</div>
-          <div>
-            <p class="home-insight-label">상권 현황</p>
-            <p class="home-insight-sub">업종별 금천구 점포 수</p>
-          </div>
-          <a class="home-insight-link" href="#/commercial">자세히 ${icon("arrow-right", { size: 14 })}</a>
-        </div>
-        <div class="home-insight-chart" id="insight-commercial-chart"></div>
+    <div class="home-dash-badges">
+      <span class="home-mode-badge" id="home-mode-badge" aria-label="현재 데이터 모드">${escapeHtml(sourceText)}</span>
+      <a class="home-dash-badge-link" href="#/api">${icon("activity", { size: 11 })} API 현황</a>
+    </div>
+  </header>
+
+  <!-- ─ 대시보드 본문 3단 그리드 ─ -->
+  <div class="home-dash-body" aria-label="금천구 현황 대시보드">
+
+    <!-- 좌: KPI 패널 -->
+    <aside class="home-dash-left">
+      <div class="home-panel-hdr-label">주요 지표</div>
+      <div class="home-kpi-grid" id="home-kpi-grid">
+        ${Array(6).fill(`<div class="home-kpi-tile skeleton" style="height:52px"></div>`).join("")}
       </div>
-      <div class="home-insight-card">
-        <div class="home-insight-header">
-          <div class="home-insight-icon green">${icon("users", { size: 18 })}</div>
-          <div>
-            <p class="home-insight-label">인구 현황</p>
-            <p class="home-insight-sub">행정동별 총인구</p>
-          </div>
-          <a class="home-insight-link" href="#/population">자세히 ${icon("arrow-right", { size: 14 })}</a>
-        </div>
-        <div class="home-insight-chart" id="insight-population-chart"></div>
+
+      <div class="home-panel-hdr-label" style="margin-top:var(--space-4)">서비스 현황</div>
+      <div class="home-hero-stats" id="home-hero-stats">
+        <div class="home-stat-card"><span>데이터 소스</span><strong>—</strong></div>
+        <div class="home-stat-card"><span>수집 정상</span><strong class="pending">대기</strong></div>
+        <div class="home-stat-card"><span>등록 시설</span><strong>—</strong></div>
+        <div class="home-stat-card"><span>가산동 인구</span><strong>—</strong></div>
       </div>
-      <div class="home-insight-card">
-        <div class="home-insight-header">
-          <div class="home-insight-icon teal">${icon("map", { size: 18 })}</div>
-          <div>
-            <p class="home-insight-label">집계구 접근성</p>
-            <p class="home-insight-sub">행정동별 평균 접근성 지수</p>
-          </div>
-          <a class="home-insight-link" href="#/geo">자세히 ${icon("arrow-right", { size: 14 })}</a>
-        </div>
-        <div class="home-insight-chart" id="insight-geo-chart"></div>
+    </aside>
+
+    <!-- 중앙: Leaflet 지도 -->
+    <div class="home-dash-center">
+      <div class="home-map-metric-bar" role="group" aria-label="지도 지표 선택">
+        <span class="home-map-metric-label">지역 지표</span>
+        ${metricBtns}
+      </div>
+      <div id="home-map-pane" class="home-map-pane" role="region" aria-label="금천구 데이터 지도">
+        <div id="home-map-legend" class="home-map-legend" aria-label="단계구분도 범례"></div>
       </div>
     </div>
 
-    ${buildReportSection()}
+    <!-- 우: 미니 차트 + 공지 패널 -->
+    <aside class="home-dash-right">
+      <div class="home-right-panel">
+        <div class="home-right-panel-hdr">
+          <span>상권 현황</span>
+          <a class="home-right-link" href="#/commercial">상세 →</a>
+        </div>
+        <div id="home-right-donut" class="home-right-chart"></div>
+      </div>
 
-    ${buildDataStatusSection()}
+      <div class="home-right-panel">
+        <div class="home-right-panel-hdr">
+          <span>행정동 인구</span>
+          <a class="home-right-link" href="#/population">상세 →</a>
+        </div>
+        <div id="home-right-pop" class="home-right-chart"></div>
+      </div>
 
-    ${buildNoticesSection()}
+      <div class="home-right-panel home-right-panel--notice">
+        <div class="home-right-panel-hdr">
+          <span>최신 공지</span>
+          <a class="home-right-link" href="#">더보기</a>
+        </div>
+        ${buildMiniNotices()}
+      </div>
+    </aside>
+  </div>
 
-    <!-- 인기 데이터셋 (카탈로그 미리보기) -->
-    <div class="home-section-label" style="margin-top: var(--space-8)">
-      <h2>인기 데이터셋</h2>
-      <a class="home-section-more" href="#/catalog" aria-label="데이터 카탈로그 전체보기">전체 카탈로그 →</a>
+  <!-- ─ 하단 섹션 ─ -->
+
+  <div class="home-section-label" style="margin-top:var(--space-6)">
+    <h2>실시간 주요 지표</h2>
+    <span>API 수집 기준</span>
+  </div>
+  <section class="metric-grid" id="home-metrics" aria-label="주요 지표">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </section>
+
+  <div class="home-insight-row home-insight-row--3" aria-label="데이터 인사이트">
+    <div class="home-insight-card">
+      <div class="home-insight-header">
+        <div class="home-insight-icon amber">${icon("bar-chart", { size: 18 })}</div>
+        <div>
+          <p class="home-insight-label">상권 현황</p>
+          <p class="home-insight-sub">업종별 금천구 점포 수</p>
+        </div>
+        <a class="home-insight-link" href="#/commercial">자세히 ${icon("arrow-right", { size: 14 })}</a>
+      </div>
+      <div class="home-insight-chart" id="insight-commercial-chart"></div>
     </div>
-    <div id="home-popular-datasets" class="home-popular-grid" aria-label="인기 데이터셋">
-      ${buildPopularDatasetsSkeleton()}
+    <div class="home-insight-card">
+      <div class="home-insight-header">
+        <div class="home-insight-icon green">${icon("users", { size: 18 })}</div>
+        <div>
+          <p class="home-insight-label">인구 현황</p>
+          <p class="home-insight-sub">행정동별 총인구</p>
+        </div>
+        <a class="home-insight-link" href="#/population">자세히 ${icon("arrow-right", { size: 14 })}</a>
+      </div>
+      <div class="home-insight-chart" id="insight-population-chart"></div>
     </div>
-
-    <div class="home-topics-header">
-      <h2>분석 화면</h2>
-      <p>아래 카드를 클릭해 세부 분석 화면으로 이동하세요.</p>
+    <div class="home-insight-card">
+      <div class="home-insight-header">
+        <div class="home-insight-icon teal">${icon("map", { size: 18 })}</div>
+        <div>
+          <p class="home-insight-label">집계구 접근성</p>
+          <p class="home-insight-sub">행정동별 평균 접근성 지수</p>
+        </div>
+        <a class="home-insight-link" href="#/geo">자세히 ${icon("arrow-right", { size: 14 })}</a>
+      </div>
+      <div class="home-insight-chart" id="insight-geo-chart"></div>
     </div>
+  </div>
 
-    <nav class="topic-grid" aria-label="주요 분석 화면 바로가기">
-      ${buildTopicCards()}
-    </nav>
+  ${buildReportSection()}
+
+  ${buildDataStatusSection()}
+
+  <div class="home-section-label" style="margin-top:var(--space-8)">
+    <h2>인기 데이터셋</h2>
+    <a class="home-section-more" href="#/catalog" aria-label="데이터 카탈로그 전체보기">전체 카탈로그 →</a>
+  </div>
+  <div id="home-popular-datasets" class="home-popular-grid" aria-label="인기 데이터셋">
+    ${buildPopularDatasetsSkeleton()}
+  </div>
+
+  <div class="home-topics-header">
+    <h2>분석 화면</h2>
+    <p>아래 카드를 클릭해 세부 분석 화면으로 이동하세요.</p>
+  </div>
+  <nav class="topic-grid" aria-label="주요 분석 화면 바로가기">
+    ${buildTopicCards()}
+  </nav>
+</div>
   `;
 }
 
-/** 공지사항 섹션 — 참조 포털의 공지/새소식 영역 */
-function buildNoticesSection() {
+function buildMiniNotices() {
   const notices = [
-    { type: "공지", title: "2026년 2분기 상권 데이터 정기 업데이트 완료", date: "2026.06.13", link: "#" },
-    { type: "안내", title: "금천구 집계구 GIS 데이터 신규 추가 (가산동·독산동·시흥동)", date: "2026.06.01", link: "#" },
-    { type: "공지", title: "API 수집 서버 점검 안내 (6월 둘째 주 토요일 02:00–04:00)", date: "2026.05.28", link: "#" },
-    { type: "새소식", title: "행안부 주민등록 API 연동 시범 운영 시작", date: "2026.05.15", link: "#" },
-    { type: "안내", title: "플랫폼 베타 오픈: 금천구 생활 데이터 서비스 개시", date: "2026.04.01", link: "#" },
+    { type: "공지", title: "2026년 2분기 상권 데이터 업데이트 완료", date: "06.13" },
+    { type: "안내", title: "금천구 집계구 GIS 데이터 신규 추가",      date: "06.01" },
+    { type: "새소식", title: "행안부 주민등록 API 연동 시범 운영",      date: "05.15" },
   ];
-
-  const badgeCls = { "공지": "notice-badge--green", "안내": "notice-badge--blue", "새소식": "notice-badge--amber" };
-
-  const rows = notices.map((n) => `
-    <li class="home-notice-item">
-      <span class="home-notice-badge ${badgeCls[n.type] || ""}">${escapeHtml(n.type)}</span>
-      <a class="home-notice-title" href="${escapeHtml(n.link)}">${escapeHtml(n.title)}</a>
-      <time class="home-notice-date" datetime="${escapeHtml(n.date)}">${escapeHtml(n.date)}</time>
-    </li>
-  `).join("");
-
-  return `
-    <div class="home-section-label" style="margin-top: var(--space-8)">
-      <h2>공지사항</h2>
-      <a class="home-section-more" href="#" aria-label="공지사항 전체보기">전체보기 →</a>
-    </div>
-    <div class="home-notices" role="region" aria-label="공지사항">
-      <ul class="home-notice-list">
-        ${rows}
-      </ul>
-    </div>
-  `;
+  const cls = { "공지": "notice-badge--green", "안내": "notice-badge--blue", "새소식": "notice-badge--amber" };
+  return `<ul class="home-mini-notice-list">
+    ${notices.map((n) => `
+      <li class="home-mini-notice-item">
+        <span class="home-notice-badge ${cls[n.type] || ""}">${escapeHtml(n.type)}</span>
+        <span class="home-mini-notice-title">${escapeHtml(n.title)}</span>
+        <time class="home-mini-notice-date">${escapeHtml(n.date)}</time>
+      </li>
+    `).join("")}
+  </ul>`;
 }
 
-/** 데이터 수집 현황 섹션 — 참조 포털의 "최신 데이터/공지" 영역에 해당 */
-function buildDataStatusSection() {
-  const datasets = [
-    { label: "기상 관측", source: "기상청 초단기 API",   updated: "2026.06.13 16:00", status: "ready" },
-    { label: "시설 정보", source: "금천구 생활시설 DB",  updated: "2026.06.13 00:00", status: "ready" },
-    { label: "상권 정보", source: "상가업소정보 API",    updated: "2026.06.02 15:40", status: "mock"  },
-    { label: "인구 통계", source: "행안부 주민등록 API", updated: "2026.06.01 00:00", status: "mock"  },
-    { label: "집계구 GIS",source: "행안부 집계구 API",   updated: "2026.06.01 00:00", status: "mock"  },
-    { label: "API 로그",  source: "내부 수집 로그 DB",   updated: "2026.06.13 16:00", status: "ready" },
-  ];
-
-  const statusBadge = (s) => {
-    if (s === "ready") return `<span class="home-ds-badge home-ds-badge--green">${icon("check", { size: 10 })} 정상</span>`;
-    if (s === "mock")  return `<span class="home-ds-badge home-ds-badge--amber">${icon("database", { size: 10 })} Mock</span>`;
-    return `<span class="home-ds-badge home-ds-badge--muted">대기</span>`;
-  };
-
-  const rows = datasets.map((d) => `
-    <div class="home-ds-row">
-      <div class="home-ds-label">${escapeHtml(d.label)}</div>
-      <div class="home-ds-source">${escapeHtml(d.source)}</div>
-      <div class="home-ds-updated">${escapeHtml(d.updated)}</div>
-      <div class="home-ds-status">${statusBadge(d.status)}</div>
-    </div>
-  `).join("");
-
-  return `
-    <div class="home-section-label">
-      <h2>데이터 수집 현황</h2>
-      <span>API 연결 및 최신 수집 일시</span>
-    </div>
-    <div class="home-ds-table" aria-label="데이터 수집 현황">
-      <div class="home-ds-head">
-        <div>데이터셋</div>
-        <div>출처</div>
-        <div>최근 업데이트</div>
-        <div>상태</div>
-      </div>
-      ${rows}
-    </div>
-  `;
-}
-
-/** 인기 데이터셋 스켈레톤 플레이스홀더 */
 function buildPopularDatasetsSkeleton() {
   return Array(4).fill(`<div class="skeleton" style="height:100px;border-radius:var(--radius-xl)"></div>`).join("");
 }
 
-/** datasets.json을 로드해 인기 데이터셋 그리드를 렌더한다. */
 async function renderPopularDatasets(container) {
   try {
     const res = await fetch("./assets/data/datasets.json");
     if (!res.ok) return;
     const data = await res.json();
-    const top = [...(data.datasets || [])]
-      .sort((a, b) => (b.views || 0) - (a.views || 0))
-      .slice(0, 4);
-
+    const top = [...(data.datasets || [])].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 4);
     if (!isMounted) return;
     const grid = container.querySelector("#home-popular-datasets");
     if (!grid || !top.length) return;
-
     const CAT_COLORS = {
       교통물류: { bg: "var(--teal-wash)",   fg: "var(--teal)" },
       환경기상: { bg: "var(--blue-wash)",   fg: "var(--blue)" },
@@ -859,16 +1048,13 @@ async function renderPopularDatasets(container) {
       산업고용: { bg: "var(--blue-wash)",   fg: "var(--blue)" },
       재난안전: { bg: "var(--red-wash)",    fg: "var(--red)" },
     };
-
     grid.innerHTML = top.map((d) => {
       const color = CAT_COLORS[d.category] || { bg: "var(--wash)", fg: "var(--muted)" };
       const views = Number(d.views || 0).toLocaleString();
       const types = (d.types || []).slice(0, 3).join(" · ");
       return `
         <a class="home-popular-card" href="#/catalog" aria-label="${escapeHtml(d.title)} 데이터셋 보기">
-          <span class="home-popular-cat" style="background:${color.bg};color:${color.fg}">
-            ${escapeHtml(d.category)}
-          </span>
+          <span class="home-popular-cat" style="background:${color.bg};color:${color.fg}">${escapeHtml(d.category)}</span>
           <strong class="home-popular-title">${escapeHtml(d.title)}</strong>
           <p class="home-popular-org">${escapeHtml(d.org)}</p>
           <div class="home-popular-meta">
@@ -878,9 +1064,7 @@ async function renderPopularDatasets(container) {
         </a>
       `;
     }).join("");
-  } catch {
-    /* 로드 실패 시 스켈레톤 유지 */
-  }
+  } catch { /* 스켈레톤 유지 */ }
 }
 
 function buildReportSection() {
@@ -891,62 +1075,26 @@ function buildReportSection() {
         return s + (byDong ? byDong.reduce((t, d) => t + (d.count ?? 0), 0) : Number(cat.total || 0));
       }, 0)
     : 0;
-
-  const pop = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
+  const pop      = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
   const facilities = state.data?.facilities?.length || 0;
-
-  const districts = state.data?.districts;
-  const avgScore = districts?.length
-    ? Math.round(
-        districts.reduce((s, d) => {
-          const sc = d.scores || {};
-          const vals = Object.values(sc).filter((v) => v > 0);
-          return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
-        }, 0) / districts.length * 10
-      ) / 10
+  const districts  = state.data?.districts;
+  const avgScore   = districts?.length
+    ? Math.round(districts.reduce((s, d) => {
+        const sc = d.scores || {};
+        const vals = Object.values(sc).filter((v) => v > 0);
+        return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+      }, 0) / districts.length * 10) / 10
     : 0;
 
   const cards = [
-    {
-      grad: "var(--grad-green)",
-      iconName: "users",
-      stat: pop ? (pop / 10000).toFixed(1) + "만명" : "24.6만명",
-      statLabel: "주민등록 인구",
-      title: "인구 현황",
-      desc: "연령대·성별·행정동별 인구 구조 분석",
-      link: "#/population",
-      linkLabel: "인구 분석 보기",
-    },
-    {
-      grad: "var(--grad-amber)",
-      iconName: "bar-chart",
-      stat: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "692개",
-      statLabel: "등록 점포 수",
-      title: "상권 분석",
-      desc: "업종별 점포 수·행정동 경쟁 밀도 비교",
-      link: "#/commercial",
-      linkLabel: "상권 분석 보기",
-    },
-    {
-      grad: "var(--grad-blue)",
-      iconName: "pin",
-      stat: avgScore ? avgScore + "점" : "68.4점",
-      statLabel: "평균 접근성 지수",
-      title: "집계구 접근성",
-      desc: "생활·교통·안전 접근성 지수 권역별 비교",
-      link: "#/geo",
-      linkLabel: "집계구 분석 보기",
-    },
-    {
-      grad: "var(--grad-teal)",
-      iconName: "database",
-      stat: facilities ? facilities + "건" : "214건",
-      statLabel: "등록 생활시설",
-      title: "공공데이터",
-      desc: "금천구·서울시·행정기관 24종 데이터셋 열람",
-      link: "#/catalog",
-      linkLabel: "카탈로그 보기",
-    },
+    { grad: "var(--grad-green)",  iconName: "users",     stat: pop ? (pop / 10000).toFixed(1) + "만명" : "24.6만명",
+      statLabel: "주민등록 인구",   title: "인구 현황",    desc: "연령대·성별·행정동별 인구 구조 분석",              link: "#/population", linkLabel: "인구 분석 보기" },
+    { grad: "var(--grad-amber)",  iconName: "bar-chart", stat: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "692개",
+      statLabel: "등록 점포 수",    title: "상권 분석",    desc: "업종별 점포 수·행정동 경쟁 밀도 비교",             link: "#/commercial", linkLabel: "상권 분석 보기" },
+    { grad: "var(--grad-blue)",   iconName: "pin",       stat: avgScore ? avgScore + "점" : "68.4점",
+      statLabel: "평균 접근성 지수", title: "집계구 접근성", desc: "생활·교통·안전 접근성 지수 권역별 비교",           link: "#/geo",        linkLabel: "집계구 분석 보기" },
+    { grad: "var(--grad-teal)",   iconName: "database",  stat: facilities ? facilities + "건" : "214건",
+      statLabel: "등록 생활시설",   title: "공공데이터",   desc: "금천구·서울시·행정기관 24종 데이터셋 열람",         link: "#/catalog",    linkLabel: "카탈로그 보기" },
   ];
 
   const html = cards.map((c) => `
@@ -968,44 +1116,60 @@ function buildReportSection() {
       <h2>분석 리포트</h2>
       <span>금천구 핵심 데이터 요약</span>
     </div>
-    <div class="home-report-row" aria-label="분석 리포트 카드">
-      ${html}
+    <div class="home-report-row" aria-label="분석 리포트 카드">${html}</div>
+  `;
+}
+
+function buildDataStatusSection() {
+  const datasets = [
+    { label: "기상 관측", source: "기상청 초단기 API",   updated: "2026.06.13 16:00", status: "ready" },
+    { label: "시설 정보", source: "금천구 생활시설 DB",  updated: "2026.06.13 00:00", status: "ready" },
+    { label: "상권 정보", source: "상가업소정보 API",    updated: "2026.06.02 15:40", status: "mock"  },
+    { label: "인구 통계", source: "행안부 주민등록 API", updated: "2026.06.01 00:00", status: "mock"  },
+    { label: "집계구 GIS", source: "행안부 집계구 API",  updated: "2026.06.01 00:00", status: "mock"  },
+    { label: "API 로그",  source: "내부 수집 로그 DB",   updated: "2026.06.13 16:00", status: "ready" },
+  ];
+  const statusBadge = (s) => {
+    if (s === "ready") return `<span class="home-ds-badge home-ds-badge--green">${icon("check", { size: 10 })} 정상</span>`;
+    if (s === "mock")  return `<span class="home-ds-badge home-ds-badge--amber">${icon("database", { size: 10 })} Mock</span>`;
+    return `<span class="home-ds-badge home-ds-badge--muted">대기</span>`;
+  };
+  const rows = datasets.map((d) => `
+    <div class="home-ds-row">
+      <div class="home-ds-label">${escapeHtml(d.label)}</div>
+      <div class="home-ds-source">${escapeHtml(d.source)}</div>
+      <div class="home-ds-updated">${escapeHtml(d.updated)}</div>
+      <div class="home-ds-status">${statusBadge(d.status)}</div>
+    </div>
+  `).join("");
+  return `
+    <div class="home-section-label">
+      <h2>데이터 수집 현황</h2>
+      <span>API 연결 및 최신 수집 일시</span>
+    </div>
+    <div class="home-ds-table" aria-label="데이터 수집 현황">
+      <div class="home-ds-head"><div>데이터셋</div><div>출처</div><div>최근 업데이트</div><div>상태</div></div>
+      ${rows}
     </div>
   `;
 }
 
-function buildHeroDeco() {
-  return `<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="hero-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-        <circle cx="1.5" cy="1.5" r="1.5" fill="rgba(255,255,255,0.06)"/>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#hero-dots)"/>
-    <circle cx="92%" cy="20%" r="180" fill="rgba(255,255,255,0.025)"/>
-    <circle cx="85%" cy="75%" r="100" fill="rgba(20,107,74,0.12)"/>
-  </svg>`;
-}
-
 function buildTopicCards() {
   const topics = [
-    { route: "catalog",    iconName: "database",  iconClass: "green",  title: "데이터 카탈로그", desc: "금천구·서울시·국가기관의 공공데이터 24종을 검색·분류·열람합니다. 카테고리별 필터와 형식 검색 지원.",     label: "카탈로그 보기" },
-    { route: "map",        iconName: "map",       iconClass: "teal",   title: "생활지도",        desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 병원·약국·주차장·안전 시설을 권역별로 비교합니다.",   label: "시설 지도 보기" },
-    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",        desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다. 카페·음식점·편의점·학원 필터를 지원합니다.", label: "상권 분석 보기" },
-    { route: "geo",        iconName: "pin",       iconClass: "blue",   title: "집계구 분석",     desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다. 반경 분석과 권역 비교를 지원합니다.",      label: "집계구 분석 보기" },
-    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",       desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다. 남녀 성비와 총인구 현황을 비교합니다.",             label: "인구 분석 보기" },
-    { route: "api",        iconName: "activity",  iconClass: "violet", title: "API 수집 현황",   desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다. 수동 재수집을 실행할 수 있습니다.",                  label: "API 현황 보기" },
-    { route: "api-logs",   iconName: "list",      iconClass: "blue",   title: "수집 로그",       desc: "API 수집 실행 내역을 필터링하고 검색합니다. 상태별·소스별로 수집 결과를 추적합니다.",                   label: "로그 보기" },
-    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",          desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다. 컬럼 매핑과 검증을 지원합니다.",            label: "관리 화면 열기" }
+    { route: "catalog",    iconName: "database",  iconClass: "green",  title: "데이터 카탈로그", desc: "금천구·서울시·국가기관의 공공데이터 24종을 검색·분류·열람합니다.", label: "카탈로그 보기" },
+    { route: "map",        iconName: "map",       iconClass: "teal",   title: "생활지도",        desc: "시설 위치와 행정동 경계를 지도 위에서 확인합니다. 권역별 비교 지원.",   label: "시설 지도 보기" },
+    { route: "commercial", iconName: "bar-chart", iconClass: "amber",  title: "상권분석",        desc: "업종별 점포 수와 행정동 경쟁 밀도를 막대차트로 비교합니다.",           label: "상권 분석 보기" },
+    { route: "geo",        iconName: "pin",       iconClass: "blue",   title: "집계구 분석",     desc: "행정동·집계구 단위로 생활·교통·안전 접근성 지표를 비교합니다.",          label: "집계구 분석 보기" },
+    { route: "population", iconName: "users",     iconClass: "teal",   title: "인구 분석",       desc: "행정동별 인구 피라미드와 연령대 분포를 시각화합니다.",                  label: "인구 분석 보기" },
+    { route: "api",        iconName: "activity",  iconClass: "violet", title: "API 수집 현황",   desc: "공공데이터 API 연결 상태와 수집 이력을 확인합니다.",                   label: "API 현황 보기" },
+    { route: "api-logs",   iconName: "list",      iconClass: "blue",   title: "수집 로그",       desc: "API 수집 실행 내역을 필터링하고 검색합니다.",                         label: "로그 보기" },
+    { route: "admin",      iconName: "settings",  iconClass: "navy",   title: "관리자",          desc: "데이터셋 메타데이터를 관리하고 CSV/Excel 파일을 업로드합니다.",          label: "관리 화면 열기" },
   ];
-
-  // accent: 카드 상단 강조선 색 (CSS 변수로 전달)
   const ACCENT_MAP = {
     catalog: "#146b4a", map: "#197982", commercial: "#b56b17",
     geo: "#245b9e", population: "#197982", api: "#6556a3",
     "api-logs": "#245b9e", admin: "#21342f"
   };
-
   return topics.map((topic) => {
     const accent = ACCENT_MAP[topic.route] || "#146b4a";
     return `

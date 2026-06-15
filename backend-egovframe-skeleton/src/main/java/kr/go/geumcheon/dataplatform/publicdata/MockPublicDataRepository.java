@@ -47,13 +47,31 @@ public class MockPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
-    public List<FacilitySummary> listFacilities() {
-        return defaultFacilities();
+    public List<FacilitySummary> listFacilities(MapQuery query) {
+        return defaultFacilities().stream()
+                .filter(f -> !query.hasBbox() || isInBbox(f.latitude(), f.longitude(), query))
+                .filter(f -> query.category() == null || query.category().isBlank()
+                        || "전체".equals(query.category()) || query.category().equals(f.category()))
+                .skip((long) query.page() * query.size())
+                .limit(query.size())
+                .toList();
     }
 
     @Override
-    public List<StoreSummary> listStores() {
-        return defaultStores();
+    public List<StoreSummary> listStores(MapQuery query) {
+        return defaultStores().stream()
+                .filter(s -> !query.hasBbox() || isInBbox(s.latitude(), s.longitude(), query))
+                .filter(s -> query.category() == null || query.category().isBlank()
+                        || "전체".equals(query.category()) || query.category().equals(s.category()))
+                .skip((long) query.page() * query.size())
+                .limit(query.size())
+                .toList();
+    }
+
+    private boolean isInBbox(Double lat, Double lng, MapQuery q) {
+        if (lat == null || lng == null) return false;
+        return lat >= q.minLat() && lat <= q.maxLat()
+                && lng >= q.minLng() && lng <= q.maxLng();
     }
 
     @Override

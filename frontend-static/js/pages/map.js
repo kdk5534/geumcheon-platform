@@ -3,6 +3,7 @@
 import { state, categoryColor, categoryInitial } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { icon } from "../core/icons.js";
+import { loadFacilitiesInBbox } from "../core/api.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
 const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전"];
@@ -15,6 +16,12 @@ let allMarkers = [];
 let choroplethLayer = null;
 let choroplethMetric = "생활"; // 단계구분도 기준 지표
 let isMounted = false;
+
+// DB 모드에서 뷰포트 이동 시 백엔드로 받아온 시설 목록.
+// null이면 state.data.facilities(초기 로드·mock 모드)를 사용한다.
+let viewportFacilities = null;
+// 뷰포트 갱신 중복 방지 플래그
+let viewportFetching = false;
 
 // ─── CSS / Leaflet 동적 로드 ──────────────────────────────────
 
@@ -104,6 +111,8 @@ export function unmount() {
   markerLayers = {};
   allMarkers = [];
   choroplethLayer = null;
+  viewportFacilities = null;
+  viewportFetching = false;
 }
 
 export function refresh() {
@@ -219,6 +228,11 @@ function initMap() {
   buildMarkers();
   renderCatStats();
   renderFacilityList();
+
+  // DB 모드에서만 뷰포트 이동 시 bbox 필터 갱신
+  if (state.sourceMode === "db" || state.sourceMode === "mixed") {
+    mapInstance.on("moveend", onMapMoveEnd);
+  }
 }
 
 // ─── Choropleth ───────────────────────────────────────────────
@@ -347,13 +361,49 @@ function renderLegend() {
   `;
 }
 
+// ─── 뷰포트 bbox 갱신 ─────────────────────────────────────────
+
+/** DB 모드에서 지도 이동이 끝나면 현재 뷰포트 범위의 시설을 재조회한다. */
+async function onMapMoveEnd() {
+  if (!mapInstance || !isMounted || viewportFetching) return;
+  viewportFetching = true;
+  try {
+    const b = mapInstance.getBounds();
+    const items = await loadFacilitiesInBbox({
+      minLat: b.getSouth(),
+      minLng: b.getWest(),
+      maxLat: b.getNorth(),
+      maxLng: b.getEast(),
+      category: state.category !== "전체" ? state.category : undefined,
+    });
+    if (!isMounted) return;
+    // 결과가 있을 때만 교체 (요청 실패 시 기존 마커 유지)
+    if (items.length > 0 || viewportFacilities !== null) {
+      viewportFacilities = items;
+      Object.values(markerLayers).forEach((l) => l.clearLayers());
+      allMarkers = [];
+      buildMarkers();
+      renderCatStats();
+      renderFacilityList();
+    }
+  } finally {
+    viewportFetching = false;
+  }
+}
+
+/** 현재 렌더에 사용할 시설 배열. 뷰포트 데이터 > 초기 로드 데이터 순으로 사용한다. */
+function getActiveFacilities() {
+  if (viewportFacilities !== null) return viewportFacilities;
+  return Array.isArray(state.data?.facilities) ? state.data.facilities : [];
+}
+
 // ─── 마커 생성 ────────────────────────────────────────────────
 
 function buildMarkers() {
   if (!window.L || !mapInstance) return;
 
   const L = window.L;
-  const facilities = Array.isArray(state.data?.facilities) ? state.data.facilities : [];
+  const facilities = getActiveFacilities();
 
   facilities.forEach((facility) => {
     const lat = Number(facility.latitude);

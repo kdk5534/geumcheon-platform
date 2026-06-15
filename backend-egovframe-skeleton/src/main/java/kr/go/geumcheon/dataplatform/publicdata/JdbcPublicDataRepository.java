@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -50,8 +51,9 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
-    public List<FacilitySummary> listFacilities() {
-        return jdbcTemplate.query("""
+    public List<FacilitySummary> listFacilities(MapQuery query) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
                 SELECT
                     COALESCE(f.source_original_id, f.facility_id::text) AS id,
                     COALESCE(NULLIF(f.facility_category, ''), 'UNKNOWN') AS category,
@@ -64,9 +66,25 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 FROM facility f
                 LEFT JOIN dataset d ON d.dataset_id = f.dataset_id
                 WHERE f.is_active = TRUE
+                """);
+        if (query.hasBbox()) {
+            // && 연산자는 GIST 인덱스를 사용하는 bbox 겹침 검사 (ST_Within보다 빠름)
+            sql.append(" AND f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)\n");
+            params.add(query.minLng()); params.add(query.minLat());
+            params.add(query.maxLng()); params.add(query.maxLat());
+        }
+        if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
+            sql.append(" AND f.facility_category = ?\n");
+            params.add(query.category());
+        }
+        sql.append("""
                 ORDER BY COALESCE(f.data_base_time, f.created_at) DESC, f.facility_name ASC
-                LIMIT 1000
-                """, (rs, rowNum) -> new FacilitySummary(
+                LIMIT ? OFFSET ?
+                """);
+        params.add(query.size());
+        params.add((long) query.page() * query.size());
+
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> new FacilitySummary(
                 rs.getString("id"),
                 rs.getString("category"),
                 rs.getString("facility_name"),
@@ -75,12 +93,13 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 rs.getObject("latitude", Double.class),
                 rs.getObject("longitude", Double.class),
                 rs.getString("source")
-        ));
+        ), params.toArray());
     }
 
     @Override
-    public List<StoreSummary> listStores() {
-        return jdbcTemplate.query("""
+    public List<StoreSummary> listStores(MapQuery query) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
                 SELECT
                     COALESCE(s.source_store_id, s.store_id::text) AS id,
                     COALESCE(NULLIF(s.store_name, ''), 'STORE') AS store_name,
@@ -92,9 +111,24 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 FROM store_business s
                 LEFT JOIN dataset d ON d.dataset_id = s.dataset_id
                 WHERE s.is_active = TRUE
+                """);
+        if (query.hasBbox()) {
+            sql.append(" AND s.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)\n");
+            params.add(query.minLng()); params.add(query.minLat());
+            params.add(query.maxLng()); params.add(query.maxLat());
+        }
+        if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
+            sql.append(" AND s.industry_large_name = ?\n");
+            params.add(query.category());
+        }
+        sql.append("""
                 ORDER BY COALESCE(s.data_base_time, s.created_at) DESC, s.store_name ASC
-                LIMIT 1000
-                """, (rs, rowNum) -> new StoreSummary(
+                LIMIT ? OFFSET ?
+                """);
+        params.add(query.size());
+        params.add((long) query.page() * query.size());
+
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> new StoreSummary(
                 rs.getString("id"),
                 rs.getString("store_name"),
                 rs.getString("category"),
@@ -102,7 +136,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 rs.getDouble("latitude"),
                 rs.getDouble("longitude"),
                 rs.getString("source")
-        ));
+        ), params.toArray());
     }
 
     @Override

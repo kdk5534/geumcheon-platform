@@ -148,6 +148,42 @@ export async function loadBackendData(localData) {
   }
 }
 
+/**
+ * 지도 뷰포트 범위(bbox) 기준 시설 목록을 백엔드에서 가져온다.
+ * bbox 파라미터 없이 호출하면 기본 200건을 반환한다.
+ * 백엔드가 없으면 빈 배열을 반환한다(호출부에서 폴백 처리).
+ *
+ * @param {{ minLat:number, minLng:number, maxLat:number, maxLng:number, category?:string, page?:number, size?:number }} opts
+ */
+export async function loadFacilitiesInBbox({ minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
+  const params = new URLSearchParams({ minLat, minLng, maxLat, maxLng, page, size });
+  if (category && category !== "전체") params.set("category", category);
+  try {
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities?${params}`);
+    const payload = await response.json();
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 지도 뷰포트 범위(bbox) 기준 상점 목록을 백엔드에서 가져온다.
+ *
+ * @param {{ minLat:number, minLng:number, maxLat:number, maxLng:number, category?:string, page?:number, size?:number }} opts
+ */
+export async function loadStoresInBbox({ minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
+  const params = new URLSearchParams({ minLat, minLng, maxLat, maxLng, page, size });
+  if (category && category !== "전체") params.set("category", category);
+  try {
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/stores?${params}`);
+    const payload = await response.json();
+    return Array.isArray(payload?.data) ? payload.data : [];
+  } catch {
+    return [];
+  }
+}
+
 /** 백엔드 데이터셋·API 수집 결과를 반영해 metrics 배열을 갱신한다. */
 export function withBackendMetric(metrics, datasets = [], storeCount = 0, airQuality = null) {
   if (!Array.isArray(datasets) || datasets.length === 0) {

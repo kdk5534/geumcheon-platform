@@ -5,6 +5,7 @@ import kr.go.geumcheon.dataplatform.admin.AdminUploadStore;
 import kr.go.geumcheon.dataplatform.admin.ExcelUploadParser;
 import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import kr.go.geumcheon.dataplatform.publicdata.JdbcPublicDataRepository;
+import kr.go.geumcheon.dataplatform.publicdata.MapQuery;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataCollectorService;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataController;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,7 @@ class SecurityConfigTest {
 
     @BeforeEach
     void setUp() {
-        when(repository.listStores()).thenReturn(List.of());
+        when(repository.listStores(MapQuery.defaults())).thenReturn(List.of());
     }
 
     @Test

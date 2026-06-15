@@ -12,9 +12,9 @@ public interface PublicDataRepository {
 
     List<DatasetSummary> listDatasets();
 
-    List<FacilitySummary> listFacilities();
+    List<FacilitySummary> listFacilities(MapQuery query);
 
-    List<StoreSummary> listStores();
+    List<StoreSummary> listStores(MapQuery query);
 
     List<AirQualitySummary> listAirQuality();
 

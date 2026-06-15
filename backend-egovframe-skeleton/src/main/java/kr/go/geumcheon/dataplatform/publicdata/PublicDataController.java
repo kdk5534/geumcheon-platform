@@ -4,6 +4,7 @@ import kr.go.geumcheon.dataplatform.api.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,9 +37,22 @@ public class PublicDataController {
         return ApiResponse.ok(collectorService.loadApiLogs(), sourceMode());
     }
 
+    /**
+     * 상점 목록 조회.
+     * bbox 파라미터(minLat/minLng/maxLat/maxLng)가 모두 있으면 PostGIS 공간 필터를 적용한다.
+     */
     @GetMapping("/stores")
-    public ApiResponse<List<StoreSummary>> stores() {
-        return ApiResponse.ok(repository.listStores(), sourceMode());
+    public ApiResponse<List<StoreSummary>> stores(
+            @RequestParam(required = false) Double minLat,
+            @RequestParam(required = false) Double minLng,
+            @RequestParam(required = false) Double maxLat,
+            @RequestParam(required = false) Double maxLng,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "200") int size
+    ) {
+        MapQuery query = new MapQuery(minLat, minLng, maxLat, maxLng, category, page, size);
+        return ApiResponse.ok(repository.listStores(query), sourceMode());
     }
 
     @GetMapping("/air-quality")

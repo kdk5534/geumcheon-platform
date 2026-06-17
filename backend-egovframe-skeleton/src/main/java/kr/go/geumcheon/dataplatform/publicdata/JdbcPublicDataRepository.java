@@ -16,9 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -67,22 +67,10 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 LEFT JOIN dataset d ON d.dataset_id = f.dataset_id
                 WHERE f.is_active = TRUE
                 """);
-        if (query.hasBbox()) {
-            // && 연산자는 GIST 인덱스를 사용하는 bbox 겹침 검사 (ST_Within보다 빠름)
-            sql.append(" AND f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)\n");
-            params.add(query.minLng()); params.add(query.minLat());
-            params.add(query.maxLng()); params.add(query.maxLat());
-        }
-        if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
-            sql.append(" AND f.facility_category = ?\n");
-            params.add(query.category());
-        }
-        sql.append("""
-                ORDER BY COALESCE(f.data_base_time, f.created_at) DESC, f.facility_name ASC
-                LIMIT ? OFFSET ?
-                """);
-        params.add(query.size());
-        params.add((long) query.page() * query.size());
+        // && 연산자는 GIST 인덱스를 사용하는 bbox 겹침 검사 (ST_Within보다 빠름)
+        appendBboxAndCategory(sql, params, query, "f.geom", "f.facility_category");
+        sql.append("ORDER BY COALESCE(f.data_base_time, f.created_at) DESC, f.facility_name ASC\n");
+        appendPaging(sql, params, query);
 
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> new FacilitySummary(
                 rs.getString("id"),
@@ -112,21 +100,9 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 LEFT JOIN dataset d ON d.dataset_id = s.dataset_id
                 WHERE s.is_active = TRUE
                 """);
-        if (query.hasBbox()) {
-            sql.append(" AND s.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)\n");
-            params.add(query.minLng()); params.add(query.minLat());
-            params.add(query.maxLng()); params.add(query.maxLat());
-        }
-        if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
-            sql.append(" AND s.industry_large_name = ?\n");
-            params.add(query.category());
-        }
-        sql.append("""
-                ORDER BY COALESCE(s.data_base_time, s.created_at) DESC, s.store_name ASC
-                LIMIT ? OFFSET ?
-                """);
-        params.add(query.size());
-        params.add((long) query.page() * query.size());
+        appendBboxAndCategory(sql, params, query, "s.geom", "s.industry_large_name");
+        sql.append("ORDER BY COALESCE(s.data_base_time, s.created_at) DESC, s.store_name ASC\n");
+        appendPaging(sql, params, query);
 
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> new StoreSummary(
                 rs.getString("id"),
@@ -137,6 +113,31 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 rs.getDouble("longitude"),
                 rs.getString("source")
         ), params.toArray());
+    }
+
+    /**
+     * bbox와 카테고리 필터 절을 sql에 추가하고 대응하는 파라미터를 params에 넣는다.
+     * geomCol: 공간 컬럼 표현식(예: "f.geom"), categoryCol: 카테고리 컬럼(예: "f.facility_category").
+     */
+    private void appendBboxAndCategory(StringBuilder sql, List<Object> params,
+                                        MapQuery query, String geomCol, String categoryCol) {
+        if (query.hasBbox()) {
+            sql.append(" AND ").append(geomCol)
+               .append(" && ST_MakeEnvelope(?, ?, ?, ?, 4326)\n");
+            params.add(query.minLng()); params.add(query.minLat());
+            params.add(query.maxLng()); params.add(query.maxLat());
+        }
+        if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
+            sql.append(" AND ").append(categoryCol).append(" = ?\n");
+            params.add(query.category());
+        }
+    }
+
+    /** LIMIT/OFFSET 절을 sql에 추가하고 대응하는 파라미터를 params에 넣는다. */
+    private void appendPaging(StringBuilder sql, List<Object> params, MapQuery query) {
+        sql.append("LIMIT ? OFFSET ?\n");
+        params.add(query.size());
+        params.add((long) query.page() * query.size());
     }
 
     @Override
@@ -158,7 +159,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                     FROM indicator_value v
                     JOIN indicator i ON i.indicator_id = v.indicator_id
                     WHERE i.indicator_key = 'seoul-air-quality'
-                    ORDER BY v.area_code, v.observed_at DESC NULLS LAST, v.created_at DESC
+                    ORDER BY v.area_code, v.area_name, v.observed_at DESC NULLS LAST, v.created_at DESC
                 )
                 SELECT
                     area_code,
@@ -410,6 +411,281 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         return batchRows.size();
     }
 
+    @Transactional
+    @Override
+    public int replaceFacilitySnapshot(UUID datasetId, String category, List<Map<String, String>> rows) {
+        jdbcTemplate.update("DELETE FROM facility WHERE dataset_id = ? AND facility_category = ?", datasetId, category);
+        List<Object[]> batchRows = new ArrayList<>();
+        for (Map<String, String> row : rows) {
+            Object[] params = buildFacilityRowParams(datasetId, category, row);
+            if (params != null) {
+                batchRows.add(params);
+            }
+        }
+        if (!batchRows.isEmpty()) {
+            jdbcTemplate.batchUpdate("""
+                    INSERT INTO facility (
+                        dataset_id,
+                        facility_category,
+                        facility_name,
+                        source_original_id,
+                        description,
+                        geom,
+                        properties,
+                        data_base_time
+                    )
+                    VALUES (?, ?, ?, ?, ?,
+                        CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL
+                             THEN NULL
+                             ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326)
+                        END,
+                        CAST(? AS jsonb),
+                        CURRENT_TIMESTAMP)
+                    """, batchRows);
+        }
+        return batchRows.size();
+    }
+
+    // 금천구 행정동별 주민등록인구를 indicator_value에 적재한다.
+    // 행정안전부 API 응답 형식이 불확실하므로 복수의 필드명 패턴을 시도한다.
+    @Transactional
+    @Override
+    public int replacePopulationSnapshot(UUID datasetId, List<Map<String, String>> rows) {
+        UUID indicatorId = ensureIndicator(
+                "resident-population",
+                "행정동별 주민등록인구",
+                "population",
+                "명",
+                "행정안전부 행정동별 성/연령별 주민등록인구 (금천구)",
+                datasetId
+        );
+
+        jdbcTemplate.update("DELETE FROM indicator_value WHERE indicator_id = ?", indicatorId);
+
+        // API 필드명 디버깅을 위해 첫 번째 행의 키를 로깅한다
+        if (!rows.isEmpty()) {
+            org.slf4j.LoggerFactory.getLogger(JdbcPublicDataRepository.class)
+                    .info("Population API row keys: {}", rows.get(0).keySet());
+        }
+
+        // 행정동별로 그룹핑 (wide 형식이면 한 행이 한 행정동, long 형식이면 여러 행이 한 행정동)
+        Map<String, List<Map<String, String>>> byDong = new java.util.LinkedHashMap<>();
+        for (Map<String, String> row : rows) {
+            Map<String, String> n = normalizeRow(row);
+            String dongName = firstValue(n,
+                    "dongNm", "admmNm", "admmcdnm", "행정동명", "읍면동명", "법정동명", "hdongNm");
+            if (dongName == null || dongName.isBlank()) {
+                continue;
+            }
+            byDong.computeIfAbsent(dongName, k -> new ArrayList<>()).add(row);
+        }
+
+        List<Object[]> batchRows = new ArrayList<>();
+        String basePeriod = buildCurrentBasePeriod();
+
+        for (Map.Entry<String, List<Map<String, String>>> entry : byDong.entrySet()) {
+            String dongName = entry.getKey();
+            List<Map<String, String>> dongRows = entry.getValue();
+
+            long total = 0, male = 0, female = 0;
+            long[] mBands = new long[8];
+            long[] fBands = new long[8];
+
+            if (dongRows.size() == 1) {
+                // wide 형식: 한 행에 모든 인구 정보
+                Map<String, String> n = normalizeRow(dongRows.get(0));
+                total = toLong(firstValue(n, "totNmprCnt", "totPopltn", "총인구수", "인구합계", "계", "popltn"));
+                male = toLong(firstValue(n, "maleNmprCnt", "mPopltn", "남자인구수", "남자합계", "남자"));
+                female = toLong(firstValue(n, "femlNmprCnt", "fPopltn", "여자인구수", "여자합계", "여자"));
+                mBands = extractWideMaleBands(n);
+                fBands = extractWideFemaleBands(n);
+            } else {
+                // long 형식: 성별×연령대 조합으로 여러 행
+                for (Map<String, String> row : dongRows) {
+                    Map<String, String> n = normalizeRow(row);
+                    String gender = firstValue(n, "popltnSe", "성별", "sexdstn");
+                    String ageBand = firstValue(n, "agrde", "연령대", "age", "ageGroup");
+                    long cnt = toLong(firstValue(n, "popltn", "인구수", "count"));
+                    if ("남".equals(gender) || "male".equalsIgnoreCase(gender)) {
+                        male += cnt;
+                        int idx = ageBandIndex(ageBand);
+                        if (idx >= 0) mBands[idx] += cnt;
+                    } else if ("여".equals(gender) || "female".equalsIgnoreCase(gender)) {
+                        female += cnt;
+                        int idx = ageBandIndex(ageBand);
+                        if (idx >= 0) fBands[idx] += cnt;
+                    } else {
+                        total += cnt;
+                    }
+                }
+                if (total == 0) total = male + female;
+            }
+
+            String valueJson = buildPopulationJson(total, male, female, mBands, fBands);
+            batchRows.add(new Object[]{indicatorId, dongName, total, valueJson, basePeriod});
+        }
+
+        if (!batchRows.isEmpty()) {
+            jdbcTemplate.batchUpdate("""
+                    INSERT INTO indicator_value (
+                        indicator_id,
+                        area_type,
+                        area_name,
+                        value_numeric,
+                        value_json,
+                        base_period,
+                        data_base_time
+                    )
+                    VALUES (?, 'DONG', ?, ?, CAST(? AS jsonb), ?, CURRENT_TIMESTAMP)
+                    """, batchRows);
+        }
+        return batchRows.size();
+    }
+
+    @Override
+    public List<PopulationSummary> listPopulation() {
+        return jdbcTemplate.query("""
+                WITH latest AS (
+                    SELECT DISTINCT ON (v.area_name)
+                        v.area_name,
+                        v.value_numeric,
+                        v.value_json
+                    FROM indicator_value v
+                    JOIN indicator i ON i.indicator_id = v.indicator_id
+                    WHERE i.indicator_key = 'resident-population'
+                    ORDER BY v.area_name, v.data_base_time DESC NULLS LAST
+                )
+                SELECT area_name, value_numeric, value_json
+                FROM latest
+                ORDER BY area_name ASC
+                """, (rs, rowNum) -> mapPopulation(rs));
+    }
+
+    private PopulationSummary mapPopulation(ResultSet rs) throws SQLException {
+        String areaName = rs.getString("area_name");
+        long total = rs.getLong("value_numeric");
+        try {
+            JsonNode json = objectMapper.readTree(rs.getString("value_json"));
+            long male = json.path("male").asLong(0);
+            long female = json.path("female").asLong(0);
+            List<PopulationSummary.AgeBand> byAge = new ArrayList<>();
+            JsonNode byAgeNode = json.path("byAge");
+            if (byAgeNode.isArray()) {
+                for (JsonNode band : byAgeNode) {
+                    byAge.add(new PopulationSummary.AgeBand(
+                            band.path("ageBand").asText(""),
+                            band.path("male").asLong(0),
+                            band.path("female").asLong(0)
+                    ));
+                }
+            }
+            return new PopulationSummary(areaName, total, male, female, byAge);
+        } catch (JsonProcessingException e) {
+            return new PopulationSummary(areaName, total, 0, 0, List.of());
+        }
+    }
+
+    private long[] extractWideMaleBands(Map<String, String> n) {
+        long[] b = new long[8];
+        b[0] = toLong(firstValue(n, "male0AgeNmprCnt", "만09세남자", "m0to9ppltn", "m0to9", "mage0to9"));
+        b[1] = toLong(firstValue(n, "male10AgeNmprCnt", "만1019세남자", "m10to19ppltn", "m10to19", "mage10to19"));
+        b[2] = toLong(firstValue(n, "male20AgeNmprCnt", "만2029세남자", "m20to29ppltn", "m20to29", "mage20to29"));
+        b[3] = toLong(firstValue(n, "male30AgeNmprCnt", "만3039세남자", "m30to39ppltn", "m30to39", "mage30to39"));
+        b[4] = toLong(firstValue(n, "male40AgeNmprCnt", "만4049세남자", "m40to49ppltn", "m40to49", "mage40to49"));
+        b[5] = toLong(firstValue(n, "male50AgeNmprCnt", "만5059세남자", "m50to59ppltn", "m50to59", "mage50to59"));
+        b[6] = toLong(firstValue(n, "male60AgeNmprCnt", "만6069세남자", "m60to69ppltn", "m60to69", "mage60to69"));
+        // 70세 이상: 70~79, 80~89, 90~99, 100+ 합산
+        b[7] = toLong(firstValue(n, "male70AgeNmprCnt", "만7079세남자", "m70to79ppltn", "m70to79"))
+             + toLong(firstValue(n, "male80AgeNmprCnt", "만8089세남자", "m80to89ppltn", "m80to89"))
+             + toLong(firstValue(n, "male90AgeNmprCnt", "만9099세남자", "m90to99ppltn", "m90to99"))
+             + toLong(firstValue(n, "male100AgeNmprCnt", "만100세이상남자", "m100plusppltn", "m100plus"));
+        return b;
+    }
+
+    private long[] extractWideFemaleBands(Map<String, String> n) {
+        long[] b = new long[8];
+        b[0] = toLong(firstValue(n, "feml0AgeNmprCnt", "만09세여자", "f0to9ppltn", "f0to9", "fage0to9"));
+        b[1] = toLong(firstValue(n, "feml10AgeNmprCnt", "만1019세여자", "f10to19ppltn", "f10to19", "fage10to19"));
+        b[2] = toLong(firstValue(n, "feml20AgeNmprCnt", "만2029세여자", "f20to29ppltn", "f20to29", "fage20to29"));
+        b[3] = toLong(firstValue(n, "feml30AgeNmprCnt", "만3039세여자", "f30to39ppltn", "f30to39", "fage30to39"));
+        b[4] = toLong(firstValue(n, "feml40AgeNmprCnt", "만4049세여자", "f40to49ppltn", "f40to49", "fage40to49"));
+        b[5] = toLong(firstValue(n, "feml50AgeNmprCnt", "만5059세여자", "f50to59ppltn", "f50to59", "fage50to59"));
+        b[6] = toLong(firstValue(n, "feml60AgeNmprCnt", "만6069세여자", "f60to69ppltn", "f60to69", "fage60to69"));
+        b[7] = toLong(firstValue(n, "feml70AgeNmprCnt", "만7079세여자", "f70to79ppltn", "f70to79"))
+             + toLong(firstValue(n, "feml80AgeNmprCnt", "만8089세여자", "f80to89ppltn", "f80to89"))
+             + toLong(firstValue(n, "feml90AgeNmprCnt", "만9099세여자", "f90to99ppltn", "f90to99"))
+             + toLong(firstValue(n, "feml100AgeNmprCnt", "만100세이상여자", "f100plusppltn", "f100plus"));
+        return b;
+    }
+
+    private int ageBandIndex(String ageBand) {
+        if (ageBand == null) return -1;
+        String n = ageBand.replaceAll("[^0-9]", "");
+        if (n.isEmpty()) return -1;
+        int start;
+        try { start = Integer.parseInt(n.length() > 3 ? n.substring(0, n.length() / 2) : n); }
+        catch (NumberFormatException e) { return -1; }
+        if (start < 10) return 0;
+        if (start < 20) return 1;
+        if (start < 30) return 2;
+        if (start < 40) return 3;
+        if (start < 50) return 4;
+        if (start < 60) return 5;
+        if (start < 70) return 6;
+        return 7;
+    }
+
+    private String buildPopulationJson(long total, long male, long female, long[] mBands, long[] fBands) {
+        String[] BANDS = {"0~9세", "10~19세", "20~29세", "30~39세", "40~49세", "50~59세", "60~69세", "70세 이상"};
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"total\":").append(total)
+          .append(",\"male\":").append(male)
+          .append(",\"female\":").append(female)
+          .append(",\"byAge\":[");
+        for (int i = 0; i < 8; i++) {
+            if (i > 0) sb.append(",");
+            sb.append("{\"ageBand\":\"").append(BANDS[i]).append("\"")
+              .append(",\"male\":").append(mBands[i])
+              .append(",\"female\":").append(fBands[i]).append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private String buildCurrentBasePeriod() {
+        LocalDate prev = LocalDate.now().minusMonths(1);
+        return String.format("%d%02d", prev.getYear(), prev.getMonthValue());
+    }
+
+    private long toLong(String value) {
+        if (value == null || value.isBlank()) return 0L;
+        try { return Long.parseLong(value.trim().replace(",", "")); }
+        catch (NumberFormatException e) { return 0L; }
+    }
+
+    private Object[] buildFacilityRowParams(UUID datasetId, String category, Map<String, String> row) {
+        Map<String, String> n = normalizeRow(row);
+        String name = firstValue(n, "stationName", "cctv_nm", "pklt_nm", "시설명", "name");
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        String originalId = firstValue(n, "stationId", "cctv_manage_no", "pklt_cd", "id");
+        String description = firstValue(n, "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "description");
+        String lat = firstValue(n, "stationLatitude", "la", "lat", "위도", "latitude", "y_dnts");
+        String lon = firstValue(n, "stationLongitude", "lo", "lot", "lon", "경도", "longitude", "x_dnts");
+        String properties = toJson(row);
+        // lon, lat 순서: ST_MakePoint(경도, 위도)
+        return new Object[]{
+                datasetId,
+                category,
+                name,
+                originalId,
+                description,
+                lat, lon, lon, lat,
+                properties
+        };
+    }
+
     @Override
     public UUID recordCollectionLog(
             UUID datasetId,
@@ -467,6 +743,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         return jdbcTemplate.query("""
                 WITH ranked AS (
                     SELECT
+                        log.log_id,
                         dataset.dataset_key,
                         dataset.dataset_name,
                         dataset.domain,
@@ -623,23 +900,23 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
 
     private Object[] buildAirQualityRowParams(UUID indicatorId, Map<String, String> row) {
         Map<String, String> normalized = normalizeRow(row);
-        String districtName = firstValue(normalized, "msrstename", "측정소명", "district_name");
+        String districtName = firstValue(normalized, "msrstn_nm", "msrstename", "측정소명", "district_name");
         if (districtName == null || districtName.isBlank()) {
             return null;
         }
 
-        String districtCode = firstValue(normalized, "msradmcode", "측정소 행정코드", "district_code");
-        String measuredAtText = firstValue(normalized, "msrdate", "측정날짜", "measured_at");
+        String districtCode = firstValue(normalized, "msrstn_pbadms_cd", "msradmcode", "측정소 행정코드", "district_code");
+        String measuredAtText = firstValue(normalized, "msrmt_ymd", "msrdate", "측정날짜", "measured_at");
         Instant observedAt = parseObservedAt(measuredAtText);
-        Double maxIndex = parseDouble(firstValue(normalized, "maxindex", "통합대기환경지수", "index"));
-        String grade = firstValue(normalized, "grade", "등급");
-        String pollutant = firstValue(normalized, "pollutant", "지수결정물질");
-        Double nitrogen = parseDouble(firstValue(normalized, "nitrogen", "이산화질소"));
-        Double ozone = parseDouble(firstValue(normalized, "ozone", "오존"));
-        Double carbon = parseDouble(firstValue(normalized, "carbon", "일산화탄소"));
-        Double sulfurous = parseDouble(firstValue(normalized, "sulfurous", "아황산가스"));
-        Double pm10 = parseDouble(firstValue(normalized, "pm10", "미세먼지"));
-        Double pm25 = parseDouble(firstValue(normalized, "pm25", "초미세먼지"));
+        Double maxIndex = parseDouble(firstValue(normalized, "cai", "maxindex", "통합대기환경지수", "index"));
+        String grade = firstValue(normalized, "cai_grd", "grade", "등급");
+        String pollutant = firstValue(normalized, "crst_sbstn", "pollutant", "지수결정물질");
+        Double nitrogen = parseDouble(firstValue(normalized, "ntdx", "nitrogen", "이산화질소"));
+        Double ozone = parseDouble(firstValue(normalized, "ozon", "ozone", "오존"));
+        Double carbon = parseDouble(firstValue(normalized, "cbmx", "carbon", "일산화탄소"));
+        Double sulfurous = parseDouble(firstValue(normalized, "spdx", "slfrdxd", "sulfurous", "아황산가스"));
+        Double pm10 = parseDouble(firstValue(normalized, "pm", "pm10", "미세먼지"));
+        Double pm25 = parseDouble(firstValue(normalized, "fpm", "pm25", "초미세먼지"));
         String properties = toJson(row);
         String basePeriod = measuredAtText == null ? null : measuredAtText.replaceAll("[^0-9]", "");
         return new Object[] {
@@ -657,8 +934,8 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     private AirQualitySummary mapAirQuality(ResultSet rs, int rowNum) throws SQLException {
         Instant observedAt = timestampToInstant(rs.getTimestamp("observed_at"));
         Map<String, String> normalized = normalizeJsonRow(rs.getString("value_json"));
-        String grade = firstValue(normalized, "grade", "등급");
-        String pollutant = firstValue(normalized, "pollutant", "지수결정물질");
+        String grade = firstValue(normalized, "cai_grd", "grade", "등급");
+        String pollutant = firstValue(normalized, "crst_sbstn", "pollutant", "지수결정물질");
         if (grade == null || grade.isBlank()) {
             grade = rs.getString("value_text");
         }
@@ -672,12 +949,12 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 grade,
                 pollutant,
                 rs.getObject("value_numeric") == null ? null : rs.getDouble("value_numeric"),
-                parseDouble(firstValue(normalized, "nitrogen", "이산화질소")),
-                parseDouble(firstValue(normalized, "ozone", "오존")),
-                parseDouble(firstValue(normalized, "carbon", "일산화탄소")),
-                parseDouble(firstValue(normalized, "sulfurous", "아황산가스")),
-                parseDouble(firstValue(normalized, "pm10", "미세먼지")),
-                parseDouble(firstValue(normalized, "pm25", "초미세먼지")),
+                parseDouble(firstValue(normalized, "ntdx", "nitrogen", "이산화질소")),
+                parseDouble(firstValue(normalized, "ozon", "ozone", "오존")),
+                parseDouble(firstValue(normalized, "cbmx", "carbon", "일산화탄소")),
+                parseDouble(firstValue(normalized, "spdx", "slfrdxd", "sulfurous", "아황산가스")),
+                parseDouble(firstValue(normalized, "pm", "pm10", "미세먼지")),
+                parseDouble(firstValue(normalized, "fpm", "pm25", "초미세먼지")),
                 "서울 열린데이터광장"
         );
     }

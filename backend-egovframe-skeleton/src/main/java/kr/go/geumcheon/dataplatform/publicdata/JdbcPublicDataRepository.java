@@ -430,11 +430,12 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                         facility_name,
                         source_original_id,
                         description,
+                        address_road,
                         geom,
                         properties,
                         data_base_time
                     )
-                    VALUES (?, ?, ?, ?, ?,
+                    VALUES (?, ?, ?, ?, ?, ?,
                         CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL
                              THEN NULL
                              ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326)
@@ -671,6 +672,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         }
         String originalId = firstValue(n, "stationId", "cctv_manage_no", "pklt_cd", "id");
         String description = firstValue(n, "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "description");
+        String address = firstValue(n, "addr", "daddr", "crd_addr", "도로명주소", "지번주소", "rdnmadr", "address");
         String lat = firstValue(n, "stationLatitude", "la", "lat", "위도", "latitude", "y_dnts");
         String lon = firstValue(n, "stationLongitude", "lo", "lot", "lon", "경도", "longitude", "x_dnts");
         String properties = toJson(row);
@@ -681,6 +683,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 name,
                 originalId,
                 description,
+                address,
                 lat, lon, lon, lat,
                 properties
         };

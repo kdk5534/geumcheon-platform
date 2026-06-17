@@ -860,7 +860,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
             return null;
         }
 
-        String sourceStoreId = firstValue(normalized, "bizesno", "상가업소번호", "store_id", "id");
+        String sourceStoreId = firstValue(normalized, "bizesid", "bizesno", "상가업소번호", "store_id", "id");
         String industryLargeCode = firstValue(normalized, "indslclscd", "상권업종대분류코드", "industry_large_code");
         String industryLargeName = firstValue(normalized, "indslclsnm", "상권업종대분류명", "industry_large_name");
         String industryMiddleCode = firstValue(normalized, "indsmclscd", "상권업종중분류코드", "industry_middle_code");

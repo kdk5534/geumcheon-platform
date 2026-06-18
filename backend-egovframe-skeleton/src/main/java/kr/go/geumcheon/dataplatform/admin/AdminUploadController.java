@@ -31,6 +31,8 @@ public class AdminUploadController {
     private static final Logger log = LoggerFactory.getLogger(AdminUploadController.class);
     private static final int DEFAULT_LOG_LIMIT = 20;
     private static final int MAX_LOG_LIMIT = 100;
+    /** 동시 업로드 처리 수를 제한해 대용량 파일이 메모리를 고갈시키는 것을 방지한다. */
+    private static final java.util.concurrent.Semaphore UPLOAD_SEMAPHORE = new java.util.concurrent.Semaphore(3);
 
     private final AdminUploadStore uploadStore;
     private final ExcelUploadParser excelUploadParser;
@@ -99,6 +101,9 @@ public class AdminUploadController {
         }
         uploadDraftManager.cleanup();
 
+        if (!UPLOAD_SEMAPHORE.tryAcquire()) {
+            return fail(HttpStatus.TOO_MANY_REQUESTS, "Upload server is busy. Please try again in a moment.");
+        }
         try {
             byte[] content = file.getInputStream().readAllBytes();
             ParsedUploadContent parsedContent = parseUploadContent(file.getOriginalFilename(), content);
@@ -129,6 +134,8 @@ public class AdminUploadController {
         } catch (IOException | RuntimeException error) {
             log.warn("Upload preview failed for datasetKey {}", datasetKey, error);
             return fail(HttpStatus.BAD_REQUEST, "Upload preview failed. Please check the file format and try again.");
+        } finally {
+            UPLOAD_SEMAPHORE.release();
         }
     }
 
@@ -166,6 +173,12 @@ public class AdminUploadController {
             return fail(HttpStatus.BAD_REQUEST, "Upload preview dataset does not match the selected dataset.");
         }
 
+        // 매핑 키가 실제 CSV 헤더에 존재하는지 검사한다. 불일치 시 전 행이 누락되어 데이터가 전체 삭제된다.
+        List<String> keyErrors = uploadValidator.validateMappingKeys(draft.headers(), request.columnMappings());
+        if (!keyErrors.isEmpty()) {
+            return fail(HttpStatus.BAD_REQUEST, "Upload mapping keys validation failed: " + String.join(" / ", keyErrors));
+        }
+
         List<String> countErrors = uploadValidator.validateCommitCounts(draft, request);
         if (!countErrors.isEmpty()) {
             return fail(HttpStatus.BAD_REQUEST, "Upload preview validation failed: " + String.join(" / ", countErrors));
@@ -179,13 +192,19 @@ public class AdminUploadController {
             return fail(HttpStatus.BAD_REQUEST, "Upload preview data is invalid. Please preview the file again.");
         }
 
-        UploadLogSummary summary = uploadStore.recordUpload(
-                request,
-                dataset.toAdminDatasetSummary(),
-                mappingCount(request),
-                draft,
-                parsedContent.dataRows()
-        );
+        UploadLogSummary summary;
+        try {
+            summary = uploadStore.recordUpload(
+                    request,
+                    dataset.toAdminDatasetSummary(),
+                    mappingCount(request),
+                    draft,
+                    parsedContent.dataRows()
+            );
+        } catch (IllegalStateException error) {
+            log.warn("Upload commit aborted for datasetKey {}: {}", request.datasetKey(), error.getMessage());
+            return fail(HttpStatus.BAD_REQUEST, error.getMessage());
+        }
         uploadDraftManager.discard(request.uploadId());
         return ResponseEntity.ok(ApiResponse.ok(summary));
     }

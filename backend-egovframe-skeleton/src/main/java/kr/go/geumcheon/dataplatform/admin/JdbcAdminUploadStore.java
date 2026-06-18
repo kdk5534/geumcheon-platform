@@ -88,6 +88,11 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
         String storedFilePath = storeOriginalFile(fileId, request, content);
         int savedRecordCount = saveDatasetRows(datasetId, request, draft, parsedRows);
         int sourceRecordCount = draft == null ? request.rowCount() : draft.rowCount();
+        // 원본 행이 있는데 저장이 0건이면 매핑이 잘못된 것이다. 트랜잭션 롤백으로 DELETE를 취소한다.
+        if (sourceRecordCount > 0 && savedRecordCount == 0) {
+            throw new IllegalStateException(
+                    "컬럼 매핑이 실제 데이터와 일치하지 않아 저장된 행이 없습니다. 매핑 설정을 확인해 주세요.");
+        }
         int sourceColumnCount = draft == null ? request.columnCount() : draft.columnCount();
         int skippedRecordCount = Math.max(0, sourceRecordCount - savedRecordCount);
         String message = "File upload committed with " + mappedColumnCount + " mapped columns; saved "

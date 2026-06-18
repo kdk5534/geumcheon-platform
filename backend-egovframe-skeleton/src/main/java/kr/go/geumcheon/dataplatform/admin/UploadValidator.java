@@ -78,6 +78,25 @@ public class UploadValidator {
         return errors;
     }
 
+    /**
+     * columnMappings의 키(CSV 원본 헤더명)가 실제 파일 헤더에 존재하는지 검사한다.
+     * 존재하지 않는 키가 있으면 매핑이 무효하고 전 행이 누락되어 데이터 소실로 이어진다.
+     */
+    public List<String> validateMappingKeys(List<String> csvHeaders, Map<String, String> mappings) {
+        List<String> errors = new ArrayList<>();
+        if (mappings == null || mappings.isEmpty() || csvHeaders == null) {
+            return errors;
+        }
+        Set<String> headerSet = new LinkedHashSet<>(csvHeaders);
+        List<String> unknownKeys = mappings.keySet().stream()
+                .filter(key -> key != null && !key.isBlank() && !headerSet.contains(key))
+                .toList();
+        if (!unknownKeys.isEmpty()) {
+            errors.add("column mappings reference headers not found in CSV: " + String.join(", ", unknownKeys));
+        }
+        return errors;
+    }
+
     public List<String> validateCommitCounts(CsvUploadDraft draft, UploadCommitRequest request) {
         List<String> errors = new ArrayList<>();
         int previewRowCount = draft == null ? 0 : draft.rowCount();

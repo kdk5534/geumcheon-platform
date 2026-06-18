@@ -194,6 +194,20 @@ public class PublicDataCollectorService {
             List<Map<String, String>> rows = fetchRows.fetch(requestUrl, spec.datasetName());
             int saved = saveRows.save(result.datasetId(), rows);
             Instant finishedAt = Instant.now();
+            // 응답 행이 있는데 저장이 0건이면 필드 불일치로 기존 데이터가 보존됐지만 수집 자체는 실패다.
+            if (!rows.isEmpty() && saved == 0) {
+                String warnMsg = "API returned " + rows.size() + " row(s) but 0 were saved"
+                        + " (field mismatch?). Existing snapshot preserved.";
+                repository.recordCollectionLog(
+                        result.datasetId(), "API", "FAILED",
+                        startedAt, finishedAt, rows.size(), 0, warnMsg, loggedRequestUrl, triggeredBy
+                );
+                return new CollectionRunResult(
+                        spec.datasetKey(), "failed", rows.size(), 0,
+                        warnMsg, loggedRequestUrl, startedAt, finishedAt,
+                        Duration.between(startedAt, finishedAt)
+                );
+            }
             repository.recordCollectionLog(
                     result.datasetId(), "API", "SUCCESS",
                     startedAt, finishedAt, rows.size(), saved, null, loggedRequestUrl, triggeredBy
@@ -431,13 +445,67 @@ public class PublicDataCollectorService {
                 + "/json/" + serviceId + "/" + start + "/" + end + "/";
     }
 
+    /**
+     * 서울 열린데이터광장 API를 페이지 순회하며 금천구 bbox 내 행만 수집한다.
+     * 위경도 필드는 데이터셋마다 다르므로 후보 키 목록을 순서대로 시도한다.
+     * bbox: 위도 37.43~37.50, 경도 126.87~126.92 (기존 BIKE/PARKING 필터와 동일)
+     *
+     * @param serviceId  열린데이터광장 서비스 ID
+     * @param pageSize   페이지당 행 수
+     * @param latKeys    위도 필드명 후보 목록 (순서대로 시도)
+     * @param lonKeys    경도 필드명 후보 목록 (순서대로 시도)
+     */
+    private List<Map<String, String>> fetchSeoulBboxFiltered(
+            String serviceId, int pageSize, String[] latKeys, String[] lonKeys
+    ) throws Exception {
+        List<Map<String, String>> all = new ArrayList<>();
+        int pageNo = 1;
+        while (true) {
+            int start = (pageNo - 1) * pageSize + 1;
+            int end = pageNo * pageSize;
+            JsonNode root = executeJsonWithRetry(buildSeoulOpenUrl(serviceId, start, end), serviceId + " page " + pageNo);
+            List<Map<String, String>> page = extractRows(root);
+            if (page.isEmpty()) {
+                break;
+            }
+            for (Map<String, String> row : page) {
+                String latStr = firstNonBlank(row, latKeys);
+                String lonStr = firstNonBlank(row, lonKeys);
+                if (latStr == null || lonStr == null) continue;
+                try {
+                    double lat = Double.parseDouble(latStr.trim());
+                    double lon = Double.parseDouble(lonStr.trim());
+                    if (lat >= BIKE_LAT_MIN && lat <= BIKE_LAT_MAX && lon >= BIKE_LON_MIN && lon <= BIKE_LON_MAX) {
+                        all.add(row);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            if (page.size() < pageSize) {
+                break;
+            }
+            pageNo++;
+            sleepBeforeStorePage();
+        }
+        return all;
+    }
+
+    /** 후보 키 목록 중 값이 있는 첫 번째 값을 반환한다. */
+    private static String firstNonBlank(Map<String, String> row, String[] keys) {
+        for (String key : keys) {
+            String v = row.get(key);
+            if (v != null && !v.isBlank()) return v;
+        }
+        return null;
+    }
+
     public CollectionRunResult syncPublicWifi(String triggeredBy) {
         // 서비스 ID: TbPublicWifiInfo (서울 열린데이터광장 — 서울시 공공와이파이 위치정보)
         // 필드: X_SWIFI_MAIN_NM(설치장소), INSTL_FLOR_INFO(설치위치), LAT, LNT
         return runSyncPipeline(
                 WIFI_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
                 () -> buildSeoulOpenUrl("TbPublicWifiInfo", 1, 1000),
-                this::fetchRowsWithRetry,
+                (url, name) -> fetchSeoulBboxFiltered("TbPublicWifiInfo", 1000,
+                        new String[]{"LAT"}, new String[]{"LNT", "LNG", "LOT"}),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "WIFI", rows),
                 saved -> "Saved " + saved + " public WiFi access point(s).",
                 triggeredBy);
@@ -449,7 +517,8 @@ public class PublicDataCollectorService {
         return runSyncPipeline(
                 HEAT_SHELTER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
                 () -> buildSeoulOpenUrl("TvCoolHouseInfo", 1, 500),
-                this::fetchRowsWithRetry,
+                (url, name) -> fetchSeoulBboxFiltered("TvCoolHouseInfo", 500,
+                        new String[]{"LAT"}, new String[]{"LOT", "LNG", "LNT"}),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "SHELTER", rows),
                 saved -> "Saved " + saved + " heat/cold shelter(s).",
                 triggeredBy);
@@ -461,7 +530,8 @@ public class PublicDataCollectorService {
         return runSyncPipeline(
                 SCHOOL_ZONE_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
                 () -> buildSeoulOpenUrl("schoolroadinfo", 1, 500),
-                this::fetchRowsWithRetry,
+                (url, name) -> fetchSeoulBboxFiltered("schoolroadinfo", 500,
+                        new String[]{"LAT", "Y"}, new String[]{"LOT", "LNG", "LNT", "X"}),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "SCHOOL_ZONE", rows),
                 saved -> "Saved " + saved + " school zone(s).",
                 triggeredBy);
@@ -473,7 +543,8 @@ public class PublicDataCollectorService {
         return runSyncPipeline(
                 EV_CHARGER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
                 () -> buildSeoulOpenUrl("EvCharger", 1, 500),
-                this::fetchRowsWithRetry,
+                (url, name) -> fetchSeoulBboxFiltered("EvCharger", 500,
+                        new String[]{"LAT"}, new String[]{"LNG", "LOT", "LNT"}),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);

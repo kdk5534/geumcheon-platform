@@ -335,7 +335,6 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     @Transactional
     @Override
     public int replaceStoreBusinesses(UUID datasetId, List<Map<String, String>> rows) {
-        jdbcTemplate.update("DELETE FROM store_business WHERE dataset_id = ?", datasetId);
         List<Object[]> batchRows = new ArrayList<>();
         for (Map<String, String> row : rows) {
             Object[] params = buildStoreBusinessRowParams(datasetId, row);
@@ -343,31 +342,34 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
-        if (!batchRows.isEmpty()) {
-            jdbcTemplate.batchUpdate("""
-                    INSERT INTO store_business (
-                        dataset_id,
-                        source_store_id,
-                        store_name,
-                        industry_large_code,
-                        industry_large_name,
-                        industry_middle_code,
-                        industry_middle_name,
-                        industry_small_code,
-                        industry_small_name,
-                        standard_industry_code,
-                        standard_industry_name,
-                        address_road,
-                        address_jibun,
-                        dong_code,
-                        geom,
-                        properties,
-                        data_base_time,
-                        is_active
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CAST(? AS jsonb), CURRENT_TIMESTAMP, TRUE)
-                    """, batchRows);
+        // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
+        if (batchRows.isEmpty()) {
+            return 0;
         }
+        jdbcTemplate.update("DELETE FROM store_business WHERE dataset_id = ?", datasetId);
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO store_business (
+                    dataset_id,
+                    source_store_id,
+                    store_name,
+                    industry_large_code,
+                    industry_large_name,
+                    industry_middle_code,
+                    industry_middle_name,
+                    industry_small_code,
+                    industry_small_name,
+                    standard_industry_code,
+                    standard_industry_name,
+                    address_road,
+                    address_jibun,
+                    dong_code,
+                    geom,
+                    properties,
+                    data_base_time,
+                    is_active
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CAST(? AS jsonb), CURRENT_TIMESTAMP, TRUE)
+                """, batchRows);
         return batchRows.size();
     }
 
@@ -383,7 +385,6 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 datasetId
         );
 
-        jdbcTemplate.update("DELETE FROM indicator_value WHERE indicator_id = ?", indicatorId);
         List<Object[]> batchRows = new ArrayList<>();
         for (Map<String, String> row : rows) {
             Object[] params = buildAirQualityRowParams(indicatorId, row);
@@ -391,30 +392,32 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
-        if (!batchRows.isEmpty()) {
-            jdbcTemplate.batchUpdate("""
-                    INSERT INTO indicator_value (
-                        indicator_id,
-                        area_type,
-                        area_code,
-                        area_name,
-                        value_numeric,
-                        value_text,
-                        value_json,
-                        observed_at,
-                        base_period,
-                        data_base_time
-                    )
-                    VALUES (?, 'DISTRICT', ?, ?, ?, ?, CAST(? AS jsonb), ?, ?, CURRENT_TIMESTAMP)
-                    """, batchRows);
+        // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
+        if (batchRows.isEmpty()) {
+            return 0;
         }
+        jdbcTemplate.update("DELETE FROM indicator_value WHERE indicator_id = ?", indicatorId);
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO indicator_value (
+                    indicator_id,
+                    area_type,
+                    area_code,
+                    area_name,
+                    value_numeric,
+                    value_text,
+                    value_json,
+                    observed_at,
+                    base_period,
+                    data_base_time
+                )
+                VALUES (?, 'DISTRICT', ?, ?, ?, ?, CAST(? AS jsonb), ?, ?, CURRENT_TIMESTAMP)
+                """, batchRows);
         return batchRows.size();
     }
 
     @Transactional
     @Override
     public int replaceFacilitySnapshot(UUID datasetId, String category, List<Map<String, String>> rows) {
-        jdbcTemplate.update("DELETE FROM facility WHERE dataset_id = ? AND facility_category = ?", datasetId, category);
         List<Object[]> batchRows = new ArrayList<>();
         for (Map<String, String> row : rows) {
             Object[] params = buildFacilityRowParams(datasetId, category, row);
@@ -422,28 +425,31 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
-        if (!batchRows.isEmpty()) {
-            jdbcTemplate.batchUpdate("""
-                    INSERT INTO facility (
-                        dataset_id,
-                        facility_category,
-                        facility_name,
-                        source_original_id,
-                        description,
-                        address_road,
-                        geom,
-                        properties,
-                        data_base_time
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?,
-                        CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL
-                             THEN NULL
-                             ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326)
-                        END,
-                        CAST(? AS jsonb),
-                        CURRENT_TIMESTAMP)
-                    """, batchRows);
+        // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
+        if (batchRows.isEmpty()) {
+            return 0;
         }
+        jdbcTemplate.update("DELETE FROM facility WHERE dataset_id = ? AND facility_category = ?", datasetId, category);
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO facility (
+                    dataset_id,
+                    facility_category,
+                    facility_name,
+                    source_original_id,
+                    description,
+                    address_road,
+                    geom,
+                    properties,
+                    data_base_time
+                )
+                VALUES (?, ?, ?, ?, ?, ?,
+                    CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL
+                         THEN NULL
+                         ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326)
+                    END,
+                    CAST(? AS jsonb),
+                    CURRENT_TIMESTAMP)
+                """, batchRows);
         return batchRows.size();
     }
 
@@ -460,8 +466,6 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 "행정안전부 행정동별 성/연령별 주민등록인구 (금천구)",
                 datasetId
         );
-
-        jdbcTemplate.update("DELETE FROM indicator_value WHERE indicator_id = ?", indicatorId);
 
         // API 필드명 디버깅을 위해 첫 번째 행의 키를 로깅한다
         if (!rows.isEmpty()) {
@@ -526,20 +530,23 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
             batchRows.add(new Object[]{indicatorId, dongName, total, valueJson, basePeriod});
         }
 
-        if (!batchRows.isEmpty()) {
-            jdbcTemplate.batchUpdate("""
-                    INSERT INTO indicator_value (
-                        indicator_id,
-                        area_type,
-                        area_name,
-                        value_numeric,
-                        value_json,
-                        base_period,
-                        data_base_time
-                    )
-                    VALUES (?, 'DONG', ?, ?, CAST(? AS jsonb), ?, CURRENT_TIMESTAMP)
-                    """, batchRows);
+        // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
+        if (batchRows.isEmpty()) {
+            return 0;
         }
+        jdbcTemplate.update("DELETE FROM indicator_value WHERE indicator_id = ?", indicatorId);
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO indicator_value (
+                    indicator_id,
+                    area_type,
+                    area_name,
+                    value_numeric,
+                    value_json,
+                    base_period,
+                    data_base_time
+                )
+                VALUES (?, 'DONG', ?, ?, CAST(? AS jsonb), ?, CURRENT_TIMESTAMP)
+                """, batchRows);
         return batchRows.size();
     }
 

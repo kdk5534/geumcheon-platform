@@ -340,10 +340,10 @@ function buildBarOption() {
       axisPointer: { type: "shadow" },
       formatter: (params) => {
         if (!params?.length) return "";
-        const area = params[0]?.name || "";
+        const area = escapeHtml(params[0]?.name || "");
         const rows = params.map((p) =>
           `<div style="display:flex;justify-content:space-between;gap:16px;padding:1px 0">` +
-          `<span style="color:#65736d">${p.seriesName}</span>` +
+          `<span style="color:#65736d">${escapeHtml(p.seriesName)}</span>` +
           `<strong>${Number(p.value).toLocaleString()}명</strong>` +
           `</div>`
         ).join("");
@@ -436,10 +436,10 @@ function buildAgeCompareOption() {
       trigger: "axis",
       axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const ageBand = params[0]?.axisValue || "";
+        const ageBand = escapeHtml(params[0]?.axisValue || "");
         const rows = params.map((p) =>
           `<div style="display:flex;justify-content:space-between;gap:16px">` +
-          `<span style="color:#65736d">${p.seriesName}</span>` +
+          `<span style="color:#65736d">${escapeHtml(p.seriesName)}</span>` +
           `<strong>${Number(p.value).toLocaleString()}명</strong></div>`
         ).join("");
         return `<div style="font-size:12px;min-width:180px">` +

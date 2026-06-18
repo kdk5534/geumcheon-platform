@@ -67,7 +67,7 @@ function buildHtml() {
   const byDongAll = {};
   Object.values(commercial).forEach((cat) => {
     (cat?.byDong || []).forEach((d) => {
-      byDongAll[d.dong] = (byDongAll[d.dong] || 0) + (d.count ?? 0);
+      byDongAll[d.name] = (byDongAll[d.name] || 0) + (d.count ?? 0);
     });
   });
   const topDong = Object.entries(byDongAll).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
@@ -409,10 +409,10 @@ function buildCrossOption() {
       trigger: "axis",
       axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const dong = params[0]?.axisValue || "";
+        const dong = escapeHtml(params[0]?.axisValue || "");
         const rows = params.map((p) =>
           `<div style="display:flex;justify-content:space-between;gap:16px">` +
-          `<span style="color:#65736d">${p.seriesName}</span>` +
+          `<span style="color:#65736d">${escapeHtml(p.seriesName)}</span>` +
           `<strong>${Number(p.value).toLocaleString()}개</strong></div>`
         ).join("");
         const total = params.reduce((s, p) => s + Number(p.value || 0), 0);

@@ -10,7 +10,7 @@ import {
   updateChoroplethLayer,
   renderChoroplethLegend,
 } from "../core/choropleth.js";
-import { injectPageCss, loadLeaflet } from "../core/assets.js";
+import { injectPageCss, loadLeaflet, createBaseTileLayer } from "../core/assets.js";
 import { calcCommercialTotal, buildDashHtml } from "./home-templates.js";
 
 // ─── 상수 ─────────────────────────────────────────────────────
@@ -63,15 +63,11 @@ export async function mount(container) {
   renderHeroStats();
   bindMapMetricToggle(container);
 
-  // Leaflet 지도 (비동기)
+  // Leaflet 지도 — 필수. 실패 시에만 에러 메시지 표시.
   try {
     await loadLeaflet();
     if (!isMounted) return;
     initHomeMap();
-
-    const geojson = await loadGeoJson();
-    if (!isMounted) return;
-    initHomeChoropleth(geojson);
   } catch (e) {
     const pane = document.getElementById("home-map-pane");
     if (pane && isMounted) {
@@ -82,6 +78,15 @@ export async function mount(container) {
         <a href="#/map" style="margin-top:8px;font-size:12px;color:#7dd3fa;text-decoration:underline">생활지도 바로가기 →</a>
       </div>`;
     }
+  }
+
+  // choropleth — 부가 기능. 실패해도 지도는 유지.
+  try {
+    const geojson = await loadGeoJson();
+    if (!isMounted) return;
+    initHomeChoropleth(geojson);
+  } catch (e) {
+    console.warn("[home] choropleth 로드 실패:", e.message);
   }
 
   // ECharts (비동기)
@@ -233,17 +238,20 @@ function initHomeMap() {
   const L = window.L;
   homeMap = L.map(mapEl, { zoomControl: true, attributionControl: true }).setView(GEUMCHEON_CENTER, 13);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(homeMap);
+  createBaseTileLayer(L).addTo(homeMap);
 
-  // 시설 마커 레이어
+  // 시설 마커 레이어 — featureGroup을 써야 bringToFront()가 choropleth 위에서 동작한다
   ["병원", "약국", "주차장", "안전"].forEach((cat) => {
-    homeMarkerLayers[cat] = L.layerGroup().addTo(homeMap);
+    homeMarkerLayers[cat] = L.featureGroup().addTo(homeMap);
   });
 
   buildHomeMarkers();
+
+  // 그리드 레이아웃이 확정된 뒤 Leaflet이 컨테이너 크기를 재계산하도록 한다.
+  // (flex: 1 컨테이너에서 L.map() 실행 시 높이가 0으로 잡히는 문제 방지)
+  requestAnimationFrame(() => {
+    if (homeMap) homeMap.invalidateSize();
+  });
 }
 
 function initHomeChoropleth(geojson) {
@@ -756,8 +764,8 @@ function renderInsightGeo() {
     tooltip: {
       trigger: "axis", axisPointer: { type: "shadow" },
       formatter: (params) => {
-        const name = params[0]?.name || "";
-        const parts = params.map((p) => `<span style="color:${p.color}">■</span> ${p.seriesName}: <strong>${p.value}</strong>점`).join("<br>");
+        const name = escapeHtml(params[0]?.name || "");
+        const parts = params.map((p) => `<span style="color:${p.color}">■</span> ${escapeHtml(p.seriesName)}: <strong>${p.value}</strong>점`).join("<br>");
         return `<div style="font-size:11px"><strong>${name}</strong><br>${parts}</div>`;
       }
     },

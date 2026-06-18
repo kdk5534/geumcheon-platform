@@ -58,7 +58,9 @@ public class UploadDraftManager {
         if (uploadId == null || uploadId.isBlank()) {
             return null;
         }
-        return uploadDrafts.get(uploadId);
+        synchronized (uploadDrafts) {
+            return uploadDrafts.get(uploadId);
+        }
     }
 
     public boolean isExpired(CsvUploadDraft draft) {
@@ -84,7 +86,9 @@ public class UploadDraftManager {
     @PreDestroy
     public void clear() {
         synchronized (uploadDrafts) {
-            uploadDrafts.keySet().forEach(this::deleteDraftLocked);
+            // keySet()을 직접 순회하면 deleteDraftLocked 내부 remove()가 CME를 일으킨다.
+            // 스냅샷을 만든 뒤 순회한다.
+            List.copyOf(uploadDrafts.keySet()).forEach(this::deleteDraftLocked);
             uploadDrafts.clear();
         }
     }

@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,6 +30,10 @@ public class PublicDataCollectorService {
 
     private static final String STATS_STORE_KEY = "stores";
     private static final String AIR_QUALITY_KEY = "air-quality";
+    private static final String BIKE_KEY = "bike-stations";
+    private static final String CCTV_KEY = "cctv-stations";
+    private static final String PARKING_KEY = "parking-lots";
+    private static final String POPULATION_KEY = "population";
     private static final Logger log = LoggerFactory.getLogger(PublicDataCollectorService.class);
 
     private final PublicDataRepository repository;
@@ -116,7 +122,11 @@ public class PublicDataCollectorService {
     public List<PublicDataRepository.CollectorSpec> specs() {
         return List.of(
                 collectorSpec(STATS_STORE_KEY, hasValue(dataGoKrApiKey)),
-                collectorSpec(AIR_QUALITY_KEY, hasValue(seoulOpenApiKey))
+                collectorSpec(AIR_QUALITY_KEY, hasValue(seoulOpenApiKey)),
+                collectorSpec(BIKE_KEY, hasValue(seoulOpenApiKey)),
+                collectorSpec(CCTV_KEY, hasValue(seoulOpenApiKey)),
+                collectorSpec(PARKING_KEY, hasValue(seoulOpenApiKey)),
+                collectorSpec(POPULATION_KEY, hasValue(dataGoKrApiKey))
         );
     }
 
@@ -128,6 +138,68 @@ public class PublicDataCollectorService {
         return repository.recentApiLogs(specs());
     }
 
+    // ─── 공통 sync 골격 ──────────────────────────────────────────────────────────
+
+    /** 행 데이터를 수집하는 함수형 인터페이스 — 체크 예외를 허용한다. */
+    @FunctionalInterface
+    private interface RowFetcher {
+        List<Map<String, String>> fetch(String requestUrl, String datasetName) throws Exception;
+    }
+
+    /** 행 데이터를 저장하는 함수형 인터페이스. */
+    @FunctionalInterface
+    private interface RowSaver {
+        int save(java.util.UUID datasetId, List<Map<String, String>> rows);
+    }
+
+    /**
+     * 공공데이터 단건 수집의 공통 골격.
+     * URL 생성 → API 키 검사 → 행 수집 → 저장 → 로그 기록 → 결과 반환을 일원화한다.
+     */
+    private CollectionRunResult runSyncPipeline(
+            String datasetKey,
+            String requiredApiKey,
+            String apiKeyMissingMsg,
+            java.util.function.Supplier<String> buildRequestUrl,
+            RowFetcher fetchRows,
+            RowSaver saveRows,
+            java.util.function.Function<Integer, String> successMsg,
+            String triggeredBy
+    ) {
+        PublicDataRepository.CollectorSpec spec = specs().stream()
+                .filter(item -> datasetKey.equals(item.datasetKey()))
+                .findFirst()
+                .orElseThrow();
+
+        Instant startedAt = Instant.now();
+        String requestUrl = buildRequestUrl.get();
+        String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
+        UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
+
+        if (requiredApiKey == null || requiredApiKey.isBlank()) {
+            return finishSkipped(spec, startedAt, loggedRequestUrl, apiKeyMissingMsg, triggeredBy, result.datasetId());
+        }
+
+        try {
+            List<Map<String, String>> rows = fetchRows.fetch(requestUrl, spec.datasetName());
+            int saved = saveRows.save(result.datasetId(), rows);
+            Instant finishedAt = Instant.now();
+            repository.recordCollectionLog(
+                    result.datasetId(), "API", "SUCCESS",
+                    startedAt, finishedAt, rows.size(), saved, null, loggedRequestUrl, triggeredBy
+            );
+            return new CollectionRunResult(
+                    spec.datasetKey(), "success", rows.size(), saved,
+                    successMsg.apply(saved),
+                    loggedRequestUrl, startedAt, finishedAt, Duration.between(startedAt, finishedAt)
+            );
+        } catch (Exception error) {
+            return finishFailed(spec, startedAt, loggedRequestUrl, error, triggeredBy, result.datasetId());
+        }
+    }
+
+    // ─── 공개 sync 메서드 ─────────────────────────────────────────────────────────
+
     public List<CollectionRunResult> syncAll(String triggeredBy) {
         if (!beginCollectorRun()) {
             return busyResults(triggeredBy);
@@ -137,6 +209,10 @@ public class PublicDataCollectorService {
             List<CollectionRunResult> results = new ArrayList<>();
             results.add(syncStores(triggeredBy));
             results.add(syncAirQuality(triggeredBy));
+            results.add(syncBikeStations(triggeredBy));
+            results.add(syncCctvStations(triggeredBy));
+            results.add(syncParkingLots(triggeredBy));
+            results.add(syncPopulation(triggeredBy));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -169,6 +245,10 @@ public class PublicDataCollectorService {
             return switch (datasetKey) {
                 case STATS_STORE_KEY -> syncStores(triggeredBy);
                 case AIR_QUALITY_KEY -> syncAirQuality(triggeredBy);
+                case BIKE_KEY -> syncBikeStations(triggeredBy);
+                case CCTV_KEY -> syncCctvStations(triggeredBy);
+                case PARKING_KEY -> syncParkingLots(triggeredBy);
+                case POPULATION_KEY -> syncPopulation(triggeredBy);
                 default -> missingRoutineResult(spec);
             };
         } finally {
@@ -177,97 +257,181 @@ public class PublicDataCollectorService {
     }
 
     public CollectionRunResult syncStores(String triggeredBy) {
-        PublicDataRepository.CollectorSpec spec = specs().stream()
-                .filter(item -> STATS_STORE_KEY.equals(item.datasetKey()))
-                .findFirst()
-                .orElseThrow();
-
-        Instant startedAt = Instant.now();
-        String requestUrl = buildStoreRequestUrl(1);
-        String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
-        UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
-
-        if (dataGoKrApiKey == null || dataGoKrApiKey.isBlank()) {
-            return finishSkipped(spec, startedAt, loggedRequestUrl, "DATA_GO_KR_API_KEY is missing.", triggeredBy, result.datasetId());
-        }
-
-        try {
-            List<Map<String, String>> rows = fetchStoreRowsWithRetry(spec.datasetName());
-            int saved = repository.replaceStoreBusinesses(result.datasetId(), rows);
-            Instant finishedAt = Instant.now();
-            repository.recordCollectionLog(
-                    result.datasetId(),
-                    "API",
-                    "SUCCESS",
-                    startedAt,
-                    finishedAt,
-                    rows.size(),
-                    saved,
-                    null,
-                    loggedRequestUrl,
-                    triggeredBy
-            );
-            return new CollectionRunResult(
-                    spec.datasetKey(),
-                    "success",
-                    rows.size(),
-                    saved,
-                    "Saved " + saved + " store record(s).",
-                    loggedRequestUrl,
-                    startedAt,
-                    finishedAt,
-                    Duration.between(startedAt, finishedAt)
-            );
-        } catch (Exception error) {
-            return finishFailed(spec, startedAt, loggedRequestUrl, error, triggeredBy, result.datasetId());
-        }
+        return runSyncPipeline(
+                STATS_STORE_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY is missing.",
+                () -> buildStoreRequestUrl(1),
+                (url, name) -> fetchStoreRowsWithRetry(name),
+                repository::replaceStoreBusinesses,
+                saved -> "Saved " + saved + " store record(s).",
+                triggeredBy);
     }
 
     public CollectionRunResult syncAirQuality(String triggeredBy) {
-        PublicDataRepository.CollectorSpec spec = specs().stream()
-                .filter(item -> AIR_QUALITY_KEY.equals(item.datasetKey()))
-                .findFirst()
-                .orElseThrow();
+        return runSyncPipeline(
+                AIR_QUALITY_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                this::buildAirQualityRequestUrl,
+                this::fetchRowsWithRetry,
+                repository::replaceAirQualitySnapshot,
+                saved -> "Saved " + saved + " air quality record(s).",
+                triggeredBy);
+    }
 
-        Instant startedAt = Instant.now();
-        String requestUrl = buildAirQualityRequestUrl();
-        String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
-        UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
+    public CollectionRunResult syncBikeStations(String triggeredBy) {
+        return runSyncPipeline(
+                BIKE_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildBikeRequestUrl(1),
+                (url, name) -> fetchBikeRowsWithFilter(),
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "BIKE", rows),
+                saved -> "Saved " + saved + " bike station(s).",
+                triggeredBy);
+    }
 
-        if (seoulOpenApiKey == null || seoulOpenApiKey.isBlank()) {
-            return finishSkipped(spec, startedAt, loggedRequestUrl, "SEOUL_OPEN_API_KEY is missing.", triggeredBy, result.datasetId());
+    // 금천구 bbox (위도 37.43~37.50, 경도 126.87~126.92)
+    private static final double BIKE_LAT_MIN = 37.43;
+    private static final double BIKE_LAT_MAX = 37.50;
+    private static final double BIKE_LON_MIN = 126.87;
+    private static final double BIKE_LON_MAX = 126.92;
+
+    private List<Map<String, String>> fetchBikeRowsWithFilter() throws Exception {
+        List<Map<String, String>> all = new ArrayList<>();
+        int pageSize = 1000;
+        int pageNo = 1;
+        while (true) {
+            int start = (pageNo - 1) * pageSize + 1;
+            int end = pageNo * pageSize;
+            JsonNode root = executeJsonWithRetry(buildBikeRequestUrl(start, end), "bike-stations page " + pageNo);
+            List<Map<String, String>> page = extractRows(root);
+            if (page.isEmpty()) {
+                break;
+            }
+            for (Map<String, String> row : page) {
+                String latStr = row.get("stationLatitude");
+                String lonStr = row.get("stationLongitude");
+                if (latStr == null || lonStr == null) continue;
+                try {
+                    double lat = Double.parseDouble(latStr.trim());
+                    double lon = Double.parseDouble(lonStr.trim());
+                    if (lat >= BIKE_LAT_MIN && lat <= BIKE_LAT_MAX && lon >= BIKE_LON_MIN && lon <= BIKE_LON_MAX) {
+                        all.add(row);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            if (page.size() < pageSize) {
+                break;
+            }
+            pageNo++;
+            sleepBeforeStorePage();
         }
+        return all;
+    }
 
+    private String buildBikeRequestUrl(int start, int end) {
+        return "http://openapi.seoul.go.kr:8088/"
+                + normalizeKeyValue(seoulOpenApiKey)
+                + "/json/bikeList/" + start + "/" + end + "/";
+    }
+
+    private String buildBikeRequestUrl(int pageNo) {
+        int start = (pageNo - 1) * 1000 + 1;
+        int end = pageNo * 1000;
+        return buildBikeRequestUrl(start, end);
+    }
+
+    public CollectionRunResult syncCctvStations(String triggeredBy) {
+        return runSyncPipeline(
+                CCTV_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                this::buildCctvRequestUrl,
+                this::fetchRowsWithRetry,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "CCTV", rows),
+                saved -> "Saved " + saved + " CCTV station(s).",
+                triggeredBy);
+    }
+
+    private String buildCctvRequestUrl() {
+        return "http://openapi.seoul.go.kr:8088/"
+                + normalizeKeyValue(seoulOpenApiKey)
+                + "/json/TB_GC_VVTV_INFO_ID01/1/400/";
+    }
+
+    public CollectionRunResult syncParkingLots(String triggeredBy) {
+        return runSyncPipeline(
+                PARKING_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildParkingRequestUrl(1, 500),
+                (url, name) -> fetchParkingRowsWithFilter(),
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "PARKING", rows),
+                saved -> "Saved " + saved + " parking lot(s).",
+                triggeredBy);
+    }
+
+    private List<Map<String, String>> fetchParkingRowsWithFilter() throws Exception {
+        List<Map<String, String>> all = new ArrayList<>();
+        int pageSize = 500;
+        int pageNo = 1;
+        while (true) {
+            int start = (pageNo - 1) * pageSize + 1;
+            int end = pageNo * pageSize;
+            JsonNode root = executeJsonWithRetry(buildParkingRequestUrl(start, end), "parking-lots page " + pageNo);
+            List<Map<String, String>> page = extractRows(root);
+            if (page.isEmpty()) {
+                break;
+            }
+            for (Map<String, String> row : page) {
+                String latStr = row.get("LAT");
+                String lonStr = row.get("LOT");
+                if (latStr == null || latStr.isBlank() || lonStr == null || lonStr.isBlank()) continue;
+                try {
+                    double lat = Double.parseDouble(latStr.trim());
+                    double lon = Double.parseDouble(lonStr.trim());
+                    if (lat >= BIKE_LAT_MIN && lat <= BIKE_LAT_MAX && lon >= BIKE_LON_MIN && lon <= BIKE_LON_MAX) {
+                        all.add(row);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            if (page.size() < pageSize) {
+                break;
+            }
+            pageNo++;
+            sleepBeforeStorePage();
+        }
+        return all;
+    }
+
+    private String buildParkingRequestUrl(int start, int end) {
+        return "http://openapi.seoul.go.kr:8088/"
+                + normalizeKeyValue(seoulOpenApiKey)
+                + "/json/GetParkInfo/" + start + "/" + end + "/"
+                + "?ADDR=" + java.net.URLEncoder.encode("금천", java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    public CollectionRunResult syncPopulation(String triggeredBy) {
+        return runSyncPipeline(
+                POPULATION_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY is missing.",
+                this::buildPopulationRequestUrl,
+                this::fetchRowsWithRetry,
+                repository::replacePopulationSnapshot,
+                saved -> "Saved " + saved + " population record(s).",
+                triggeredBy);
+    }
+
+    private String buildPopulationRequestUrl() {
+        LocalDate prev = LocalDate.now().minusMonths(1);
+        String yearMonth = String.format("%d%02d", prev.getYear(), prev.getMonthValue());
+        String encodedKey;
         try {
-            List<Map<String, String>> rows = fetchRowsWithRetry(requestUrl, spec.datasetName());
-            int saved = repository.replaceAirQualitySnapshot(result.datasetId(), rows);
-            Instant finishedAt = Instant.now();
-            repository.recordCollectionLog(
-                    result.datasetId(),
-                    "API",
-                    "SUCCESS",
-                    startedAt,
-                    finishedAt,
-                    rows.size(),
-                    saved,
-                    null,
-                    loggedRequestUrl,
-                    triggeredBy
-            );
-            return new CollectionRunResult(
-                    spec.datasetKey(),
-                    "success",
-                    rows.size(),
-                    saved,
-                    "Saved " + saved + " air quality record(s).",
-                    loggedRequestUrl,
-                    startedAt,
-                    finishedAt,
-                    Duration.between(startedAt, finishedAt)
-            );
-        } catch (Exception error) {
-            return finishFailed(spec, startedAt, loggedRequestUrl, error, triggeredBy, result.datasetId());
+            encodedKey = URLEncoder.encode(normalizeKeyValue(dataGoKrApiKey), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            encodedKey = normalizeKeyValue(dataGoKrApiKey);
         }
+        return "https://apis.data.go.kr/1741000/admmSexdAgePpltn/selectAdmmSexdAgePpltn"
+                + "?serviceKey=" + encodedKey
+                + "&admmCd=1154500000"
+                + "&srchFrYm=" + yearMonth
+                + "&srchToYm=" + yearMonth
+                + "&lv=3"
+                + "&regSeCd=1"
+                + "&type=json"
+                + "&numOfRows=50"
+                + "&pageNo=1";
     }
 
     private CollectionRunResult finishSkipped(
@@ -362,7 +526,7 @@ public class PublicDataCollectorService {
     }
 
     private String buildAirQualityRequestUrl() {
-        return "https://openAPI.seoul.go.kr:8088/"
+        return "http://openAPI.seoul.go.kr:8088/"
                 + normalizeKeyValue(seoulOpenApiKey)
                 + "/json/ListAirQualityByDistrictService/1/25/";
     }
@@ -641,7 +805,7 @@ public class PublicDataCollectorService {
         if (node == null) {
             return null;
         }
-        if (node.isArray()) {
+        if (node.isArray() && isObjectArray(node)) {
             return node;
         }
         if (node.isObject()) {
@@ -650,7 +814,7 @@ public class PublicDataCollectorService {
                 if (direct == null) {
                     continue;
                 }
-                if (direct.isArray()) {
+                if (direct.isArray() && isObjectArray(direct)) {
                     return direct;
                 }
                 JsonNode nested = findArrayNode(direct);
@@ -666,6 +830,15 @@ public class PublicDataCollectorService {
             }
         }
         return null;
+    }
+
+    // 빈 배열이거나 첫 요소가 객체인 경우에만 데이터 행 배열로 간주한다.
+    // header.columns 같은 문자열 배열을 건너뛰기 위해 사용한다.
+    private boolean isObjectArray(JsonNode array) {
+        if (array.isEmpty()) {
+            return true;
+        }
+        return array.get(0).isObject();
     }
 
     private Map<String, String> flatten(JsonNode object) {

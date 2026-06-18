@@ -13,18 +13,33 @@ export const CHART_PALETTE = [
   "#bd493c", // --red
 ];
 
-// 차트 텍스트·그리드 공통 색상
-export const CHART_COLORS = {
-  text:    "#65736d", // --muted
-  line:    "#d8e0dd", // --line
-  ink:     "#14201b", // --ink
-  surface: "#ffffff", // --surface
+// 차트 텍스트·그리드 공통 색상 — Proxy로 현재 CSS 변수를 실시간 반환한다.
+// 다크 테마 전환 후 페이지가 remount되면 render 시점 토큰을 읽어 자동 적용된다.
+const _COLOR_MAP = {
+  text:    "--text-secondary",
+  line:    "--border-subtle",
+  ink:     "--text-primary",
+  surface: "--surface-base",
+  muted:   "--text-tertiary",
 };
+const _COLOR_FALLBACK = {
+  text: "#65736d", line: "#d8e0dd", ink: "#14201b", surface: "#ffffff", muted: "#8a9e97",
+};
+export const CHART_COLORS = new Proxy({}, {
+  get(_, key) {
+    const cssVar = _COLOR_MAP[key];
+    if (!cssVar) return _COLOR_FALLBACK[key] ?? "#65736d";
+    return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
+      || _COLOR_FALLBACK[key];
+  },
+});
 
-// 모든 ECharts 차트에 적용할 기본 테마 옵션
+const _FONT = '"Pretendard", "Pretendard Variable", "Noto Sans KR", "Malgun Gothic", sans-serif';
+
+// 모든 ECharts 차트에 적용할 기본 테마 옵션 (fontFamily 참조 용도로만 유지)
 export const BASE_OPTION = {
   backgroundColor: "transparent",
-  textStyle: { fontFamily: '"Pretendard", "Pretendard Variable", "Noto Sans KR", "Malgun Gothic", sans-serif', color: CHART_COLORS.text, fontSize: 12 },
+  textStyle: { fontFamily: _FONT, color: "#65736d", fontSize: 12 },
   color: CHART_PALETTE,
 };
 
@@ -70,7 +85,13 @@ const observerMap = new WeakMap();
  */
 export function createChart(el, option) {
   const chart = window.echarts.init(el, null, { renderer: "canvas" });
-  chart.setOption({ ...BASE_OPTION, ...option });
+  // 현재 테마 토큰을 읽어 기본 옵션을 동적으로 구성한다. (CHART_COLORS는 Proxy)
+  const dynamicBase = {
+    backgroundColor: "transparent",
+    textStyle: { fontFamily: _FONT, color: CHART_COLORS.text, fontSize: 12 },
+    color: CHART_PALETTE,
+  };
+  chart.setOption({ ...dynamicBase, ...option });
 
   const observer = new ResizeObserver(() => chart.resize());
   observer.observe(el);

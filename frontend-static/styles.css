@@ -115,6 +115,22 @@ select {
   color: #fff;
 }
 
+/* 테마 토글 버튼 */
+.util-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.55);
+  transition: color 0.15s;
+  vertical-align: middle;
+}
+.util-theme-toggle:hover { color: #fff; }
+.util-theme-toggle svg { display: block; }
+
 @media (max-width: 640px) {
   .util-bar-date { display: none; }
   .util-bar-links { gap: 12px; font-size: 11px; }
@@ -122,7 +138,7 @@ select {
 
 .topbar {
   position: sticky;
-  top: 0;
+  top: 34px; /* pulse-bar 높이(34px) 아래에 스택 */
   z-index: 20;
   /* ::after 강조선 기준 */
   isolation: isolate;
@@ -326,12 +342,6 @@ h3 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
   margin-top: var(--space-4);
-}
-
-/* metric-card: 최종 정의는 styles.css 하단(1917)에 있음. 이 블록은 제거. */
-
-.metric-card:nth-child(4) {
-  border-top-color: var(--violet);
 }
 
 .metric-top {
@@ -1876,8 +1886,7 @@ select {
 .geo-industry-card,
 .api-log-card,
 .cml-kpi-card,
-.cml-chart-card,
-.metric-card {
+.cml-chart-card {
   border-radius: var(--radius-xl);
 }
 

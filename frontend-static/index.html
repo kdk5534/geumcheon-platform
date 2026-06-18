@@ -39,7 +39,47 @@
           <a href="https://www.geumcheon.go.kr" target="_blank" rel="noopener noreferrer">금천구청 홈페이지</a>
           <a href="https://data.seoul.go.kr" target="_blank" rel="noopener noreferrer">서울 열린데이터</a>
           <a href="https://data.go.kr" target="_blank" rel="noopener noreferrer">공공데이터포털</a>
+          <button class="util-theme-toggle" id="util-theme-toggle" title="테마 전환" aria-label="다크 모드로 전환"></button>
         </div>
+      </div>
+    </div>
+
+    <!-- PULSE BAR: 실시간 도시 텔레메트리 스트립 (가산 정밀기기 컨셉) -->
+    <div class="pulse-bar" role="complementary" aria-label="실시간 도시현황 요약" id="pulse-bar">
+      <div class="pulse-bar-inner">
+        <span class="pulse-bar-label">실시간</span>
+        <div class="pulse-bar-items" id="pulse-items">
+          <span class="pulse-item" data-key="temp">
+            <span class="pulse-dot pulse-dot--ok"></span>
+            <span class="pulse-key">기온</span>
+            <span class="pulse-val" id="pulse-temp">--°C</span>
+          </span>
+          <span class="pulse-sep" aria-hidden="true">|</span>
+          <span class="pulse-item" data-key="air">
+            <span class="pulse-dot pulse-dot--ok"></span>
+            <span class="pulse-key">미세먼지</span>
+            <span class="pulse-val" id="pulse-air">--</span>
+          </span>
+          <span class="pulse-sep" aria-hidden="true">|</span>
+          <span class="pulse-item" data-key="traffic">
+            <span class="pulse-dot pulse-dot--ok"></span>
+            <span class="pulse-key">교통</span>
+            <span class="pulse-val" id="pulse-traffic">--</span>
+          </span>
+          <span class="pulse-sep" aria-hidden="true">|</span>
+          <span class="pulse-item" data-key="stores">
+            <span class="pulse-dot pulse-dot--ok"></span>
+            <span class="pulse-key">등록점포</span>
+            <span class="pulse-val" id="pulse-stores">--</span>
+          </span>
+          <span class="pulse-sep" aria-hidden="true">|</span>
+          <span class="pulse-item" data-key="pop">
+            <span class="pulse-dot pulse-dot--ok"></span>
+            <span class="pulse-key">주민등록인구</span>
+            <span class="pulse-val" id="pulse-pop">--</span>
+          </span>
+        </div>
+        <span class="pulse-bar-time" id="pulse-time" aria-live="polite"></span>
       </div>
     </div>
 
@@ -105,6 +145,7 @@
       </div>
     </footer>
 
+    <script src="/env-config.js"></script>
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>

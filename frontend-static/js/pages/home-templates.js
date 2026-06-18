@@ -234,12 +234,8 @@ export function buildDashHtml(metric) {
   return `
 <div class="home-dash">
 
-  <!-- ─ 상단 타이틀 띠 ─ -->
+  <!-- ─ 상단 타이틀 띠 — 슬림 단행 (상황판 밀도) ─ -->
   <header class="home-dash-header">
-    <div class="home-dash-emblem" aria-hidden="true">
-      <img src="./assets/brand/emblem-30th.png" alt="" width="64" height="64" style="object-fit:contain;display:block">
-    </div>
-
     <div class="home-dash-brand">
       <p class="home-dash-eyebrow" id="home-eyebrow">${escapeHtml(asOf)} 기준 · ${escapeHtml(sourceText)}</p>
       <h1 class="home-dash-title-text">금천구 도시·생활 데이터플랫폼</h1>
@@ -252,20 +248,20 @@ export function buildDashHtml(metric) {
       </div>
       <div class="home-hdr-stat">
         <span class="home-hdr-stat-val">${facilityCount || "—"}</span>
-        <span class="home-hdr-stat-label">등록 시설</span>
+        <span class="home-hdr-stat-label">시설</span>
       </div>
       <div class="home-hdr-stat">
         <span class="home-hdr-stat-val">${totalSources}</span>
-        <span class="home-hdr-stat-label">데이터 소스</span>
+        <span class="home-hdr-stat-label">데이터소스</span>
       </div>
     </div>
 
     <form class="home-search-form home-dash-search" role="search" aria-label="화면 검색">
       <label class="sr-only" for="home-search-input">화면 검색</label>
       <div class="home-search-wrap">
-        <span class="home-search-icon" aria-hidden="true">${icon("search", { size: 15 })}</span>
+        <span class="home-search-icon" aria-hidden="true">${icon("search", { size: 14 })}</span>
         <input id="home-search-input" class="home-search-input" type="search"
-               placeholder="화면 검색 (상권, 지도, 인구…)"
+               placeholder="상권·지도·인구…"
                autocomplete="off" spellcheck="false">
         <button class="home-search-btn" type="submit">이동</button>
       </div>
@@ -273,7 +269,7 @@ export function buildDashHtml(metric) {
 
     <div class="home-dash-badges">
       <span class="home-mode-badge" id="home-mode-badge" aria-label="현재 데이터 모드">${escapeHtml(sourceText)}</span>
-      <a class="home-dash-badge-link" href="#/api">${icon("activity", { size: 11 })} API 현황</a>
+      <a class="home-dash-badge-link" href="#/api">${icon("activity", { size: 11 })} API</a>
     </div>
   </header>
 

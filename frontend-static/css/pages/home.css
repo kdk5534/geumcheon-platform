@@ -10,17 +10,18 @@
 }
 
 /* ─────────────────────────────────────────
-   상단 타이틀 띠 (금천 공식 시안→마젠타 그라디언트)
+   상단 타이틀 띠 — 슬림 단행 배너 (상황판 밀도)
 ───────────────────────────────────────── */
 .home-dash-header {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-5) var(--space-8);
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-6);  /* 압축: 5×8 → 2×6 */
   background: var(--grad-brand);
   border-radius: var(--radius-xl);
   color: #fff;
   box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.10) inset;
+  min-height: 52px;  /* 고정 높이로 덜 팽창 */
 }
 
 .home-dash-emblem {
@@ -80,17 +81,18 @@
 
 .home-dash-title-text {
   margin: 0;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);  /* 22px → 18px 슬림 */
   font-weight: 900;
   color: #fff;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .home-dash-search {
   flex: 1;
   min-width: 0;
-  max-width: 360px;
+  max-width: 260px;  /* 압축: 360px → 260px */
   margin: 0;
 }
 
@@ -154,11 +156,11 @@
 .home-search-input {
   flex: 1;
   min-width: 0;
-  padding: var(--space-2) 0;
+  padding: 5px 0;  /* 압축: space-2(8px) → 5px */
   background: transparent;
   border: none;
   color: #fff;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);  /* 슬림: text-sm → text-xs */
   font-family: inherit;
   outline: none;
 }
@@ -173,7 +175,7 @@
 
 .home-search-btn {
   flex-shrink: 0;
-  padding: var(--space-2) var(--space-4);
+  padding: 5px var(--space-3);  /* 압축 */
   background: rgba(255,255,255,0.15);
   border: none;
   border-left: 1px solid rgba(255,255,255,0.18);
@@ -259,9 +261,9 @@
 ───────────────────────────────────────── */
 .home-dash-body {
   display: grid;
-  grid-template-columns: 248px 1fr 252px;
+  grid-template-columns: 228px 1fr 228px;  /* 좌우 축소 → 지도 더 넓게 */
   gap: var(--space-3);
-  min-height: 600px;
+  min-height: max(600px, calc(100vh - 280px));  /* 뷰포트를 꽉 채우는 고밀도 상황판 */
 }
 
 /* ─────────────────────────────────────────
@@ -461,7 +463,9 @@
   overflow: hidden;
   border: 1px solid var(--line);
   box-shadow: var(--shadow-md);
-  min-height: 0;
+  /* min-height: 0 단독으로는 flex 자식의 height: 100%가 작동 안 함 */
+  height: 100%;
+  min-height: 600px;
 }
 
 /* 지표 토글 바 */
@@ -470,8 +474,8 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
-  background: rgba(255,255,255,0.97);
-  border-bottom: 1px solid var(--line);
+  background: var(--surface-base);  /* 시맨틱 토큰 — 다크 모드 대응 */
+  border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: blur(4px);
   flex-shrink: 0;
   z-index: 10;
@@ -562,7 +566,7 @@
   position: absolute;
   bottom: var(--space-4);
   left: var(--space-4);
-  background: rgba(255,255,255,0.93);
+  background: var(--surface-base);  /* 다크 모드 대응 */
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
@@ -610,7 +614,7 @@
   gap: var(--space-3);
   min-width: 0;
   overflow-y: auto;
-  max-height: 580px;
+  max-height: 600px;  /* 좌·중 패널 min-height(600px)와 정렬 */
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -628,9 +632,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);  /* 압축: space-3×4 → 2×3 */
   border-bottom: 1px solid var(--line);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 700;
   color: var(--ink);
 }
@@ -648,8 +652,8 @@
 }
 
 .home-right-chart {
-  height: 175px;
-  padding: var(--space-2) var(--space-1);
+  height: 155px;  /* 압축: 175px → 155px */
+  padding: var(--space-1) var(--space-1);
 }
 
 /* ─── 실시간 현황 요약 위젯 (우 패널 상단) ────────────────── */

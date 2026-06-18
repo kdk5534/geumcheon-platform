@@ -666,15 +666,29 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
 
     private Object[] buildFacilityRowParams(UUID datasetId, String category, Map<String, String> row) {
         Map<String, String> n = normalizeRow(row);
-        String name = firstValue(n, "stationName", "cctv_nm", "pklt_nm", "시설명", "name");
+        String name = firstValue(n,
+                "stationName", "cctv_nm", "pklt_nm", "시설명", "name",
+                // P4 신규: 공공와이파이(X_SWIFI_MAIN_NM), 무더위쉼터(SHTER_NM), 어린이보호구역(ZONE_NM), 전기차충전소(STAT_NM)
+                "X_SWIFI_MAIN_NM", "SHTER_NM", "ZONE_NM", "STAT_NM");
         if (name == null || name.isBlank()) {
             return null;
         }
-        String originalId = firstValue(n, "stationId", "cctv_manage_no", "pklt_cd", "id");
-        String description = firstValue(n, "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "description");
-        String address = firstValue(n, "addr", "daddr", "crd_addr", "도로명주소", "지번주소", "rdnmadr", "address");
-        String lat = firstValue(n, "stationLatitude", "la", "lat", "위도", "latitude", "y_dnts");
-        String lon = firstValue(n, "stationLongitude", "lo", "lot", "lon", "경도", "longitude", "x_dnts");
+        String originalId = firstValue(n,
+                "stationId", "cctv_manage_no", "pklt_cd", "id",
+                "X_SWIFI_WRDNFC_NO", "SHTER_MANAGE_NO", "STAT_ID");
+        String description = firstValue(n,
+                "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "description",
+                "INSTL_FLOR_INFO", "SHTER_SE_NM", "CHARGER_TYPE_NM");
+        String address = firstValue(n,
+                "addr", "daddr", "crd_addr", "도로명주소", "지번주소", "rdnmadr", "address",
+                "REFINE_ROADNM_ADDR", "ADDR");
+        String lat = firstValue(n,
+                "stationLatitude", "la", "lat", "위도", "latitude", "y_dnts",
+                "REFINE_WGS84_LAT");
+        String lon = firstValue(n,
+                "stationLongitude", "lo", "lot", "lon", "경도", "longitude", "x_dnts",
+                // P4 신규: LNT(공공와이파이 경도), LNG(전기차충전소 경도)
+                "LNT", "LNG", "REFINE_WGS84_LOGT");
         String properties = toJson(row);
         // lon, lat 순서: ST_MakePoint(경도, 위도)
         return new Object[]{

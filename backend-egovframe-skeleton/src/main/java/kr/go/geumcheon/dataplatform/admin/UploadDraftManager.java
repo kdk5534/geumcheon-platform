@@ -7,18 +7,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class UploadDraftManager {
 
     private final Duration previewDraftTtl;
     private final int maxPreviewDrafts;
     private final Path tempDirectory;
-    private final ConcurrentMap<String, CsvUploadDraft> uploadDrafts = new ConcurrentHashMap<>();
+    // 삽입 순서를 보존해 eviction 시 가장 오래된 항목이 결정론적으로 제거된다.
+    // 모든 접근이 synchronized이므로 ConcurrentHashMap 불필요.
+    private final Map<String, CsvUploadDraft> uploadDrafts = new LinkedHashMap<>();
 
     public UploadDraftManager(Duration previewDraftTtl, int maxPreviewDrafts) {
         this(previewDraftTtl, maxPreviewDrafts, Path.of(System.getProperty("java.io.tmpdir")));
@@ -124,14 +125,9 @@ public class UploadDraftManager {
         if (overflow <= 0) {
             return;
         }
-
-        List<CsvUploadDraft> oldestDrafts = uploadDrafts.values().stream()
-                .sorted(Comparator.comparing(CsvUploadDraft::createdAt, Comparator.nullsLast(Comparator.naturalOrder())))
-                .limit(overflow)
-                .toList();
-        for (CsvUploadDraft draft : oldestDrafts) {
-            deleteDraftLocked(draft.uploadId());
-        }
+        // LinkedHashMap은 삽입 순서를 유지하므로 앞에서 overflow개를 제거하면 항상 가장 오래된 항목이 먼저 나간다.
+        List<String> toRemove = uploadDrafts.keySet().stream().limit(overflow).toList();
+        toRemove.forEach(this::deleteDraftLocked);
     }
 
     private void deleteDraftLocked(String uploadId) {

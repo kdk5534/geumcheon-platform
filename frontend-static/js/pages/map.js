@@ -12,7 +12,7 @@ import {
 import { injectPageCss, loadLeaflet, loadMarkerCluster, createBaseTileLayer } from "../core/assets.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
-const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전", "따릉이", "CCTV"];
+const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전", "따릉이", "CCTV", "와이파이", "쉼터", "보호구역", "충전소"];
 const CHOROPLETH_METRICS = ["생활", "교통", "안전", "인구"];
 
 // 모듈-레벨 상태 (unmount 시 정리)

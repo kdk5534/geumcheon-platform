@@ -105,6 +105,10 @@ export const categoryInitial = {
   "안전": "S",
   "따릉이": "B",  // Bike
   "CCTV": "C",
+  "와이파이": "W",
+  "쉼터": "R",    // Rest
+  "보호구역": "Z", // Zone
+  "충전소": "E",  // EV
 };
 
 export const categoryColor = {
@@ -114,6 +118,10 @@ export const categoryColor = {
   "안전": "#b46d16",
   "따릉이": "#0d7b3e",  // 서울시 따릉이 녹색
   "CCTV":   "#4b4b8a",  // 안전·감시 남색
+  "와이파이": "#0d93cf", // 브랜드 시안
+  "쉼터":   "#2e7d32",  // 녹색 계열
+  "보호구역": "#e65100", // 주황 — 어린이 안전
+  "충전소": "#1565c0",  // 전기 파란색
 };
 
 /**
@@ -128,6 +136,11 @@ const _NORMALIZE_MAP = {
   PHARMACY: "약국", pharmacy: "약국",
   SAFETY: "안전", safety: "안전",
   WELFARE: "복지", welfare: "복지",
+  // P4 신규
+  WIFI: "와이파이", wifi: "와이파이",
+  SHELTER: "쉼터", shelter: "쉼터",
+  SCHOOL_ZONE: "보호구역", school_zone: "보호구역",
+  EV_CHARGER: "충전소", ev_charger: "충전소",
 };
 export function normalizeCategory(raw) {
   if (!raw) return "기타";
@@ -141,6 +154,7 @@ export function normalizeCategory(raw) {
 const _CODE_MAP = {
   "따릉이": "BIKE", "CCTV": "CCTV", "주차장": "PARKING",
   "병원": "HOSPITAL", "약국": "PHARMACY", "안전": "SAFETY", "복지": "WELFARE",
+  "와이파이": "WIFI", "쉼터": "SHELTER", "보호구역": "SCHOOL_ZONE", "충전소": "EV_CHARGER",
 };
 export function toCategoryCode(label) {
   return _CODE_MAP[label] || label;

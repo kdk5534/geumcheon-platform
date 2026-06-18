@@ -202,6 +202,63 @@ public class DatasetRegistry {
                 "DATA_GO_KR_API_KEY",
                 "인구 대시보드"
         ));
+        // ── P4 신규 POINT 시설 데이터셋 ──────────────────────────────────────────
+        items.put("public-wifi", new DatasetDefinition(
+                "public-wifi", "공공 와이파이", "생활", "서울 열린데이터광장",
+                "수시", "API 가능", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "AP 설치장소명"),
+                        new DatasetFieldDefinition("address", "설치위치"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr/dataList/OA-1218/S/1/datasetView.do",
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
+        ));
+        items.put("heat-shelters", new DatasetDefinition(
+                "heat-shelters", "무더위·한파 쉼터", "안전·복지", "서울 열린데이터광장",
+                "연", "API 가능", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "시설명"),
+                        new DatasetFieldDefinition("address", "주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr",
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
+        ));
+        items.put("school-zones", new DatasetDefinition(
+                "school-zones", "어린이 보호구역", "안전", "서울 열린데이터광장",
+                "수시", "API 가능", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "구역명"),
+                        new DatasetFieldDefinition("address", "주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr",
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
+        ));
+        items.put("ev-chargers", new DatasetDefinition(
+                "ev-chargers", "전기차 충전소", "교통", "서울 열린데이터광장",
+                "수시", "API 가능", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "충전소명"),
+                        new DatasetFieldDefinition("address", "주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr",
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
+        ));
         this.definitions = Collections.unmodifiableMap(items);
     }
 

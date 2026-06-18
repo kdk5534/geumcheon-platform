@@ -303,6 +303,70 @@
       "address": "서울특별시 금천구 시흥동",
       "latitude": 37.4522,
       "longitude": 126.9005
+    },
+    {
+      "id": "F023",
+      "category": "와이파이",
+      "name": "가산디지털단지역 공공와이파이",
+      "address": "서울특별시 금천구 가산동 가산디지털단지역",
+      "latitude": 37.4813,
+      "longitude": 126.8824
+    },
+    {
+      "id": "F024",
+      "category": "와이파이",
+      "name": "금천구청 공공와이파이",
+      "address": "서울특별시 금천구 시흥대로 70",
+      "latitude": 37.4575,
+      "longitude": 126.8967
+    },
+    {
+      "id": "F025",
+      "category": "쉼터",
+      "name": "가산동 주민센터 무더위쉼터",
+      "address": "서울특별시 금천구 가산동 60-12",
+      "latitude": 37.4790,
+      "longitude": 126.8847
+    },
+    {
+      "id": "F026",
+      "category": "쉼터",
+      "name": "독산1동 복지관 한파쉼터",
+      "address": "서울특별시 금천구 독산동 941-1",
+      "latitude": 37.4648,
+      "longitude": 126.9015
+    },
+    {
+      "id": "F027",
+      "category": "보호구역",
+      "name": "금천초등학교 어린이보호구역",
+      "address": "서울특별시 금천구 시흥대로 53",
+      "latitude": 37.4560,
+      "longitude": 126.8990
+    },
+    {
+      "id": "F028",
+      "category": "보호구역",
+      "name": "가산초등학교 어린이보호구역",
+      "address": "서울특별시 금천구 가산동 349-11",
+      "latitude": 37.4778,
+      "longitude": 126.8870
+    },
+    {
+      "id": "F029",
+      "category": "충전소",
+      "name": "금천구청 전기차 충전소",
+      "address": "서울특별시 금천구 시흥대로 70 지하주차장",
+      "latitude": 37.4572,
+      "longitude": 126.8963
+    },
+    {
+      "id": "F030",
+      "category": "충전소",
+      "name": "가산디지털단지 공영주차장 충전소",
+      "address": "서울특별시 금천구 가산동 공영주차장",
+      "latitude": 37.4805,
+      "longitude": 126.8830
     }
   ],
   "commercial": {

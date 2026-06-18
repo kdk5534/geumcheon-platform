@@ -28,12 +28,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class PublicDataCollectorService {
 
-    private static final String STATS_STORE_KEY = "stores";
-    private static final String AIR_QUALITY_KEY = "air-quality";
-    private static final String BIKE_KEY = "bike-stations";
-    private static final String CCTV_KEY = "cctv-stations";
-    private static final String PARKING_KEY = "parking-lots";
-    private static final String POPULATION_KEY = "population";
+    private static final String STATS_STORE_KEY  = "stores";
+    private static final String AIR_QUALITY_KEY  = "air-quality";
+    private static final String BIKE_KEY         = "bike-stations";
+    private static final String CCTV_KEY         = "cctv-stations";
+    private static final String PARKING_KEY      = "parking-lots";
+    private static final String POPULATION_KEY   = "population";
+    // P4 신규 POINT 시설 데이터셋
+    private static final String WIFI_KEY         = "public-wifi";
+    private static final String HEAT_SHELTER_KEY = "heat-shelters";
+    private static final String SCHOOL_ZONE_KEY  = "school-zones";
+    private static final String EV_CHARGER_KEY   = "ev-chargers";
     private static final Logger log = LoggerFactory.getLogger(PublicDataCollectorService.class);
 
     private final PublicDataRepository repository;
@@ -121,12 +126,17 @@ public class PublicDataCollectorService {
 
     public List<PublicDataRepository.CollectorSpec> specs() {
         return List.of(
-                collectorSpec(STATS_STORE_KEY, hasValue(dataGoKrApiKey)),
-                collectorSpec(AIR_QUALITY_KEY, hasValue(seoulOpenApiKey)),
-                collectorSpec(BIKE_KEY, hasValue(seoulOpenApiKey)),
-                collectorSpec(CCTV_KEY, hasValue(seoulOpenApiKey)),
-                collectorSpec(PARKING_KEY, hasValue(seoulOpenApiKey)),
-                collectorSpec(POPULATION_KEY, hasValue(dataGoKrApiKey))
+                collectorSpec(STATS_STORE_KEY,  hasValue(dataGoKrApiKey)),
+                collectorSpec(AIR_QUALITY_KEY,  hasValue(seoulOpenApiKey)),
+                collectorSpec(BIKE_KEY,         hasValue(seoulOpenApiKey)),
+                collectorSpec(CCTV_KEY,         hasValue(seoulOpenApiKey)),
+                collectorSpec(PARKING_KEY,      hasValue(seoulOpenApiKey)),
+                collectorSpec(POPULATION_KEY,   hasValue(dataGoKrApiKey)),
+                // P4 신규
+                collectorSpec(WIFI_KEY,         hasValue(seoulOpenApiKey)),
+                collectorSpec(HEAT_SHELTER_KEY, hasValue(seoulOpenApiKey)),
+                collectorSpec(SCHOOL_ZONE_KEY,  hasValue(seoulOpenApiKey)),
+                collectorSpec(EV_CHARGER_KEY,   hasValue(seoulOpenApiKey))
         );
     }
 
@@ -213,6 +223,11 @@ public class PublicDataCollectorService {
             results.add(syncCctvStations(triggeredBy));
             results.add(syncParkingLots(triggeredBy));
             results.add(syncPopulation(triggeredBy));
+            // P4 신규
+            results.add(syncPublicWifi(triggeredBy));
+            results.add(syncHeatShelters(triggeredBy));
+            results.add(syncSchoolZones(triggeredBy));
+            results.add(syncEvChargers(triggeredBy));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -243,13 +258,17 @@ public class PublicDataCollectorService {
 
         try {
             return switch (datasetKey) {
-                case STATS_STORE_KEY -> syncStores(triggeredBy);
-                case AIR_QUALITY_KEY -> syncAirQuality(triggeredBy);
-                case BIKE_KEY -> syncBikeStations(triggeredBy);
-                case CCTV_KEY -> syncCctvStations(triggeredBy);
-                case PARKING_KEY -> syncParkingLots(triggeredBy);
-                case POPULATION_KEY -> syncPopulation(triggeredBy);
-                default -> missingRoutineResult(spec);
+                case STATS_STORE_KEY  -> syncStores(triggeredBy);
+                case AIR_QUALITY_KEY  -> syncAirQuality(triggeredBy);
+                case BIKE_KEY         -> syncBikeStations(triggeredBy);
+                case CCTV_KEY         -> syncCctvStations(triggeredBy);
+                case PARKING_KEY      -> syncParkingLots(triggeredBy);
+                case POPULATION_KEY   -> syncPopulation(triggeredBy);
+                case WIFI_KEY         -> syncPublicWifi(triggeredBy);
+                case HEAT_SHELTER_KEY -> syncHeatShelters(triggeredBy);
+                case SCHOOL_ZONE_KEY  -> syncSchoolZones(triggeredBy);
+                case EV_CHARGER_KEY   -> syncEvChargers(triggeredBy);
+                default               -> missingRoutineResult(spec);
             };
         } finally {
             collectorRunning.set(false);
@@ -401,6 +420,63 @@ public class PublicDataCollectorService {
                 + normalizeKeyValue(seoulOpenApiKey)
                 + "/json/GetParkInfo/" + start + "/" + end + "/"
                 + "?ADDR=" + java.net.URLEncoder.encode("금천", java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    // ─── P4 신규 POINT 시설 수집 ───────────────────────────────────────────────────
+
+    /** 서울 열린데이터광장 공통 URL 패턴. serviceId·start·end만 교체. */
+    private String buildSeoulOpenUrl(String serviceId, int start, int end) {
+        return "http://openapi.seoul.go.kr:8088/"
+                + normalizeKeyValue(seoulOpenApiKey)
+                + "/json/" + serviceId + "/" + start + "/" + end + "/";
+    }
+
+    public CollectionRunResult syncPublicWifi(String triggeredBy) {
+        // 서비스 ID: TbPublicWifiInfo (서울 열린데이터광장 — 서울시 공공와이파이 위치정보)
+        // 필드: X_SWIFI_MAIN_NM(설치장소), INSTL_FLOR_INFO(설치위치), LAT, LNT
+        return runSyncPipeline(
+                WIFI_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildSeoulOpenUrl("TbPublicWifiInfo", 1, 1000),
+                this::fetchRowsWithRetry,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "WIFI", rows),
+                saved -> "Saved " + saved + " public WiFi access point(s).",
+                triggeredBy);
+    }
+
+    public CollectionRunResult syncHeatShelters(String triggeredBy) {
+        // 서비스 ID: TvCoolHouseInfo (서울 열린데이터광장 — 서울시 무더위쉼터)
+        // TODO: 서비스 ID 확인 후 교체. 필드: SHTER_NM(시설명), LAT, LOT
+        return runSyncPipeline(
+                HEAT_SHELTER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildSeoulOpenUrl("TvCoolHouseInfo", 1, 500),
+                this::fetchRowsWithRetry,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "SHELTER", rows),
+                saved -> "Saved " + saved + " heat/cold shelter(s).",
+                triggeredBy);
+    }
+
+    public CollectionRunResult syncSchoolZones(String triggeredBy) {
+        // 서비스 ID: schoolroadinfo (서울 열린데이터광장 — 어린이보호구역)
+        // TODO: 서비스 ID 확인 후 교체. 필드: ZONE_NM(구역명), LAT, LOT or X/Y
+        return runSyncPipeline(
+                SCHOOL_ZONE_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildSeoulOpenUrl("schoolroadinfo", 1, 500),
+                this::fetchRowsWithRetry,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "SCHOOL_ZONE", rows),
+                saved -> "Saved " + saved + " school zone(s).",
+                triggeredBy);
+    }
+
+    public CollectionRunResult syncEvChargers(String triggeredBy) {
+        // 서비스 ID: EvCharger (서울 열린데이터광장 — 전기차충전소)
+        // TODO: 서비스 ID 확인 후 교체. 필드: STAT_NM(충전소명), LAT, LNG
+        return runSyncPipeline(
+                EV_CHARGER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> buildSeoulOpenUrl("EvCharger", 1, 500),
+                this::fetchRowsWithRetry,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
+                saved -> "Saved " + saved + " EV charger(s).",
+                triggeredBy);
     }
 
     public CollectionRunResult syncPopulation(String triggeredBy) {

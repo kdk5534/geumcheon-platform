@@ -15,13 +15,15 @@ public record MapQuery(
         int size
 ) {
     public static final int DEFAULT_SIZE = 200;
-    public static final int MAX_SIZE = 500;
+    public static final int MAX_SIZE = 1000;
+    public static final int MAX_PAGE = 1000;
 
-    // 범위 강제: size 1~MAX_SIZE, page 0 이상
+    // 범위 강제: size 1~MAX_SIZE, page 0~MAX_PAGE
     public MapQuery {
         if (size <= 0) size = DEFAULT_SIZE;
         if (size > MAX_SIZE) size = MAX_SIZE;
         if (page < 0) page = 0;
+        if (page > MAX_PAGE) page = MAX_PAGE;
     }
 
     public static MapQuery defaults() {

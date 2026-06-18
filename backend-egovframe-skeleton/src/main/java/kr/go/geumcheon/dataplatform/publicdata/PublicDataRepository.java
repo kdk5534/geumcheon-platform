@@ -32,6 +32,12 @@ public interface PublicDataRepository {
 
     int replaceAirQualitySnapshot(UUID datasetId, List<Map<String, String>> rows);
 
+    int replaceFacilitySnapshot(UUID datasetId, String category, List<Map<String, String>> rows);
+
+    int replacePopulationSnapshot(UUID datasetId, List<Map<String, String>> rows);
+
+    List<PopulationSummary> listPopulation();
+
     UUID recordCollectionLog(
             UUID datasetId,
             String collectionType,

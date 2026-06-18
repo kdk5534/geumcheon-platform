@@ -97,15 +97,94 @@ public class DatasetRegistry {
                 "SEOUL_OPEN_API_KEY",
                 "대기환경"
         ));
+        items.put("bike-stations", new DatasetDefinition(
+                "bike-stations",
+                "공공자전거 따릉이 대여소",
+                "생활",
+                "서울 열린데이터광장",
+                "실시간",
+                "API 가능",
+                true,
+                "API",
+                false,
+                false,
+                true,
+                List.of("stationName", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("stationId", "대여소 ID"),
+                        new DatasetFieldDefinition("stationName", "대여소명"),
+                        new DatasetFieldDefinition("rackTotCnt", "거치대 수"),
+                        new DatasetFieldDefinition("parkingBikeTotCnt", "현재 자전거 수"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr/dataList/OA-13252/A/1/datasetView.do",
+                "POINT",
+                "SEOUL_OPEN_API_KEY",
+                "생활지도"
+        ));
+        items.put("cctv-stations", new DatasetDefinition(
+                "cctv-stations",
+                "금천구 CCTV 위치",
+                "안전",
+                "서울 열린데이터광장",
+                "수시",
+                "API 가능",
+                true,
+                "API",
+                false,
+                false,
+                true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "명칭"),
+                        new DatasetFieldDefinition("address", "상세주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr/dataList/OA-12253/S/1/datasetView.do",
+                "POINT",
+                "SEOUL_OPEN_API_KEY",
+                "생활지도"
+        ));
+        items.put("parking-lots", new DatasetDefinition(
+                "parking-lots",
+                "서울 공영주차장",
+                "교통",
+                "서울 열린데이터광장",
+                "수시",
+                "API 가능",
+                true,
+                "API",
+                false,
+                false,
+                true,
+                List.of("pkltNm", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("pkltNm", "주차장명"),
+                        new DatasetFieldDefinition("pkltKndNm", "종류"),
+                        new DatasetFieldDefinition("tpkct", "총 주차면"),
+                        new DatasetFieldDefinition("addr", "주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://data.seoul.go.kr/dataList/OA-13122/S/1/datasetView.do",
+                "POINT",
+                "SEOUL_OPEN_API_KEY",
+                "생활지도"
+        ));
         items.put("population", new DatasetDefinition(
                 "population",
-                "인구 통계",
+                "행정동별 주민등록인구",
                 "인구",
-                "서울 열린데이터광장",
+                "행정안전부",
                 "월",
-                "CSV/API",
-                false,
-                "CSV",
+                "API 가능",
+                true,
+                "API",
                 true,
                 true,
                 true,
@@ -118,9 +197,9 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("female", "여성"),
                         new DatasetFieldDefinition("source", "출처")
                 ),
-                null,
-                null,
-                null,
+                "https://www.data.go.kr/data/15108072/openapi.do",
+                "AREA",
+                "DATA_GO_KR_API_KEY",
                 "인구 대시보드"
         ));
         this.definitions = Collections.unmodifiableMap(items);

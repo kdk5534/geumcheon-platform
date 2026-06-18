@@ -130,6 +130,7 @@ async function bootData() {
   state.data = await loadBackendData(localData);
   refreshHomeIfVisible();
   refreshMapIfVisible();
+  refreshPopulationIfVisible();
 }
 
 /** 현재 홈 페이지가 마운트된 상태면 KPI와 히어로를 갱신한다. */
@@ -149,5 +150,12 @@ function refreshHomeIfVisible() {
 function refreshMapIfVisible() {
   if (document.getElementById("map-pane")) {
     mapPage.refresh();
+  }
+}
+
+/** 현재 인구 분석 페이지가 마운트된 상태면 페이지 전체를 갱신한다. */
+function refreshPopulationIfVisible() {
+  if (document.getElementById("pop-chart-bar")) {
+    populationPage.refresh();
   }
 }

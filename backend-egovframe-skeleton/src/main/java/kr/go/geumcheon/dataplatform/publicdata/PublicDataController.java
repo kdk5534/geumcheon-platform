@@ -60,6 +60,11 @@ public class PublicDataController {
         return ApiResponse.ok(repository.listAirQuality(), sourceMode());
     }
 
+    @GetMapping("/population")
+    public ApiResponse<List<PopulationSummary>> population() {
+        return ApiResponse.ok(repository.listPopulation(), sourceMode());
+    }
+
     private String sourceMode() {
         return "mock".equalsIgnoreCase(runtimeMode) ? "mock" : "db";
     }

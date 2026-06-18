@@ -168,6 +168,21 @@ public class MockPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
+    public int replaceFacilitySnapshot(UUID datasetId, String category, List<Map<String, String>> rows) {
+        return rows == null ? 0 : rows.size();
+    }
+
+    @Override
+    public int replacePopulationSnapshot(UUID datasetId, List<Map<String, String>> rows) {
+        return rows == null ? 0 : rows.size();
+    }
+
+    @Override
+    public List<PopulationSummary> listPopulation() {
+        return List.of();
+    }
+
+    @Override
     public UUID recordCollectionLog(
             UUID datasetId,
             String collectionType,

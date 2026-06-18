@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const rootWithSeparator = root.endsWith(sep) ? root : `${root}${sep}`;
-const port = Number(process.env.PORT || 3000);
+const requestedPort = Number(process.env.PORT || 3000);
+const allowPortFallback = !process.env.PORT;
+let activePort = requestedPort;
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -16,9 +18,9 @@ const contentTypes = {
   ".svg": "image/svg+xml; charset=utf-8"
 };
 
-createServer(async (request, response) => {
+const server = createServer(async (request, response) => {
   try {
-    const url = new URL(request.url || "/", `http://localhost:${port}`);
+    const url = new URL(request.url || "/", `http://localhost:${activePort}`);
     const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
     const safePathname = decodeURIComponent(pathname).replace(/^[/\\]+/, "");
     const filePath = resolve(join(root, safePathname));
@@ -38,6 +40,46 @@ createServer(async (request, response) => {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     response.end("Not found");
   }
-}).listen(port, () => {
-  console.log(`Geumcheon frontend running at http://localhost:${port}`);
+});
+
+function listen(port) {
+  return new Promise((resolve, reject) => {
+    const onError = (error) => {
+      server.off("listening", onListening);
+      reject(error);
+    };
+
+    const onListening = () => {
+      server.off("error", onError);
+      resolve(port);
+    };
+
+    server.once("error", onError);
+    server.once("listening", onListening);
+    server.listen(port);
+  });
+}
+
+async function start() {
+  const maxAttempts = allowPortFallback ? 10 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const port = requestedPort + attempt;
+
+    try {
+      const boundPort = await listen(port);
+      activePort = boundPort;
+      console.log(`Geumcheon frontend running at http://localhost:${boundPort}`);
+      return;
+    } catch (error) {
+      if (error.code !== "EADDRINUSE" || attempt === maxAttempts - 1) {
+        throw error;
+      }
+    }
+  }
+}
+
+start().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });

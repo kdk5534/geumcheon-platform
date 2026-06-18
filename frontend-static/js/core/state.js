@@ -12,11 +12,12 @@ export const ALLOWED_UPLOAD_MODES = new Set(["CSV", "API", "API/CSV"]);
 export const GEO_METRICS = ["생활", "교통", "안전"];
 
 export const DEFAULT_SECTION_META = {
-  overview: { source: "금천구 Mock 데이터", asOf: "2026.06.02 16:00" },
-  life: { source: "생활시설 Mock 데이터", asOf: "2026.06.02 16:00" },
-  commercial: { source: "상가업소정보 Mock 집계", asOf: "2026.06.02 15:40" },
-  geo: { source: "행정동/집계구 Mock GeoJSON", asOf: "2026.06.02 16:00" },
-  api: { source: "API 설정/로그 Mock", asOf: "2026.06.02 16:00" }
+  overview:   { source: "금천구 Mock 데이터",            asOf: "2026.06.02 16:00" },
+  life:       { source: "생활시설 Mock 데이터",           asOf: "2026.06.02 16:00" },
+  commercial: { source: "상가업소정보 Mock 집계",          asOf: "2026.06.02 15:40" },
+  geo:        { source: "행정동/집계구 Mock GeoJSON",      asOf: "2026.06.02 16:00" },
+  api:        { source: "API 설정/로그 Mock",              asOf: "2026.06.02 16:00" },
+  population: { source: "주민등록인구 Mock (행안부 형식)", asOf: "2026.06.01 00:00" }
 };
 
 // 업로드 컬럼 스키마 (admin 모듈로 이전 예정)

@@ -88,9 +88,10 @@ export async function loadBackendData(localData) {
   try {
     const requests = [
       ["datasets", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/datasets`)],
-      ["facilities", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities`)],
-      ["stores", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/stores`)],
-      ["airQuality", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/air-quality`)]
+      ["facilities", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities?size=1000`)],
+      ["stores", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/stores?size=1000`)],
+      ["airQuality", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/air-quality`)],
+      ["population", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/population`)]
     ];
     const settled = await Promise.allSettled(requests.map(([, promise]) => promise.then((response) => response.json())));
     const payloads = {};
@@ -119,23 +120,31 @@ export async function loadBackendData(localData) {
       : localData.facilities;
     const stores = Array.isArray(payloads.stores?.data) ? payloads.stores.data : [];
     const airQuality = Array.isArray(payloads.airQuality?.data) ? payloads.airQuality.data : [];
+    const populationFromBackend = Array.isArray(payloads.population?.data) && payloads.population.data.length > 0;
+    const population = populationFromBackend ? payloads.population.data : localData.population;
     const storeCount = stores.length;
     const latestAirQuality = airQuality.find((item) => String(item?.districtName || "").includes("금천")) || airQuality[0] || null;
     const successfulSources = Object.keys(payloads);
     const sourceMode = successfulSources.length === requests.length ? "db" : "mixed";
     const sourceText = sourceModeText(sourceMode);
 
+    const baseMeta = updateOverviewMeta(
+      localData.meta,
+      sourceMode === "db" ? "금천구 DB 데이터" : "금천구 혼합 데이터"
+    );
+    const meta = populationFromBackend
+      ? { ...baseMeta, population: { source: "행정안전부 주민등록인구", asOf: formatKrTimestamp(payloads.population.timestamp) } }
+      : baseMeta;
+
     return {
       ...localData,
-      meta: updateOverviewMeta(
-        localData.meta,
-        sourceMode === "db" ? "금천구 DB 데이터" : "금천구 혼합 데이터"
-      ),
+      meta,
       sourceMode,
       sourceModeText: sourceText,
       sourceModeError: errors.length ? errors.join(" / ") : undefined,
       metrics: withBackendMetric(localData.metrics, datasets, storeCount, latestAirQuality),
-      facilities
+      facilities,
+      population
     };
   } catch (error) {
     return {
@@ -149,39 +158,60 @@ export async function loadBackendData(localData) {
 }
 
 /**
- * 지도 뷰포트 범위(bbox) 기준 시설 목록을 백엔드에서 가져온다.
- * bbox 파라미터 없이 호출하면 기본 200건을 반환한다.
- * 백엔드가 없으면 빈 배열을 반환한다(호출부에서 폴백 처리).
+ * bbox 기준 목록을 백엔드에서 가져오는 공통 헬퍼.
+ * 성공 시 배열(0건 포함), 네트워크/파싱 실패 시 null을 반환한다.
+ * 호출부에서 null=실패, []=빈 결과로 구분해 처리한다.
  *
- * @param {{ minLat:number, minLng:number, maxLat:number, maxLng:number, category?:string, page?:number, size?:number }} opts
+ * @param {string} path API 경로 (예: "/api/public/facilities")
+ * @param {{ minLat?:number, minLng?:number, maxLat?:number, maxLng?:number, category?:string, page?:number, size?:number }} opts
+ * @returns {Promise<Array|null>}
  */
-export async function loadFacilitiesInBbox({ minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
-  const params = new URLSearchParams({ minLat, minLng, maxLat, maxLng, page, size });
+async function loadItemsInBbox(path, { minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
+  const params = new URLSearchParams({ page, size });
+  // undefined/null인 bbox 파라미터는 추가하지 않는다 (String("undefined")가 서버 400을 유발)
+  if (minLat != null) params.set("minLat", minLat);
+  if (minLng != null) params.set("minLng", minLng);
+  if (maxLat != null) params.set("maxLat", maxLat);
+  if (maxLng != null) params.set("maxLng", maxLng);
   if (category && category !== "전체") params.set("category", category);
   try {
-    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities?${params}`);
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}${path}?${params}`);
     const payload = await response.json();
-    return Array.isArray(payload?.data) ? payload.data : [];
+    return Array.isArray(payload?.data) ? payload.data : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
 /**
- * 지도 뷰포트 범위(bbox) 기준 상점 목록을 백엔드에서 가져온다.
+ * 지도 뷰포트 범위(bbox) 기준 시설 목록을 백엔드에서 가져온다.
+ * 성공 시 배열(0건 포함), 실패 시 null 반환.
  *
  * @param {{ minLat:number, minLng:number, maxLat:number, maxLng:number, category?:string, page?:number, size?:number }} opts
+ * @returns {Promise<Array|null>}
  */
-export async function loadStoresInBbox({ minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
-  const params = new URLSearchParams({ minLat, minLng, maxLat, maxLng, page, size });
-  if (category && category !== "전체") params.set("category", category);
-  try {
-    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/stores?${params}`);
-    const payload = await response.json();
-    return Array.isArray(payload?.data) ? payload.data : [];
-  } catch {
-    return [];
-  }
+export async function loadFacilitiesInBbox(opts = {}) {
+  return loadItemsInBbox("/api/public/facilities", opts);
+}
+
+/**
+ * 지도 뷰포트 범위(bbox) 기준 상점 목록을 백엔드에서 가져온다.
+ * 성공 시 배열(0건 포함), 실패 시 null 반환.
+ *
+ * @param {{ minLat:number, minLng:number, maxLat:number, maxLng:number, category?:string, page?:number, size?:number }} opts
+ * @returns {Promise<Array|null>}
+ */
+export async function loadStoresInBbox(opts = {}) {
+  return loadItemsInBbox("/api/public/stores", opts);
+}
+
+/** ISO 8601 타임스탬프를 "YYYY.MM.DD HH:mm" 형식의 한국어 표기로 변환한다. */
+function formatKrTimestamp(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** 백엔드 데이터셋·API 수집 결과를 반영해 metrics 배열을 갱신한다. */

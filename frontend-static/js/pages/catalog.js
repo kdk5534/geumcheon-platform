@@ -2,6 +2,7 @@
 
 import { escapeHtml } from "../core/dom.js";
 import { icon } from "../core/icons.js";
+import { injectPageCss } from "../core/assets.js";
 
 const CATEGORIES = ["전체", "교통물류", "환경기상", "사회복지", "공공행정", "보건의료", "문화관광", "산업고용", "재난안전"];
 const TYPE_LABELS = { sheet: "시트", chart: "차트", map: "지도", file: "파일", api: "API" };
@@ -22,23 +23,11 @@ const CATEGORY_COLORS = {
 let allDatasets = [];
 let isMounted = false;
 
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-catalog")) {
-    const link = document.createElement("link");
-    link.id = "css-page-catalog";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/catalog.css";
-    document.head.appendChild(link);
-  }
-}
-
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss("css-page-catalog", "./css/pages/catalog.css");
   container.innerHTML = buildSkeleton();
 
   allDatasets = await loadDatasets();

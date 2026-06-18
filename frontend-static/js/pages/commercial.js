@@ -6,6 +6,7 @@ import { renderDataStamp } from "../core/meta.js";
 import { currentCommercialIndustryData } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
+import { injectPageCss } from "../core/assets.js";
 
 const INDUSTRIES = ["카페", "음식점", "편의점", "학원"];
 
@@ -16,23 +17,11 @@ let chartLine  = null;
 let chartCross = null; // 동×업종 교차 누적 막대
 let isMounted  = false;
 
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-commercial")) {
-    const link = document.createElement("link");
-    link.id = "css-page-commercial";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/commercial.css";
-    document.head.appendChild(link);
-  }
-}
-
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss("css-page-commercial", "./css/pages/commercial.css");
   container.innerHTML = buildHtml();
   bindEvents(container);
 

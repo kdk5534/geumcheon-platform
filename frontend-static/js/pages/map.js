@@ -4,6 +4,12 @@ import { state, categoryColor, categoryInitial } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { icon } from "../core/icons.js";
 import { loadFacilitiesInBbox } from "../core/api.js";
+import {
+  createChoroplethLayer,
+  updateChoroplethLayer,
+  renderChoroplethLegend,
+} from "../core/choropleth.js";
+import { injectPageCss, loadLeaflet } from "../core/assets.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
 const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전"];
@@ -20,48 +26,10 @@ let isMounted = false;
 // DB 모드에서 뷰포트 이동 시 백엔드로 받아온 시설 목록.
 // null이면 state.data.facilities(초기 로드·mock 모드)를 사용한다.
 let viewportFacilities = null;
-// 뷰포트 갱신 중복 방지 플래그
+// fetch 진행 중 여부. true인 동안 새 moveend는 viewportPending에 저장된다.
 let viewportFetching = false;
-
-// ─── CSS / Leaflet 동적 로드 ──────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-map")) {
-    const link = document.createElement("link");
-    link.id = "css-page-map";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/map.css";
-    document.head.appendChild(link);
-  }
-}
-
-function loadLeaflet() {
-  return new Promise((resolve, reject) => {
-    if (window.L) { resolve(); return; }
-
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    const existing = document.getElementById("leaflet-js");
-    if (existing) {
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", () => reject(new Error("Leaflet 스크립트 로드 실패")), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = "leaflet-js";
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("Leaflet 스크립트 로드 실패"));
-    document.head.appendChild(script);
-  });
-}
+// fetch 완료 후 즉시 재조회해야 할 최신 bounds. null이면 재조회 불필요.
+let viewportPending = null;
 
 // GeoJSON 파일을 로드한다.
 function loadGeoJson() {
@@ -75,7 +43,7 @@ function loadGeoJson() {
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss("css-page-map", "./css/pages/map.css");
   container.innerHTML = buildHtml();
 
   try {
@@ -96,7 +64,6 @@ export async function mount(container) {
     const geojson = await loadGeoJson();
     if (!isMounted) return;
     initChoropleth(geojson);
-    renderLegend();
   } catch (e) {
     console.warn("choropleth GeoJSON 로드 실패:", e.message);
   }
@@ -113,6 +80,7 @@ export function unmount() {
   choroplethLayer = null;
   viewportFacilities = null;
   viewportFetching = false;
+  viewportPending = null;
 }
 
 export function refresh() {
@@ -237,155 +205,70 @@ function initMap() {
 
 // ─── Choropleth ───────────────────────────────────────────────
 
-function getDistrictValue(name) {
-  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
-
-  if (choroplethMetric === "인구") {
-    const pop = Array.isArray(state.data?.population) ? state.data.population : [];
-    const found = pop.find((p) => p.areaName === name);
-    return found ? Number(found.total) : 0;
-  }
-
-  const d = districts.find((d) => d.name === name);
-  return d ? Number(d.scores?.[choroplethMetric] || 0) : 0;
-}
-
-function choroplethColor(value, metric) {
-  if (metric === "인구") {
-    // 인구는 절대값 스케일 (금천구 3개 동 기준)
-    if (value >= 55000) return "#0a4570";
-    if (value >= 45000) return "#0c7fb8";
-    if (value >= 35000) return "#0d93cf";
-    return "#63bde3";
-  }
-  // 점수 스케일 (0~100)
-  if (value >= 85) return "#0a4570";
-  if (value >= 75) return "#0c7fb8";
-  if (value >= 65) return "#0d93cf";
-  if (value >= 55) return "#63bde3";
-  return "#c5e8f7";
-}
-
 function initChoropleth(geojson) {
   if (!window.L || !mapInstance) return;
-
-  if (choroplethLayer) {
-    choroplethLayer.remove();
-    choroplethLayer = null;
-  }
-
-  choroplethLayer = window.L.geoJSON(geojson, {
-    style: (feature) => {
-      const name  = feature.properties?.name || "";
-      const value = getDistrictValue(name);
-      return {
-        fillColor:   choroplethColor(value, choroplethMetric),
-        fillOpacity: 0.45,
-        color:       "#ffffff",
-        weight:      2,
-        opacity:     0.8,
-      };
-    },
-    onEachFeature: (feature, layer) => {
-      const name  = feature.properties?.name || "";
-      const value = getDistrictValue(name);
-      const label = choroplethMetric === "인구"
-        ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
-        : `${name}<br><strong>${value}점</strong> (${choroplethMetric})`;
-
-      layer.bindTooltip(label, { sticky: true, className: "map-tooltip" });
-
-      layer.on({
-        mouseover: (e) => {
-          e.target.setStyle({ fillOpacity: 0.7, weight: 3 });
-          e.target.bringToFront();
-        },
-        mouseout: (e) => {
-          choroplethLayer.resetStyle(e.target);
-        },
-        click: (e) => {
-          mapInstance.fitBounds(e.target.getBounds(), { padding: [40, 40] });
-        },
-      });
-    },
-  }).addTo(mapInstance);
-
-  // 마커를 choropleth 위로
-  Object.values(markerLayers).forEach((l) => l.bringToFront());
-}
-
-function updateChoroplethColors() {
-  if (!choroplethLayer) return;
-  choroplethLayer.setStyle((feature) => {
-    const name  = feature.properties?.name || "";
-    const value = getDistrictValue(name);
-    return {
-      fillColor:   choroplethColor(value, choroplethMetric),
-      fillOpacity: 0.45,
-      color:       "#ffffff",
-      weight:      2,
-      opacity:     0.8,
-    };
-  });
-  // 툴팁 내용도 갱신
-  choroplethLayer.eachLayer((layer) => {
-    const name  = layer.feature?.properties?.name || "";
-    const value = getDistrictValue(name);
-    const label = choroplethMetric === "인구"
-      ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
-      : `${name}<br><strong>${value}점</strong> (${choroplethMetric})`;
-    layer.setTooltipContent(label);
+  if (choroplethLayer) { choroplethLayer.remove(); choroplethLayer = null; }
+  choroplethLayer = createChoroplethLayer(window.L, mapInstance, geojson, {
+    metric:       choroplethMetric,
+    markerLayers: Object.values(markerLayers),
   });
   renderLegend();
 }
 
+function updateChoroplethColors() {
+  updateChoroplethLayer(choroplethLayer, choroplethMetric);
+  renderLegend();
+}
+
 function renderLegend() {
-  const el = document.getElementById("map-legend");
-  if (!el) return;
-
-  const steps = choroplethMetric === "인구"
-    ? [{ color: "#0a4570", label: "55,000명 이상" }, { color: "#0c7fb8", label: "45,000명 이상" },
-       { color: "#0d93cf", label: "35,000명 이상" }, { color: "#63bde3", label: "35,000명 미만" }]
-    : [{ color: "#0a4570", label: "85점 이상" }, { color: "#0c7fb8", label: "75점 이상" },
-       { color: "#0d93cf", label: "65점 이상" }, { color: "#63bde3", label: "55점 이상" },
-       { color: "#c5e8f7", label: "55점 미만" }];
-
-  el.innerHTML = `
-    <div class="map-legend-title">${escapeHtml(choroplethMetric)} 지수</div>
-    ${steps.map((s) => `
-      <div class="map-legend-item">
-        <span class="map-legend-swatch" style="background:${s.color}"></span>
-        <span>${escapeHtml(s.label)}</span>
-      </div>
-    `).join("")}
-  `;
+  renderChoroplethLegend("map-legend", choroplethMetric);
 }
 
 // ─── 뷰포트 bbox 갱신 ─────────────────────────────────────────
 
-/** DB 모드에서 지도 이동이 끝나면 현재 뷰포트 범위의 시설을 재조회한다. */
+/**
+ * DB 모드에서 지도 이동이 끝나면 현재 뷰포트 범위의 시설을 재조회한다.
+ * fetch 진행 중 새 moveend가 오면 viewportPending에 저장하고, 현재 fetch 완료 후
+ * 최신 bounds로 자동 재조회한다(latest-wins 패턴 — stale 뷰포트 데이터 방지).
+ */
 async function onMapMoveEnd() {
-  if (!mapInstance || !isMounted || viewportFetching) return;
+  if (!mapInstance || !isMounted) return;
+
+  if (viewportFetching) {
+    // 진행 중이면 최신 bounds를 기록해 두고 현재 fetch가 끝난 후 처리
+    viewportPending = mapInstance.getBounds();
+    return;
+  }
+
   viewportFetching = true;
   try {
-    const b = mapInstance.getBounds();
-    const items = await loadFacilitiesInBbox({
-      minLat: b.getSouth(),
-      minLng: b.getWest(),
-      maxLat: b.getNorth(),
-      maxLng: b.getEast(),
-      category: state.category !== "전체" ? state.category : undefined,
-    });
-    if (!isMounted) return;
-    // 결과가 있을 때만 교체 (요청 실패 시 기존 마커 유지)
-    if (items.length > 0 || viewportFacilities !== null) {
-      viewportFacilities = items;
-      Object.values(markerLayers).forEach((l) => l.clearLayers());
-      allMarkers = [];
-      buildMarkers();
-      renderCatStats();
-      renderFacilityList();
-    }
+    // 최신 pending이 있으면 그 bounds를, 없으면 현재 bounds를 사용
+    let bounds = viewportPending || mapInstance.getBounds();
+    viewportPending = null;
+
+    // pending이 누적될 수 있으므로 do/while로 남은 pending을 소진
+    do {
+      if (!isMounted) return;
+      const items = await loadFacilitiesInBbox({
+        minLat: bounds.getSouth(),
+        minLng: bounds.getWest(),
+        maxLat: bounds.getNorth(),
+        maxLng: bounds.getEast(),
+        category: state.category !== "전체" ? state.category : undefined,
+      });
+      if (!isMounted) return;
+      // null = 네트워크/서버 실패 → 기존 마커 유지. [] = 실제 0건 → 마커 비움
+      if (items !== null) {
+        viewportFacilities = items;
+        Object.values(markerLayers).forEach((l) => l.clearLayers());
+        allMarkers = [];
+        buildMarkers();
+        renderCatStats();
+        renderFacilityList();
+      }
+      bounds = viewportPending;
+      viewportPending = null;
+    } while (bounds !== null);
   } finally {
     viewportFetching = false;
   }

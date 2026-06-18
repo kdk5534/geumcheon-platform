@@ -2,8 +2,8 @@
 
 import { loadECharts, createChart, disposeChart, BASE_OPTION, CHART_PALETTE, CHART_COLORS } from '../core/charts.js';
 import { escapeHtml } from '../core/dom.js';
+import { injectPageCss, loadLeaflet } from '../core/assets.js';
 
-const CSS_ID = 'css-realtime';
 const DATA_URL = './assets/data/realtime.json';
 
 let isMounted = false;
@@ -20,41 +20,6 @@ const CATEGORY_ICON = {
   환경: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`,
   안전: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6z"/></svg>`,
 };
-
-// ─── Leaflet 로더 (map.js 패턴) ─────────────────────────────────
-function loadLeaflet() {
-  return new Promise((resolve, reject) => {
-    if (window.L) { resolve(); return; }
-    const ex = document.getElementById('leaflet-css');
-    if (!ex) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-    if (document.getElementById('leaflet-js')) {
-      const waiting = setInterval(() => { if (window.L) { clearInterval(waiting); resolve(); } }, 50);
-      return;
-    }
-    const s = document.createElement('script');
-    s.id = 'leaflet-js';
-    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Leaflet 로드 실패'));
-    document.head.appendChild(s);
-  });
-}
-
-// ─── CSS 동적 주입 ───────────────────────────────────────────────
-function injectCss() {
-  if (document.getElementById(CSS_ID)) return;
-  const link = document.createElement('link');
-  link.id = CSS_ID;
-  link.rel = 'stylesheet';
-  link.href = './css/pages/realtime.css';
-  document.head.appendChild(link);
-}
 
 // ─── 데이터 로드 ────────────────────────────────────────────────
 async function loadData() {
@@ -190,7 +155,7 @@ function formatUpdatedAt(iso) {
 // ─── mount ──────────────────────────────────────────────────────
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss('css-realtime', './css/pages/realtime.css');
 
   container.innerHTML = `
     <div class="page-header">

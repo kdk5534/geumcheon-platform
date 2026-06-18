@@ -4,6 +4,7 @@ import { state } from "../core/state.js";
 import { escapeHtml } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
 import { icon } from "../core/icons.js";
+import { injectPageCss } from "../core/assets.js";
 
 const FILTER_OPTIONS = ["전체", "준비됨", "Mock", "키 필요", "확인 필요"];
 
@@ -39,23 +40,11 @@ function mergeApiSources(rawSources = []) {
   return merged.concat(extras);
 }
 
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-api")) {
-    const link = document.createElement("link");
-    link.id = "css-page-api";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/api.css";
-    document.head.appendChild(link);
-  }
-}
-
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 /** API 수집 현황 페이지를 container에 마운트한다. */
 export function mount(container) {
-  injectCss();
+  injectPageCss("css-page-api", "./css/pages/api.css");
 
   // 외부 소스와 기본 소스를 병합해 state에 저장
   state.apiSources = mergeApiSources(Array.isArray(state.apiSources) ? state.apiSources : []);

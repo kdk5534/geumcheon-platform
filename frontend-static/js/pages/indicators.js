@@ -2,23 +2,14 @@
 
 import { loadECharts, createChart, disposeChart, BASE_OPTION, CHART_COLORS } from '../core/charts.js';
 import { escapeHtml } from '../core/dom.js';
+import { injectPageCss } from '../core/assets.js';
 
-const CSS_ID = 'css-indicators';
 const DATA_URL = './assets/data/indicators.json';
 
 let isMounted = false;
 let currentChart = null;
 let currentDomainKey = '';
 
-// ─── CSS 동적 주입 ───────────────────────────────────────────────
-function injectCss() {
-  if (document.getElementById(CSS_ID)) return;
-  const link = document.createElement('link');
-  link.id = CSS_ID;
-  link.rel = 'stylesheet';
-  link.href = './css/pages/indicators.css';
-  document.head.appendChild(link);
-}
 
 // ─── 데이터 로드 ────────────────────────────────────────────────
 async function loadData() {
@@ -144,7 +135,7 @@ function renderDomainPanel(domain) {
 // ─── mount ──────────────────────────────────────────────────────
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss('css-indicators', './css/pages/indicators.css');
 
   container.innerHTML = `
     <div class="page-header">

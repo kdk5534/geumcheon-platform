@@ -2,6 +2,7 @@
 
 import { state, API_LOG_KEY } from "../core/state.js";
 import { escapeHtml, formatMockTimestamp } from "../core/dom.js";
+import { injectPageCss } from "../core/assets.js";
 
 const FILTER_OPTIONS = ["전체", "성공", "실패", "대기", "수동"];
 
@@ -50,23 +51,11 @@ function saveApiLogs() {
   localStorage.setItem(API_LOG_KEY, JSON.stringify(state.apiLogs));
 }
 
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-api")) {
-    const link = document.createElement("link");
-    link.id = "css-page-api";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/api.css";
-    document.head.appendChild(link);
-  }
-}
-
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 /** API 로그 페이지를 container에 마운트한다. */
 export function mount(container) {
-  injectCss();
+  injectPageCss("css-page-api", "./css/pages/api.css");
 
   // 기본 로그와 localStorage 편집분을 병합해 state에 저장
   const baseLogs = Array.isArray(state.apiLogs) && state.apiLogs.length > 0

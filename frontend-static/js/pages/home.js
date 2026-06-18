@@ -5,6 +5,12 @@ import { escapeHtml, revealOnScroll } from "../core/dom.js";
 import { getSectionMeta, sourceModeText } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
+import {
+  createChoroplethLayer,
+  updateChoroplethLayer,
+  renderChoroplethLegend,
+} from "../core/choropleth.js";
+import { injectPageCss, loadLeaflet } from "../core/assets.js";
 
 // ─── 상수 ─────────────────────────────────────────────────────
 
@@ -38,43 +44,6 @@ let homeChoroplethMetric = "생활";
 let clockInterval = null;
 let isMounted = false;
 
-// ─── CSS / Leaflet 동적 로드 ─────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-home")) {
-    const link = document.createElement("link");
-    link.id = "css-page-home";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/home.css";
-    document.head.appendChild(link);
-  }
-}
-
-function loadLeaflet() {
-  return new Promise((resolve, reject) => {
-    if (window.L) { resolve(); return; }
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-    const existing = document.getElementById("leaflet-js");
-    if (existing) {
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", () => reject(new Error("Leaflet 로드 실패")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.id = "leaflet-js";
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("Leaflet 로드 실패"));
-    document.head.appendChild(script);
-  });
-}
-
 function loadGeoJson() {
   return fetch("./assets/data/geumcheon-dong.geojson").then((r) => {
     if (!r.ok) throw new Error("GeoJSON 로드 실패");
@@ -86,7 +55,7 @@ function loadGeoJson() {
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss("css-page-home", "./css/pages/home.css");
   container.innerHTML = buildDashHtml();
   bindSearch(container);
   renderKpiTiles();
@@ -103,7 +72,6 @@ export async function mount(container) {
     const geojson = await loadGeoJson();
     if (!isMounted) return;
     initHomeChoropleth(geojson);
-    renderHomeMapLegend();
   } catch (e) {
     const pane = document.getElementById("home-map-pane");
     if (pane && isMounted) {
@@ -284,110 +252,30 @@ function initHomeMap() {
   buildHomeMarkers();
 }
 
-function getHomeDistrictValue(name) {
-  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
-  if (homeChoroplethMetric === "인구") {
-    const pop = Array.isArray(state.data?.population) ? state.data.population : [];
-    const found = pop.find((p) => p.areaName === name);
-    return found ? Number(found.total) : 0;
-  }
-  const d = districts.find((d) => d.name === name);
-  return d ? Number(d.scores?.[homeChoroplethMetric] || 0) : 0;
-}
-
-function choroplethColor(value, metric) {
-  if (metric === "인구") {
-    if (value >= 55000) return "#0a4570";
-    if (value >= 45000) return "#0c7fb8";
-    if (value >= 35000) return "#0d93cf";
-    return "#63bde3";
-  }
-  if (value >= 85) return "#0a4570";
-  if (value >= 75) return "#0c7fb8";
-  if (value >= 65) return "#0d93cf";
-  if (value >= 55) return "#63bde3";
-  return "#c5e8f7";
-}
-
 function initHomeChoropleth(geojson) {
   if (!window.L || !homeMap) return;
-
   if (homeChoropleth) { homeChoropleth.remove(); homeChoropleth = null; }
-
-  homeChoropleth = window.L.geoJSON(geojson, {
-    style: (feature) => {
-      const name  = feature.properties?.name || "";
-      const value = getHomeDistrictValue(name);
-      return {
-        fillColor:   choroplethColor(value, homeChoroplethMetric),
-        fillOpacity: 0.5,
-        color:       "#ffffff",
-        weight:      2,
-        opacity:     0.9,
-      };
-    },
-    onEachFeature: (feature, layer) => {
-      const name  = feature.properties?.name || "";
-      const value = getHomeDistrictValue(name);
-      const label = homeChoroplethMetric === "인구"
-        ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
-        : `${name}<br><strong>${value}점</strong> (${homeChoroplethMetric})`;
-      layer.bindTooltip(label, { sticky: true, className: "map-tooltip" });
-      layer.on({
-        mouseover: (e) => { e.target.setStyle({ fillOpacity: 0.72, weight: 3 }); e.target.bringToFront(); },
-        mouseout:  (e) => { homeChoropleth?.resetStyle(e.target); },
-        click:     (e) => { homeMap?.fitBounds(e.target.getBounds(), { padding: [30, 30] }); },
-      });
-    },
-  }).addTo(homeMap);
-
-  Object.values(homeMarkerLayers).forEach((l) => l.bringToFront());
-}
-
-function updateHomeChoropleth() {
-  if (!homeChoropleth) return;
-  homeChoropleth.setStyle((feature) => {
-    const name  = feature.properties?.name || "";
-    const value = getHomeDistrictValue(name);
-    return {
-      fillColor:   choroplethColor(value, homeChoroplethMetric),
-      fillOpacity: 0.5,
-      color:       "#ffffff",
-      weight:      2,
-      opacity:     0.9,
-    };
-  });
-  homeChoropleth.eachLayer((layer) => {
-    const name  = layer.feature?.properties?.name || "";
-    const value = getHomeDistrictValue(name);
-    const label = homeChoroplethMetric === "인구"
-      ? `${name}<br><strong>${Number(value).toLocaleString()}명</strong>`
-      : `${name}<br><strong>${value}점</strong> (${homeChoroplethMetric})`;
-    layer.setTooltipContent(label);
+  homeChoropleth = createChoroplethLayer(window.L, homeMap, geojson, {
+    metric:          homeChoroplethMetric,
+    markerLayers:    Object.values(homeMarkerLayers),
+    fillOpacity:     0.5,
+    opacity:         0.9,
+    hoverFillOpacity: 0.72,
+    fitPadding:      [30, 30],
   });
   renderHomeMapLegend();
 }
 
+function updateHomeChoropleth() {
+  updateChoroplethLayer(homeChoropleth, homeChoroplethMetric, { fillOpacity: 0.5, opacity: 0.9 });
+  renderHomeMapLegend();
+}
+
 function renderHomeMapLegend() {
-  const el = document.getElementById("home-map-legend");
-  if (!el) return;
-
-  const steps = homeChoroplethMetric === "인구"
-    ? [{ color: "#0a4570", label: "55,000명↑" }, { color: "#0c7fb8", label: "45,000명↑" },
-       { color: "#0d93cf", label: "35,000명↑" }, { color: "#63bde3", label: "35,000명↓" }]
-    : [{ color: "#0a4570", label: "85점↑" }, { color: "#0c7fb8", label: "75점↑" },
-       { color: "#0d93cf", label: "65점↑" }, { color: "#63bde3", label: "55점↑" },
-       { color: "#c5e8f7", label: "55점↓" }];
-
-  el.innerHTML = `
-    <div class="home-map-legend-title">${escapeHtml(homeChoroplethMetric)} 지수</div>
-    ${steps.map((s) => `
-      <div class="home-map-legend-item">
-        <span class="home-map-legend-swatch" style="background:${s.color}"></span>
-        <span>${escapeHtml(s.label)}</span>
-      </div>
-    `).join("")}
-  `;
+  renderChoroplethLegend("home-map-legend", homeChoroplethMetric, {
+    cssPrefix: "home-map-legend",
+    compact:   true,
+  });
 }
 
 function buildHomeMarkers() {

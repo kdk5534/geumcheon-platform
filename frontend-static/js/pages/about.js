@@ -1,15 +1,6 @@
 // 이용안내 페이지: 금천 데이터플랫폼 소개·데이터 출처·관련 사이트
 
-const CSS_ID = 'css-about';
-
-function injectCss() {
-  if (document.getElementById(CSS_ID)) return;
-  const link = document.createElement('link');
-  link.id = CSS_ID;
-  link.rel = 'stylesheet';
-  link.href = './css/pages/about.css';
-  document.head.appendChild(link);
-}
+import { injectPageCss } from "../core/assets.js";
 
 const DATA_SOURCES = [
   { org: '행정안전부', dataset: '주민등록 인구통계', cycle: '월간', link: 'https://jumin.mois.go.kr' },
@@ -39,7 +30,7 @@ const FEATURES = [
 ];
 
 export function mount(container) {
-  injectCss();
+  injectPageCss("css-about", "./css/pages/about.css");
 
   container.innerHTML = `
     <div class="about-hero">

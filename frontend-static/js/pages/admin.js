@@ -9,26 +9,15 @@ import {
 } from "../core/state.js";
 import { escapeHtml, formatBytes, formatAdminAuthSavedAt } from "../core/dom.js";
 import { fetchWithTimeout } from "../core/api.js";
+import { injectPageCss } from "../core/assets.js";
 
 const UPLOAD_LOG_LIMIT = 20;
-
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-admin")) {
-    const link = document.createElement("link");
-    link.id = "css-page-admin";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/admin.css";
-    document.head.appendChild(link);
-  }
-}
 
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 /** 관리자 페이지를 container에 마운트한다. */
 export async function mount(container) {
-  injectCss();
+  injectPageCss("css-page-admin", "./css/pages/admin.css");
   container.innerHTML = buildHtml();
   await initAdminPage();
   bindEvents(container);
@@ -759,7 +748,7 @@ async function commitCsvUpload() {
 async function refreshFacilitiesAfterUpload(preview) {
   if (preview.datasetKey !== "facilities") return "최근 로그에 반영했습니다.";
   try {
-    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities`, 1500);
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities?size=1000`, 1500);
     const payload = await response.json();
     const facilities = Array.isArray(payload.data) ? payload.data : [];
     if (facilities.length === 0) return "시설 데이터가 비어 있습니다.";

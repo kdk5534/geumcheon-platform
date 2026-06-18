@@ -5,32 +5,23 @@ import { escapeHtml, revealOnScroll } from "../core/dom.js";
 import { renderDataStamp } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
+import { injectPageCss } from "../core/assets.js";
 
 const AGE_BANDS = ["0~9세", "10~19세", "20~29세", "30~39세", "40~49세", "50~59세", "60~69세", "70세 이상"];
 
 // 모듈-레벨 차트 인스턴스
-let chartPyramid = null;
-let chartBar     = null;
-let chartAge     = null; // 3동 연령구조 비교
-let isMounted    = false;
-
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-population")) {
-    const link = document.createElement("link");
-    link.id = "css-page-population";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/population.css";
-    document.head.appendChild(link);
-  }
-}
+let chartPyramid  = null;
+let chartBar      = null;
+let chartAge      = null;
+let isMounted     = false;
+let rootContainer = null;
 
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  rootContainer = container;
+  injectPageCss("css-page-population", "./css/pages/population.css");
   container.innerHTML = buildHtml();
   renderKpi();
   bindEvents(container);
@@ -49,15 +40,50 @@ export async function mount(container) {
 
 export function unmount() {
   isMounted = false;
+  rootContainer = null;
   disposeChart(chartPyramid); chartPyramid = null;
   disposeChart(chartBar);     chartBar     = null;
   disposeChart(chartAge);     chartAge     = null;
 }
 
+/** 백엔드 데이터 갱신 후 페이지 전체를 다시 그린다. */
+export function refresh() {
+  if (!isMounted || !rootContainer) return;
+  disposeChart(chartPyramid); chartPyramid = null;
+  disposeChart(chartBar);     chartBar     = null;
+  disposeChart(chartAge);     chartAge     = null;
+  rootContainer.innerHTML = buildHtml();
+  renderKpi();
+  if (window.echarts) initCharts();
+}
+
+// ─── 데이터 집계 ──────────────────────────────────────────────
+
+/** 행정동(10개)을 법정동(3개)으로 묶어 합산한다. "제N동" 접미사 제거가 그룹 키. */
+function getPopulation() {
+  const raw = Array.isArray(state.data?.population) ? state.data.population : [];
+  const map = new Map();
+  for (const p of raw) {
+    const key = String(p.areaName || "").replace(/제\d+동$/, "동");
+    const acc = map.get(key) || { areaName: key, total: 0, male: 0, female: 0, byAge: new Map() };
+    acc.total  += Number(p.total  || 0);
+    acc.male   += Number(p.male   || 0);
+    acc.female += Number(p.female || 0);
+    for (const b of (p.byAge || [])) {
+      const a = acc.byAge.get(b.ageBand) || { ageBand: b.ageBand, male: 0, female: 0 };
+      a.male   += Number(b.male   || 0);
+      a.female += Number(b.female || 0);
+      acc.byAge.set(b.ageBand, a);
+    }
+    map.set(key, acc);
+  }
+  return [...map.values()].map((a) => ({ ...a, byAge: [...a.byAge.values()] }));
+}
+
 // ─── HTML 구조 ────────────────────────────────────────────────
 
 function buildHtml() {
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   const selectedDistrict = state.populationDistrict || (population[0]?.areaName ?? "가산동");
 
   const districtBtns = population.map((p) => `
@@ -98,7 +124,7 @@ function buildHtml() {
           </div>
           <div class="page-banner-stat">
             <span class="page-banner-stat-val">${population.length || "—"}</span>
-            <span class="page-banner-stat-label">행정동</span>
+            <span class="page-banner-stat-label">법정동</span>
           </div>
           <div class="page-banner-stat">
             <span class="page-banner-stat-val">${elderlyRatio ? elderlyRatio + "%" : "—"}</span>
@@ -108,8 +134,8 @@ function buildHtml() {
         <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
-      <div class="pop-filter-bar" role="group" aria-label="행정동 선택">
-        <span class="pop-filter-label">행정동</span>
+      <div class="pop-filter-bar" role="group" aria-label="법정동 선택">
+        <span class="pop-filter-label">법정동</span>
         ${districtBtns}
         <span class="pop-filter-hint">인구 피라미드는 선택 동 기준</span>
       </div>
@@ -131,14 +157,14 @@ function buildHtml() {
             <span class="pop-district-badge">전체</span>
           </div>
           <div id="pop-chart-bar" class="pop-echart" aria-label="행정동별 인구 막대차트"></div>
-          ${renderDataStamp("population", "주민등록인구 Mock")}
+          ${renderDataStamp("population")}
         </div>
       </div>
 
       <!-- 3동 연령구조 비교 (풀폭) -->
       <div class="pop-chart-card pop-chart-card--wide reveal" style="margin-top:var(--space-5)">
         <div class="pop-chart-header">
-          <h3>3개 행정동 연령구조 비교</h3>
+          <h3>법정동별 연령구조 비교</h3>
           <span class="pop-district-badge">전체 동</span>
         </div>
         <div id="pop-chart-age" class="pop-echart pop-echart--age" aria-label="3동 연령구조 비교 막대차트"></div>
@@ -147,7 +173,7 @@ function buildHtml() {
       <!-- 행정동별 인구 통계 테이블 -->
       <div class="pop-table-wrap reveal" style="margin-top:var(--space-5)">
         <div class="pop-table-header">
-          <h3>행정동별 인구 통계</h3>
+          <h3>법정동별 인구 통계</h3>
           <span class="pop-district-badge">2026.06 기준</span>
         </div>
         ${buildPopTable()}
@@ -162,7 +188,7 @@ function renderKpi() {
   const el = document.getElementById("pop-kpi-row");
   if (!el) return;
 
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   if (population.length === 0) {
     el.innerHTML = `<p style="color:var(--muted);grid-column:1/-1">인구 데이터를 불러오는 중입니다.</p>`;
     return;
@@ -241,7 +267,7 @@ function initCharts() {
 // ─── 차트 옵션 빌더 ───────────────────────────────────────────
 
 function buildPyramidOption() {
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   const selected   = population.find((p) => p.areaName === (state.populationDistrict || population[0]?.areaName));
   const byAge      = selected?.byAge ?? [];
 
@@ -302,7 +328,7 @@ function buildPyramidOption() {
 }
 
 function buildBarOption() {
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   const names      = population.map((p) => p.areaName);
   const totals     = population.map((p) => Number(p.total || 0));
   const males      = population.map((p) => Number(p.male || 0));
@@ -377,9 +403,9 @@ function buildBarOption() {
   };
 }
 
-/** 3개 행정동 × 8연령대 그룹 막대 비교 */
+/** 법정동 × 8연령대 그룹 막대 비교 */
 function buildAgeCompareOption() {
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   if (!population.length) return {};
 
   // 각 동별 8연령대 합계(남+여)
@@ -448,12 +474,12 @@ function buildAgeCompareOption() {
   };
 }
 
-/** 행정동별 인구 통계 테이블 HTML */
+/** 법정동별 인구 통계 테이블 HTML */
 function buildPopTable() {
-  const population = Array.isArray(state.data?.population) ? state.data.population : [];
+  const population = getPopulation();
   if (!population.length) return `<p style="color:var(--muted)">데이터 없음</p>`;
 
-  const headers = ["행정동", "총인구", "남성", "여성", "성비", "고령인구비", "유소년비"];
+  const headers = ["법정동", "총인구", "남성", "여성", "성비", "고령인구비", "유소년비"];
   const rows = population.map((p) => {
     const total   = Number(p.total   || 0);
     const male    = Number(p.male    || 0);

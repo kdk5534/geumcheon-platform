@@ -12,6 +12,7 @@ import {
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS } from "../core/charts.js";
 import { revealOnScroll } from "../core/dom.js";
 import { icon } from "../core/icons.js";
+import { injectPageCss } from "../core/assets.js";
 
 // 모듈-레벨 차트 인스턴스
 let chartRadar = null;
@@ -19,23 +20,11 @@ let chartComparison = null;
 let chartAccess = null;
 let isMounted = false;
 
-// ─── CSS 주입 ─────────────────────────────────────────────────
-
-function injectCss() {
-  if (!document.getElementById("css-page-geo")) {
-    const link = document.createElement("link");
-    link.id = "css-page-geo";
-    link.rel = "stylesheet";
-    link.href = "./css/pages/geo.css";
-    document.head.appendChild(link);
-  }
-}
-
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
-  injectCss();
+  injectPageCss("css-page-geo", "./css/pages/geo.css");
   container.innerHTML = buildHtml();
   renderAll();
   bindEvents(container);

@@ -215,7 +215,8 @@ function initMap() {
   renderFacilityList();
 
   // DB 모드에서만 뷰포트 이동 시 bbox 필터 갱신
-  if (state.sourceMode === "db" || state.sourceMode === "mixed") {
+  // sourceMode는 state.data 안에 있다 (state 루트에는 없음)
+  if (state.data?.sourceMode === "db" || state.data?.sourceMode === "mixed") {
     mapInstance.on("moveend", onMapMoveEnd);
   }
 }

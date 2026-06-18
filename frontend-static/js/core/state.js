@@ -2,6 +2,9 @@
 
 export const BACKEND_API_BASE = "http://localhost:8080";
 export const API_TIMEOUT_MS = 1500;
+
+// serve-static.mjs가 .env에서 읽어 /env-config.js로 주입한다. 빈 문자열이면 OSM 폴백.
+export const VWORLD_KEY = window.__ENV__?.VWORLD_API_KEY || "";
 export const ADMIN_API_TIMEOUT_MS = 5000;
 export const UPLOAD_LOG_KEY = "geumcheon-upload-logs";
 export const API_LOG_KEY = "geumcheon-api-logs";
@@ -98,16 +101,50 @@ export const fieldAliases = {
 export const categoryInitial = {
   "병원": "H",
   "약국": "P",
-  "주차장": "P",
-  "안전": "S"
+  "주차장": "K",  // K: 주차(Koo-chajang)
+  "안전": "S",
+  "따릉이": "B",  // Bike
+  "CCTV": "C",
 };
 
 export const categoryColor = {
   "병원": "#ba3f33",
   "약국": "#6658a6",
   "주차장": "#1f7f86",
-  "안전": "#b46d16"
+  "안전": "#b46d16",
+  "따릉이": "#0d7b3e",  // 서울시 따릉이 녹색
+  "CCTV":   "#4b4b8a",  // 안전·감시 남색
 };
+
+/**
+ * 백엔드 수신 카테고리 값을 프론트 한글 표준으로 정규화한다.
+ * DB 수집 코드(대문자) / Mock 소문자 / 이미 한글인 경우를 모두 처리한다.
+ */
+const _NORMALIZE_MAP = {
+  BIKE: "따릉이", bike: "따릉이",
+  CCTV: "CCTV", cctv: "CCTV",
+  PARKING: "주차장", parking: "주차장",
+  HOSPITAL: "병원", hospital: "병원",
+  PHARMACY: "약국", pharmacy: "약국",
+  SAFETY: "안전", safety: "안전",
+  WELFARE: "복지", welfare: "복지",
+};
+export function normalizeCategory(raw) {
+  if (!raw) return "기타";
+  return _NORMALIZE_MAP[raw] || raw;
+}
+
+/**
+ * 프론트 한글 카테고리 라벨을 백엔드 API 코드로 역변환한다 (bbox 쿼리 파라미터용).
+ * 매핑이 없으면 원본 그대로 반환한다.
+ */
+const _CODE_MAP = {
+  "따릉이": "BIKE", "CCTV": "CCTV", "주차장": "PARKING",
+  "병원": "HOSPITAL", "약국": "PHARMACY", "안전": "SAFETY", "복지": "WELFARE",
+};
+export function toCategoryCode(label) {
+  return _CODE_MAP[label] || label;
+}
 
 // 전역 상태 — 모든 페이지 모듈이 이 객체를 import해서 읽고 쓴다
 export const state = {

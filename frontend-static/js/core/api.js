@@ -1,6 +1,6 @@
 // 백엔드 API 호출 유틸: 데이터를 가져와 반환하되 state에 직접 쓰지 않는다
 
-import { BACKEND_API_BASE, API_TIMEOUT_MS } from "./state.js";
+import { BACKEND_API_BASE, API_TIMEOUT_MS, normalizeCategory, toCategoryCode } from "./state.js";
 import { sourceModeText, updateOverviewMeta } from "./meta.js";
 
 /**
@@ -115,9 +115,12 @@ export async function loadBackendData(localData) {
     }
 
     const datasets = payloads.datasets?.data || [];
+    // 백엔드 카테고리 코드(BIKE/CCTV/PARKING/hospital 등)를 한글 표준으로 정규화한다.
+    const normalizeFacilities = (arr) =>
+      arr.map((f) => ({ ...f, category: normalizeCategory(f.category) }));
     const facilities = Array.isArray(payloads.facilities?.data) && payloads.facilities.data.length > 0
-      ? payloads.facilities.data
-      : localData.facilities;
+      ? normalizeFacilities(payloads.facilities.data)
+      : normalizeFacilities(localData.facilities || []);
     const stores = Array.isArray(payloads.stores?.data) ? payloads.stores.data : [];
     const airQuality = Array.isArray(payloads.airQuality?.data) ? payloads.airQuality.data : [];
     const populationFromBackend = Array.isArray(payloads.population?.data) && payloads.population.data.length > 0;
@@ -173,7 +176,8 @@ async function loadItemsInBbox(path, { minLat, minLng, maxLat, maxLng, category,
   if (minLng != null) params.set("minLng", minLng);
   if (maxLat != null) params.set("maxLat", maxLat);
   if (maxLng != null) params.set("maxLng", maxLng);
-  if (category && category !== "전체") params.set("category", category);
+  // 한글 라벨을 백엔드 코드로 역변환한다 (BIKE/CCTV/PARKING 등).
+  if (category && category !== "전체") params.set("category", toCategoryCode(category));
   try {
     const response = await fetchWithTimeout(`${BACKEND_API_BASE}${path}?${params}`);
     const payload = await response.json();

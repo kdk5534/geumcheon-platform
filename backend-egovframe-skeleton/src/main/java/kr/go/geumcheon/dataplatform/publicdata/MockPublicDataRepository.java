@@ -250,7 +250,11 @@ public class MockPublicDataRepository implements PublicDataRepository {
                 new FacilitySummary("FAC-003", "parking", "Geumcheon District Parking", "Seoul Geumcheon-gu Siheung-daero 73-gil 70", "02-0000-0000", 37.4556, 126.8941, "Mock"),
                 new FacilitySummary("FAC-004", "safety", "Siheung 2-dong Community Center", "Seoul Geumcheon-gu Doksan-ro 54-gil 12", "02-2627-3000", 37.4519, 126.9002, "Mock"),
                 new FacilitySummary("FAC-005", "welfare", "Geumcheon Lifelong Learning Center", "Seoul Geumcheon-gu Gasan-dong 371-50", "02-2627-1000", 37.4612, 126.9085, "Mock"),
-                new FacilitySummary("FAC-006", "safety", "Gasan AED Location", "Seoul Geumcheon-gu Gasan-digital 1-ro 168", "02-0000-0000", 37.4697, 126.8868, "Mock")
+                new FacilitySummary("FAC-006", "safety", "Gasan AED Location", "Seoul Geumcheon-gu Gasan-digital 1-ro 168", "02-0000-0000", 37.4697, 126.8868, "Mock"),
+                new FacilitySummary("FAC-007", "BIKE", "가산디지털단지역 따릉이 대여소", "서울특별시 금천구 가산동 가산디지털단지역", "", 37.4813, 126.8824, "Mock"),
+                new FacilitySummary("FAC-008", "BIKE", "독산역 따릉이 대여소", "서울특별시 금천구 독산동 독산역 1번출구", "", 37.4640, 126.9042, "Mock"),
+                new FacilitySummary("FAC-009", "CCTV", "가산동 방범 CCTV", "서울특별시 금천구 가산동", "", 37.4765, 126.8852, "Mock"),
+                new FacilitySummary("FAC-010", "CCTV", "시흥동 방범 CCTV", "서울특별시 금천구 시흥동", "", 37.4522, 126.9005, "Mock")
         );
     }
 

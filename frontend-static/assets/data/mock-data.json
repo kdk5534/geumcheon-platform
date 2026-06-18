@@ -255,6 +255,54 @@
       "latitude": 37.449,
       "longitude": 126.9018,
       "color": "#b46d16"
+    },
+    {
+      "id": "F017",
+      "category": "따릉이",
+      "name": "가산디지털단지역 따릉이 대여소",
+      "address": "서울특별시 금천구 가산동 가산디지털단지역",
+      "latitude": 37.4813,
+      "longitude": 126.8824
+    },
+    {
+      "id": "F018",
+      "category": "따릉이",
+      "name": "독산역 따릉이 대여소",
+      "address": "서울특별시 금천구 독산동 독산역 1번출구",
+      "latitude": 37.464,
+      "longitude": 126.9042
+    },
+    {
+      "id": "F019",
+      "category": "따릉이",
+      "name": "시흥대로 금천구청 따릉이 대여소",
+      "address": "서울특별시 금천구 시흥대로73길 70 금천구청 앞",
+      "latitude": 37.4575,
+      "longitude": 126.8967
+    },
+    {
+      "id": "F020",
+      "category": "CCTV",
+      "name": "가산동 방범 CCTV",
+      "address": "서울특별시 금천구 가산동",
+      "latitude": 37.4765,
+      "longitude": 126.8852
+    },
+    {
+      "id": "F021",
+      "category": "CCTV",
+      "name": "독산동 방범 CCTV",
+      "address": "서울특별시 금천구 독산동",
+      "latitude": 37.4648,
+      "longitude": 126.9072
+    },
+    {
+      "id": "F022",
+      "category": "CCTV",
+      "name": "시흥동 방범 CCTV",
+      "address": "서울특별시 금천구 시흥동",
+      "latitude": 37.4522,
+      "longitude": 126.9005
     }
   ],
   "commercial": {

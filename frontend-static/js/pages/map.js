@@ -9,10 +9,10 @@ import {
   updateChoroplethLayer,
   renderChoroplethLegend,
 } from "../core/choropleth.js";
-import { injectPageCss, loadLeaflet } from "../core/assets.js";
+import { injectPageCss, loadLeaflet, loadMarkerCluster, createBaseTileLayer } from "../core/assets.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
-const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전"];
+const CATEGORIES = ["전체", "병원", "약국", "주차장", "안전", "따릉이", "CCTV"];
 const CHOROPLETH_METRICS = ["생활", "교통", "안전", "인구"];
 
 // 모듈-레벨 상태 (unmount 시 정리)
@@ -48,6 +48,7 @@ export async function mount(container) {
 
   try {
     await loadLeaflet();
+    await loadMarkerCluster();
   } catch {
     if (!isMounted) return;
     const pane = document.getElementById("map-pane");
@@ -128,7 +129,7 @@ function buildHtml() {
           <div class="page-banner-copy">
             <p class="page-banner-eyebrow">생활지도</p>
             <h2 class="page-banner-title">금천구 생활시설 지도</h2>
-            <p class="page-banner-desc">병원·약국·주차장·안전시설 위치와 행정동별 접근성을 지도에서 확인합니다.</p>
+            <p class="page-banner-desc">병원·약국·주차장·안전시설·따릉이·CCTV 위치와 행정동별 접근성을 지도에서 확인합니다.</p>
           </div>
           <div class="page-banner-stats">
             <div class="page-banner-stat">
@@ -184,13 +185,29 @@ function initMap() {
   const L = window.L;
   mapInstance = L.map(mapEl, { zoomControl: true }).setView(GEUMCHEON_CENTER, 14);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(mapInstance);
+  // 타일 레이어 + 컨트롤 (VWorld 키 있을 때만 위성 토글 노출)
+  const baseLayers = {
+    "일반지도": createBaseTileLayer(L, "base"),
+    "위성지도": createBaseTileLayer(L, "satellite"),
+  };
+  baseLayers["일반지도"].addTo(mapInstance);
+  L.control.layers(baseLayers, {}, { position: "topright", collapsed: false }).addTo(mapInstance);
 
+  const clusterOpts = {
+    maxClusterRadius: 50,
+    showCoverageOnHover: false,
+    iconCreateFunction: (cluster) => L.divIcon({
+      html: `<div class="map-cluster">${cluster.getChildCount()}</div>`,
+      className: "",
+      iconSize: L.point(36, 36),
+    }),
+  };
   CATEGORIES.filter((c) => c !== "전체").forEach((cat) => {
-    markerLayers[cat] = L.layerGroup().addTo(mapInstance);
+    const group = window.L?.MarkerClusterGroup
+      ? L.markerClusterGroup({ ...clusterOpts })
+      : L.layerGroup();
+    markerLayers[cat] = group;
+    group.addTo(mapInstance);
   });
 
   buildMarkers();

@@ -1,10 +1,16 @@
 // 전역 상태 객체와 앱 전역 상수
 
-export const BACKEND_API_BASE = "http://localhost:8080";
+const runtimeEnv = typeof window !== "undefined" ? (window.__ENV__ || {}) : {};
+
+export function normalizeApiBase(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+export const BACKEND_API_BASE = normalizeApiBase(runtimeEnv.BACKEND_API_BASE);
 export const API_TIMEOUT_MS = 1500;
 
 // serve-static.mjs가 .env에서 읽어 /env-config.js로 주입한다. 빈 문자열이면 OSM 폴백.
-export const VWORLD_KEY = window.__ENV__?.VWORLD_API_KEY || "";
+export const VWORLD_KEY = runtimeEnv.VWORLD_API_KEY || "";
 export const ADMIN_API_TIMEOUT_MS = 5000;
 export const UPLOAD_LOG_KEY = "geumcheon-upload-logs";
 export const API_LOG_KEY = "geumcheon-api-logs";
@@ -62,6 +68,19 @@ export const datasetFieldSchemas = {
       { key: "source", label: "출처" }
     ]
   },
+  "cctv-stations": {
+    required: ["id", "latitude", "longitude"],
+    fields: [
+      { key: "id", label: "관리번호" },
+      { key: "purpose", label: "설치목적구분" },
+      { key: "roadAddress", label: "소재지도로명주소" },
+      { key: "lotAddress", label: "소재지지번주소" },
+      { key: "phone", label: "관리기관전화번호" },
+      { key: "latitude", label: "위도" },
+      { key: "longitude", label: "경도" },
+      { key: "source", label: "출처" }
+    ]
+  },
   population: {
     required: ["areaName", "baseDate", "populationTotal"],
     fields: [
@@ -94,7 +113,10 @@ export const fieldAliases = {
   baseDate: ["basedate", "date", "기준일", "기준연월"],
   populationTotal: ["populationtotal", "population", "total", "총인구", "인구"],
   male: ["male", "남성", "남자인구"],
-  female: ["female", "여성", "여자인구"]
+  female: ["female", "여성", "여자인구"],
+  purpose: ["purpose", "설치목적구분", "설치목적"],
+  roadAddress: ["roadaddress", "소재지도로명주소", "도로명주소"],
+  lotAddress: ["lotaddress", "소재지지번주소", "지번주소"]
 };
 
 // 지도 마커 관련 (map 모듈로 이전 예정)
@@ -109,6 +131,9 @@ export const categoryInitial = {
   "쉼터": "R",    // Rest
   "보호구역": "Z", // Zone
   "충전소": "E",  // EV
+  "복지": "F",    // Welfare facility
+  "대피시설": "D", // Civil defense
+  "어린이집": "C",
 };
 
 export const categoryColor = {
@@ -122,6 +147,9 @@ export const categoryColor = {
   "쉼터":   "#2e7d32",  // 녹색 계열
   "보호구역": "#e65100", // 주황 — 어린이 안전
   "충전소": "#1565c0",  // 전기 파란색
+  "복지": "#8e5a2b",
+  "대피시설": "#ad1457",
+  "어린이집": "#00838f",
 };
 
 /**
@@ -141,6 +169,8 @@ const _NORMALIZE_MAP = {
   SHELTER: "쉼터", shelter: "쉼터",
   SCHOOL_ZONE: "보호구역", school_zone: "보호구역",
   EV_CHARGER: "충전소", ev_charger: "충전소",
+  CIVIL_DEFENSE_SHELTER: "대피시설", civil_defense_shelter: "대피시설",
+  CHILDCARE: "어린이집", childcare: "어린이집",
 };
 export function normalizeCategory(raw) {
   if (!raw) return "기타";
@@ -155,6 +185,7 @@ const _CODE_MAP = {
   "따릉이": "BIKE", "CCTV": "CCTV", "주차장": "PARKING",
   "병원": "HOSPITAL", "약국": "PHARMACY", "안전": "SAFETY", "복지": "WELFARE",
   "와이파이": "WIFI", "쉼터": "SHELTER", "보호구역": "SCHOOL_ZONE", "충전소": "EV_CHARGER",
+  "대피시설": "CIVIL_DEFENSE_SHELTER", "어린이집": "CHILDCARE",
 };
 export function toCategoryCode(label) {
   return _CODE_MAP[label] || label;

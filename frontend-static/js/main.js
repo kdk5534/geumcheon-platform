@@ -11,11 +11,31 @@ import * as catalogPage from "./pages/catalog.js";
 import * as mapPage from "./pages/map.js";
 import * as commercialPage from "./pages/commercial.js";
 import * as geoPage from "./pages/geo.js";
-import * as apiStatusPage from "./pages/api-status.js";
-import * as apiLogsPage from "./pages/api-logs.js";
-import * as adminPage from "./pages/admin.js";
+import * as dongPage from "./pages/dong.js";
+import * as topicsPage from "./pages/topics.js";
 import * as populationPage from "./pages/population.js";
 import * as aboutPage from "./pages/about.js";
+
+function lazyPage(loader) {
+  let module = null;
+  let mountSequence = 0;
+  return {
+    async mount(container) {
+      const sequence = ++mountSequence;
+      module ||= await loader();
+      if (sequence !== mountSequence) return;
+      return module.mount(container);
+    },
+    unmount() {
+      mountSequence += 1;
+      module?.unmount?.();
+    },
+  };
+}
+
+const apiStatusPage = lazyPage(() => import("./pages/api-status.js"));
+const apiLogsPage = lazyPage(() => import("./pages/api-logs.js"));
+const adminPage = lazyPage(() => import("./pages/admin.js"));
 
 // ─── 테마 초기화 + 다크모드 토글 ───────────────────────────────
 
@@ -56,18 +76,11 @@ import * as aboutPage from "./pages/about.js";
 
 (function initNavIcons() {
   const NAV_ICONS = {
-    home:        "home",
-    realtime:    "activity",
-    indicators:  "bar-chart",
-    catalog:     "database",
-    map:         "map",
-    commercial:  "shopping-bag",
-    geo:         "filter",
-    population:  "users",
-    about:       "info",
-    api:         "server",
-    "api-logs":  "list",
-    admin:       "settings"
+    home:    "home",
+    nearby:  "map",
+    dong:    "users",
+    topics:  "bar-chart",
+    catalog: "database"
   };
   document.querySelectorAll(".nav a[data-route]").forEach((link) => {
     const routeKey = link.dataset.route;
@@ -118,22 +131,6 @@ import * as aboutPage from "./pages/about.js";
   });
 }());
 
-// ─── PULSE BAR 초기화 ────────────────────────────────────────
-
-(function initPulseBar() {
-  const timeEl = document.getElementById("pulse-time");
-
-  function updateTime() {
-    if (!timeEl) return;
-    const now = new Date();
-    timeEl.textContent = now.toLocaleTimeString("ko-KR", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit"
-    }) + " 기준";
-  }
-  updateTime();
-  setInterval(updateTime, 1000);
-}());
-
 // ─── 라우터 초기화 ────────────────────────────────────────────
 
 const viewContainer = document.getElementById("view");
@@ -144,7 +141,9 @@ initRouter(viewContainer, {
   indicators:  indicatorsPage,
   catalog:     catalogPage,
   map:         mapPage,
+  dong:        dongPage,
   commercial:  commercialPage,
+  topics:      topicsPage,
   geo:         geoPage,
   population:  populationPage,
   about:       aboutPage,
@@ -155,9 +154,17 @@ initRouter(viewContainer, {
 
 // ─── 공통 데이터 로드 ─────────────────────────────────────────
 
-bootData().catch((error) => {
-  console.error("데이터 초기화 실패:", error?.message);
-});
+document.documentElement.dataset.appDataState = "loading";
+bootData()
+  .catch((error) => {
+    document.documentElement.dataset.appDataState = "error";
+    console.error("데이터 초기화 실패:", error?.message);
+  })
+  .finally(() => {
+    if (document.documentElement.dataset.appDataState !== "error") {
+      document.documentElement.dataset.appDataState = "ready";
+    }
+  });
 
 /**
  * 로컬 데이터를 먼저 렌더하고, 백엔드 데이터를 가져와 갱신한다.
@@ -168,6 +175,10 @@ async function bootData() {
   const localData = await loadLocalData();
   state.data = localData;
   refreshHomeIfVisible();
+  refreshMapIfVisible();
+  refreshPopulationIfVisible();
+  refreshDongIfVisible();
+  refreshTopicsIfVisible();
   refreshPulseBar();
 
   // 2. API 소스/로그 로드
@@ -183,6 +194,8 @@ async function bootData() {
   refreshHomeIfVisible();
   refreshMapIfVisible();
   refreshPopulationIfVisible();
+  refreshDongIfVisible();
+  refreshTopicsIfVisible();
   refreshPulseBar();
 }
 
@@ -221,6 +234,8 @@ function refreshHomeIfVisible() {
   homePage.renderMetrics();
   homePage.renderStatsStrip();
   homePage.renderHeroMode();
+  homePage.renderHomeDataState();
+  homePage.refreshStaticData();
   // ECharts가 이미 로드된 경우 스파크라인도 함께 갱신
   if (window.echarts && typeof homePage.refreshSparklines === "function") {
     homePage.refreshSparklines();
@@ -238,5 +253,19 @@ function refreshMapIfVisible() {
 function refreshPopulationIfVisible() {
   if (document.getElementById("pop-chart-bar")) {
     populationPage.refresh();
+  }
+}
+
+/** 현재 우리 동 허브가 마운트된 상태면 선택·비교 요약을 갱신한다. */
+function refreshDongIfVisible() {
+  if (document.querySelector(".dong-page")) {
+    dongPage.refresh();
+  }
+}
+
+/** 현재 분야별 허브가 마운트된 상태면 질문 카드와 데이터 상태를 갱신한다. */
+function refreshTopicsIfVisible() {
+  if (document.querySelector(".topics-page")) {
+    topicsPage.refresh();
   }
 }

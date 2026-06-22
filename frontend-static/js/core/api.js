@@ -7,9 +7,16 @@ import { sourceModeText, updateOverviewMeta } from "./meta.js";
  * 타임아웃 기능을 포함한 fetch 래퍼.
  * 응답이 ok가 아닐 경우 에러를 던진다.
  */
-export async function fetchWithTimeout(url, timeoutMs = API_TIMEOUT_MS) {
+export async function fetchWithTimeout(url, timeoutMs = API_TIMEOUT_MS, { signal } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromCaller = () => controller.abort(signal?.reason);
+
+  if (signal?.aborted) {
+    controller.abort(signal.reason);
+  } else {
+    signal?.addEventListener("abort", abortFromCaller, { once: true });
+  }
 
   try {
     const response = await fetch(url, { signal: controller.signal });
@@ -19,13 +26,60 @@ export async function fetchWithTimeout(url, timeoutMs = API_TIMEOUT_MS) {
     return response;
   } finally {
     clearTimeout(timeout);
+    signal?.removeEventListener("abort", abortFromCaller);
   }
 }
 
 /** ./assets/data/mock-data.json 에서 로컬 데이터를 로드한다. */
 export async function loadLocalData() {
   const response = await fetch("./assets/data/mock-data.json");
+  const data = await response.json();
+  return {
+    ...data,
+    operationalSnapshots: {
+      ...(data.operationalSnapshots || {}),
+      publicWifi: {
+        mode: "last-success",
+        sourceRows: 1644,
+        collectedAt: "2026-06-19",
+        realtimeEnabled: false,
+      },
+    },
+  };
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetchWithTimeout(url, API_TIMEOUT_MS, options);
   return response.json();
+}
+
+async function loadAllFacilityPayload() {
+  const allItems = [];
+  let firstPayload = null;
+  let lastPagination = null;
+
+  for (let page = 0; page < 20; page += 1) {
+    const payload = await fetchJson(
+      `${BACKEND_API_BASE}/api/public/facilities?scope=GEUMCHEON&page=${page}&size=1000`
+    );
+    if (!payload?.success || !Array.isArray(payload.data)) return payload;
+    if (!firstPayload) firstPayload = payload;
+    allItems.push(...payload.data);
+    lastPagination = payload?.meta?.pagination || null;
+    if (lastPagination?.hasNext !== true || payload.data.length === 0) break;
+  }
+
+  if (!firstPayload) return null;
+  return {
+    ...firstPayload,
+    data: allItems,
+    meta: {
+      ...(firstPayload.meta || {}),
+      pagination: lastPagination
+        ? { ...lastPagination, page: 0, size: allItems.length, hasNext: false }
+        : null,
+    },
+  };
 }
 
 /**
@@ -87,13 +141,14 @@ export async function loadApiLogsRaw() {
 export async function loadBackendData(localData) {
   try {
     const requests = [
-      ["datasets", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/datasets`)],
-      ["facilities", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/facilities?size=1000`)],
-      ["stores", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/stores?size=1000`)],
-      ["airQuality", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/air-quality`)],
-      ["population", fetchWithTimeout(`${BACKEND_API_BASE}/api/public/population`)]
+      ["datasets", fetchJson(`${BACKEND_API_BASE}/api/public/datasets`)],
+      ["facilities", loadAllFacilityPayload()],
+      ["stores", fetchJson(`${BACKEND_API_BASE}/api/public/stores?scope=GEUMCHEON&size=1000`)],
+      ["airQuality", fetchJson(`${BACKEND_API_BASE}/api/public/air-quality`)],
+      ["population", fetchJson(`${BACKEND_API_BASE}/api/public/population`)]
+      , ["datasetStatuses", fetchJson(`${BACKEND_API_BASE}/api/public/datasets/status`)]
     ];
-    const settled = await Promise.allSettled(requests.map(([, promise]) => promise.then((response) => response.json())));
+    const settled = await Promise.allSettled(requests.map(([, promise]) => promise));
     const payloads = {};
     const errors = [];
 
@@ -128,16 +183,44 @@ export async function loadBackendData(localData) {
     const storeCount = stores.length;
     const latestAirQuality = airQuality.find((item) => String(item?.districtName || "").includes("금천")) || airQuality[0] || null;
     const successfulSources = Object.keys(payloads);
-    const sourceMode = successfulSources.length === requests.length ? "db" : "mixed";
+    const staleSources = Object.entries(payloads)
+      .filter(([, payload]) => ["STALE", "EXPIRED"].includes(payload?.meta?.status))
+      .map(([key, payload]) => `${key}: ${payload.meta.status === "EXPIRED" ? "보존기간 초과" : "갱신 지연"}`);
+    errors.push(...staleSources);
+    const sourceMode = successfulSources.length === requests.length && staleSources.length === 0 ? "db" : "mixed";
     const sourceText = sourceModeText(sourceMode);
 
     const baseMeta = updateOverviewMeta(
       localData.meta,
       sourceMode === "db" ? "금천구 DB 데이터" : "금천구 혼합 데이터"
     );
-    const meta = populationFromBackend
-      ? { ...baseMeta, population: { source: "행정안전부 주민등록인구", asOf: formatKrTimestamp(payloads.population.timestamp) } }
-      : baseMeta;
+    const sectionMeta = (payload, fallback) => ({
+      source: payload?.meta?.source || fallback.source,
+      status: payload?.meta?.status || fallback.status,
+      asOf: formatKrTimestamp(
+        payload?.meta?.observedAt || payload?.meta?.collectedAt || payload?.timestamp
+      ) || fallback.asOf
+    });
+    const meta = {
+      ...baseMeta,
+      overview: sectionMeta(payloads.airQuality, baseMeta.overview),
+      life: sectionMeta(payloads.facilities, baseMeta.life),
+      commercial: sectionMeta(payloads.stores, baseMeta.commercial),
+      population: populationFromBackend
+        ? sectionMeta(payloads.population, baseMeta.population)
+        : baseMeta.population
+    };
+    const wifiStatus = Array.isArray(payloads.datasetStatuses?.data)
+      ? payloads.datasetStatuses.data.find((item) => item.datasetKey === "public-wifi")
+      : null;
+    const wifiSnapshot = {
+      ...(localData.operationalSnapshots?.publicWifi || {}),
+      sourceRows: wifiStatus?.lastSuccessSourceRecordCount || localData.operationalSnapshots?.publicWifi?.sourceRows || 1644,
+      collectedAt: formatKrTimestamp(wifiStatus?.collectedAt)
+        || localData.operationalSnapshots?.publicWifi?.collectedAt
+        || "2026-06-19",
+      realtimeEnabled: false,
+    };
 
     return {
       ...localData,
@@ -148,6 +231,10 @@ export async function loadBackendData(localData) {
       metrics: withBackendMetric(localData.metrics, datasets, storeCount, latestAirQuality),
       facilities,
       population
+      , operationalSnapshots: {
+        ...(localData.operationalSnapshots || {}),
+        publicWifi: wifiSnapshot,
+      }
     };
   } catch (error) {
     return {
@@ -169,7 +256,7 @@ export async function loadBackendData(localData) {
  * @param {{ minLat?:number, minLng?:number, maxLat?:number, maxLng?:number, category?:string, page?:number, size?:number }} opts
  * @returns {Promise<Array|null>}
  */
-async function loadItemsInBbox(path, { minLat, minLng, maxLat, maxLng, category, page = 0, size = 200 } = {}) {
+async function loadItemsPageInBbox(path, { minLat, minLng, maxLat, maxLng, category, scope = "GEUMCHEON", page = 0, size = 200, signal } = {}) {
   const params = new URLSearchParams({ page, size });
   // undefined/null인 bbox 파라미터는 추가하지 않는다 (String("undefined")가 서버 400을 유발)
   if (minLat != null) params.set("minLat", minLat);
@@ -178,13 +265,21 @@ async function loadItemsInBbox(path, { minLat, minLng, maxLat, maxLng, category,
   if (maxLng != null) params.set("maxLng", maxLng);
   // 한글 라벨을 백엔드 코드로 역변환한다 (BIKE/CCTV/PARKING 등).
   if (category && category !== "전체") params.set("category", toCategoryCode(category));
+  params.set("scope", scope);
   try {
-    const response = await fetchWithTimeout(`${BACKEND_API_BASE}${path}?${params}`);
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}${path}?${params}`, API_TIMEOUT_MS, { signal });
     const payload = await response.json();
-    return Array.isArray(payload?.data) ? payload.data : null;
+    return Array.isArray(payload?.data)
+      ? { items: payload.data, pagination: payload?.meta?.pagination || null }
+      : null;
   } catch {
     return null;
   }
+}
+
+async function loadItemsInBbox(path, opts = {}) {
+  const result = await loadItemsPageInBbox(path, opts);
+  return result?.items ?? null;
 }
 
 /**
@@ -195,7 +290,24 @@ async function loadItemsInBbox(path, { minLat, minLng, maxLat, maxLng, category,
  * @returns {Promise<Array|null>}
  */
 export async function loadFacilitiesInBbox(opts = {}) {
-  return loadItemsInBbox("/api/public/facilities", opts);
+  const size = Math.min(Math.max(Number(opts.size) || 1000, 1), 1000);
+  const allItems = [];
+  let page = 0;
+
+  while (page < 20) {
+    const result = await loadItemsPageInBbox("/api/public/facilities", { ...opts, page, size });
+    if (!result) return null;
+    allItems.push(...result.items);
+
+    const hasNext = result.pagination?.hasNext === true;
+    if (!hasNext || result.items.length === 0) break;
+    page += 1;
+  }
+
+  return allItems.map((facility) => ({
+    ...facility,
+    category: normalizeCategory(facility.category),
+  }));
 }
 
 /**
@@ -207,6 +319,20 @@ export async function loadFacilitiesInBbox(opts = {}) {
  */
 export async function loadStoresInBbox(opts = {}) {
   return loadItemsInBbox("/api/public/stores", opts);
+}
+
+export async function loadStoreScopeCount(scope = "GEUMCHEON") {
+  try {
+    const params = new URLSearchParams({ scope });
+    const response = await fetchWithTimeout(
+      `${BACKEND_API_BASE}/api/public/stores/count?${params}`,
+      API_TIMEOUT_MS
+    );
+    const payload = await response.json();
+    return payload?.success && payload.data ? payload.data : null;
+  } catch {
+    return null;
+  }
 }
 
 /** ISO 8601 타임스탬프를 "YYYY.MM.DD HH:mm" 형식의 한국어 표기로 변환한다. */

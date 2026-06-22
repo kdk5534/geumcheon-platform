@@ -9,7 +9,8 @@ export function getSectionMeta(sectionKey) {
   const meta = state.data?.meta?.[sectionKey] || {};
   return {
     source: meta.source || fallback.source,
-    asOf: meta.asOf || fallback.asOf
+    asOf: meta.asOf || fallback.asOf,
+    status: meta.status || fallback.status || ""
   };
 }
 

@@ -3,24 +3,80 @@
 import { state } from "./state.js";
 import { escapeHtml } from "./dom.js";
 
+const PALETTE = ["#c5e8f7", "#63bde3", "#0d93cf", "#0c7fb8", "#0a4570"];
+
 /**
- * 지표값을 단계구분도 색상으로 매핑한다.
+ * 값 배열에서 분위수 기반 색상 경계를 계산한다.
+ * @param {number[]} values
+ * @param {number} steps - 단계 수
+ * @returns {number[]} 오름차순 임계값 배열 (length = steps - 1)
+ */
+function quantileBreaks(values, steps) {
+  const sorted = [...values].filter((v) => v > 0).sort((a, b) => a - b);
+  if (sorted.length === 0) return [];
+  const breaks = [];
+  for (let i = 1; i < steps; i++) {
+    const idx = Math.floor((i / steps) * sorted.length);
+    breaks.push(sorted[Math.min(idx, sorted.length - 1)]);
+  }
+  return breaks;
+}
+
+// 지표별 분위수 캐시 (동일 데이터 반복 계산 방지)
+const _breakCache = new Map();
+
+/**
+ * 지표 전체 값을 기반으로 분위수 임계값을 반환한다.
+ * @param {string} metric
+ * @returns {number[]}
+ */
+function getBreaks(metric) {
+  if (_breakCache.has(metric)) return _breakCache.get(metric);
+  const districts = Array.isArray(state.data?.districts) ? state.data.districts : [];
+  const pop       = Array.isArray(state.data?.population) ? state.data.population : [];
+  let values;
+  if (metric === "인구") {
+    values = pop.map((p) => Number(p.total) || 0);
+  } else {
+    values = districts.map((d) => Number(d.scores?.[metric]) || 0);
+  }
+  const breaks = quantileBreaks(values, PALETTE.length);
+  _breakCache.set(metric, breaks);
+  return breaks;
+}
+
+/** 메트릭이 바뀔 때 캐시를 초기화한다. */
+export function clearChoroplethCache() {
+  _breakCache.clear();
+}
+
+/**
+ * 지표값을 단계구분도 색상으로 매핑한다 (분위수 기반).
  * @param {number} value
- * @param {string} metric - "인구" 또는 점수 지표명
+ * @param {string} metric
  * @returns {string}
  */
 export function choroplethColor(value, metric) {
-  if (metric === "인구") {
-    if (value >= 55000) return "#0a4570";
-    if (value >= 45000) return "#0c7fb8";
-    if (value >= 35000) return "#0d93cf";
-    return "#63bde3";
+  if (value <= 0) return PALETTE[0];
+  const breaks = getBreaks(metric);
+  if (breaks.length === 0) {
+    // 폴백: 이전 고정 임계값
+    if (metric === "인구") {
+      if (value >= 55000) return PALETTE[4];
+      if (value >= 45000) return PALETTE[3];
+      if (value >= 35000) return PALETTE[2];
+      return PALETTE[1];
+    }
+    if (value >= 85) return PALETTE[4];
+    if (value >= 75) return PALETTE[3];
+    if (value >= 65) return PALETTE[2];
+    if (value >= 55) return PALETTE[1];
+    return PALETTE[0];
   }
-  if (value >= 85) return "#0a4570";
-  if (value >= 75) return "#0c7fb8";
-  if (value >= 65) return "#0d93cf";
-  if (value >= 55) return "#63bde3";
-  return "#c5e8f7";
+  for (let i = breaks.length - 1; i >= 0; i--) {
+    if (value >= breaks[i]) return PALETTE[i + 1];
+  }
+  return PALETTE[0];
 }
 
 /**
@@ -109,7 +165,8 @@ export function createChoroplethLayer(L, mapInst, geojson, opts = {}) {
     },
   }).addTo(mapInst);
 
-  markerLayers.forEach((l) => l.bringToFront());
+  // LayerGroup은 bringToFront가 없으므로 FeatureGroup/GeoJSON 계열에만 호출한다.
+  markerLayers.forEach((l) => { if (typeof l.bringToFront === "function") l.bringToFront(); });
   return layer;
 }
 
@@ -153,20 +210,32 @@ export function renderChoroplethLegend(elId, metric, opts = {}) {
   if (!el) return;
   const { cssPrefix = "map-legend", compact = false } = opts;
 
-  const steps = metric === "인구"
+  const breaks = getBreaks(metric);
+  const unit = metric === "인구" ? "명" : "점";
+  const fmt = (v) => metric === "인구" ? Number(v).toLocaleString() : String(Math.round(v));
+  const steps = breaks.length > 0
     ? [
-        { color: "#0a4570", label: compact ? "55,000명↑" : "55,000명 이상" },
-        { color: "#0c7fb8", label: compact ? "45,000명↑" : "45,000명 이상" },
-        { color: "#0d93cf", label: compact ? "35,000명↑" : "35,000명 이상" },
-        { color: "#63bde3", label: compact ? "35,000명↓" : "35,000명 미만" },
-      ]
-    : [
-        { color: "#0a4570", label: compact ? "85점↑" : "85점 이상" },
-        { color: "#0c7fb8", label: compact ? "75점↑" : "75점 이상" },
-        { color: "#0d93cf", label: compact ? "65점↑" : "65점 이상" },
-        { color: "#63bde3", label: compact ? "55점↑" : "55점 이상" },
-        { color: "#c5e8f7", label: compact ? "55점↓" : "55점 미만" },
-      ];
+        { color: PALETTE[0], label: compact ? `${fmt(breaks[0])}${unit}↓` : `${fmt(breaks[0])}${unit} 미만` },
+        ...breaks.slice(1).map((b, i) => ({
+          color: PALETTE[i + 1],
+          label: compact ? `${fmt(b)}${unit}↑` : `${fmt(b)}${unit} 이상`,
+        })),
+        { color: PALETTE[PALETTE.length - 1], label: compact ? `${fmt(breaks[breaks.length - 1])}${unit}↑` : `${fmt(breaks[breaks.length - 1])}${unit} 이상` },
+      ].slice(0, PALETTE.length)
+    : metric === "인구"
+      ? [
+          { color: PALETTE[4], label: "55,000명 이상" },
+          { color: PALETTE[3], label: "45,000명 이상" },
+          { color: PALETTE[2], label: "35,000명 이상" },
+          { color: PALETTE[1], label: "35,000명 미만" },
+        ]
+      : [
+          { color: PALETTE[4], label: "85점 이상" },
+          { color: PALETTE[3], label: "75점 이상" },
+          { color: PALETTE[2], label: "65점 이상" },
+          { color: PALETTE[1], label: "55점 이상" },
+          { color: PALETTE[0], label: "55점 미만" },
+        ];
 
   el.innerHTML = `
     <div class="${cssPrefix}-title">${escapeHtml(metric)} 지수</div>

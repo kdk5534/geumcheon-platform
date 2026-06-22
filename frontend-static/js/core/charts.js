@@ -1,11 +1,13 @@
 // ECharts 동적 로드 + 차트 생성·소멸 헬퍼
 
+import { loadScriptOnce } from "./assets.js";
+
 const ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js";
 
 // 금천구 공식 브랜드 색상 기반 팔레트 (시안→마젠타 계열 우선)
 export const CHART_PALETTE = [
   "#0d93cf", // --teal (금천 시안블루)
-  "#bd1d77", // --magenta
+  "#3f7180", // subdued blue-teal accent
   "#0c7fb8", // --green (딥 시안)
   "#6556a3", // --violet
   "#b56b17", // --amber
@@ -51,25 +53,11 @@ export const BASE_OPTION = {
  * (map.js loadLeaflet() 패턴과 동일)
  */
 export function loadECharts() {
-  return new Promise((resolve, reject) => {
-    if (window.echarts) {
-      resolve();
-      return;
-    }
-
-    const existing = document.getElementById("echarts-js");
-    if (existing) {
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", () => reject(new Error("ECharts 스크립트 로드 실패")), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.id = "echarts-js";
-    script.src = ECHARTS_CDN;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("ECharts 스크립트 로드 실패"));
-    document.head.appendChild(script);
+  return loadScriptOnce({
+    id: "echarts-js",
+    src: ECHARTS_CDN,
+    isReady: () => Boolean(window.echarts),
+    errorMessage: "ECharts 스크립트 로드 실패",
   });
 }
 

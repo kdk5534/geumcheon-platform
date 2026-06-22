@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.ByteArrayOutputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -20,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -289,11 +292,434 @@ class PublicDataCollectorServiceTest {
         assertThat(firstRun.get(2, TimeUnit.SECONDS).status()).isEqualTo("success");
     }
 
+    @Test
+    void wifiCollectorSkipsWithoutRelayTokenAndMakesNoExternalRequest() {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository,
+                datasetRegistry,
+                objectMapper,
+                "data-key",
+                "seoul-secret",
+                true,
+                5,
+                0,
+                0,
+                500,
+                200,
+                0,
+                httpClient
+        );
+
+        List<String> keys = List.of("public-wifi");
+        List<CollectionRunResult> results = keys.stream()
+                .map(key -> service.syncDataset(key, "manual"))
+                .toList();
+        assertThat(results).extracting(CollectionRunResult::status).containsOnly("skipped");
+        assertThat(results).extracting(CollectionRunResult::message)
+                .allSatisfy(message -> assertThat(message).contains("WIFI_RELAY_TOKEN is missing"));
+        verifyNoInteractions(httpClient);
+    }
+
+    @Test
+    void wifiCollectorAcceptsOnlyAuthenticatedLoopbackRelayRows() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("WIFI"), anyList())).thenReturn(2);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+        HttpResponse<String> response = successResponse("""
+                {
+                  "service":"TbPublicWifiInfo_GC",
+                  "status":"SUCCESS",
+                  "sourceCount":2,
+                  "validCount":2,
+                  "rows":[
+                    {"X_SWIFI_WRDNFC_NO":"wifi-1","X_SWIFI_MAIN_NM":"AP 1","ADDR":"금천구 테스트로 1","LAT":"37.4568","LNT":"126.8954","district":"금천구","sourceService":"TbPublicWifiInfo_GC"},
+                    {"X_SWIFI_WRDNFC_NO":"wifi-2","X_SWIFI_MAIN_NM":"AP 2","ADDR":"금천구 테스트로 2","LAT":"37.4668","LNT":"126.8854","district":"금천구","sourceService":"TbPublicWifiInfo_GC"}
+                  ]
+                }
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
+
+        String relayToken = "relay-token-with-at-least-32-characters";
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, false,
+                500, 200, 0,
+                "http://127.0.0.1:18088", relayToken, httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("public-wifi", "manual");
+
+        ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(requestCaptor.capture(), any(HttpResponse.BodyHandler.class));
+        assertThat(requestCaptor.getValue().uri().toString())
+                .isEqualTo("http://127.0.0.1:18088/v1/public-wifi");
+        assertThat(requestCaptor.getValue().headers().firstValue("X-Relay-Token")).contains(relayToken);
+        assertThat(result.status()).isEqualTo("success");
+        assertThat(result.savedCount()).isEqualTo(2);
+        assertThat(result.requestUrl()).doesNotContain(relayToken).doesNotContain("seoul-key");
+        verify(repository).replaceFacilitySnapshot(
+                eq(datasetId), eq("WIFI"),
+                argThat(rows -> rows.size() == 2 && rows.stream().allMatch(row -> "금천구".equals(row.get("district"))))
+        );
+    }
+
+    @Test
+    void wifiCollectorRejectsDuplicateRelayRowsAndPreservesSnapshot() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+        HttpResponse<String> response = successResponse("""
+                {"status":"SUCCESS","rows":[
+                  {"X_SWIFI_WRDNFC_NO":"same","X_SWIFI_MAIN_NM":"AP 1","LAT":"37.4568","LNT":"126.8954","district":"금천구","sourceService":"TbPublicWifiInfo_GC"},
+                  {"X_SWIFI_WRDNFC_NO":"same","X_SWIFI_MAIN_NM":"AP 2","LAT":"37.4668","LNT":"126.8854","district":"금천구","sourceService":"TbPublicWifiInfo_GC"}
+                ]}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, false,
+                500, 200, 0,
+                "http://127.0.0.1:18088", "relay-token-with-at-least-32-characters", httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("public-wifi", "manual");
+
+        assertThat(result.status()).isEqualTo("failed");
+        verify(repository, never()).replaceFacilitySnapshot(eq(datasetId), eq("WIFI"), anyList());
+    }
+
+    @Test
+    void wifiCollectorReportsSafeRelayTimeoutAndPreservesSnapshot() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+        HttpResponse<String> response = mock(HttpResponse.class);
+        when(response.statusCode()).thenReturn(503);
+        when(response.body()).thenReturn("{\"status\":\"FAILED\",\"errorCode\":\"TIMEOUT\"}");
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, false,
+                500, 200, 0,
+                "http://127.0.0.1:18088", "relay-token-with-at-least-32-characters", httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("public-wifi", "manual");
+
+        assertThat(result.status()).isEqualTo("failed");
+        assertThat(result.message()).isEqualTo("Public data collection failed.");
+        verify(repository).recordCollectionLog(
+                eq(datasetId), eq("API"), eq("FAILED"), any(), any(), eq(0), eq(0),
+                argThat(message -> message.contains("TIMEOUT")
+                        && !message.contains("relay-token") && !message.contains("seoul-key")),
+                eq("http://127.0.0.1:18088/v1/public-wifi"), eq("manual")
+        );
+        verify(repository, never()).replaceFacilitySnapshot(eq(datasetId), eq("WIFI"), anyList());
+    }
+
+    @Test
+    void wifiRelayUrlMustStayOnExplicitLoopbackPort() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, false,
+                500, 200, 0,
+                "http://example.com:18088", "relay-token-with-at-least-32-characters", httpClient
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loopback-only");
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void bikeStationsUseLatestOfficialHttpsWorkbookAndKeepOnlyGeumcheonRows() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.latestSuccessfulSourceCount(datasetId)).thenReturn(127);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("BIKE"), anyList())).thenReturn(2);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+
+        HttpResponse<String> pageResponse = successResponse("""
+                <span onclick="javascript:downloadFile('23');">공공자전거 대여소 정보(25.12월 기준).xlsx</span>
+                """);
+        HttpResponse<byte[]> workbookResponse = mock(HttpResponse.class);
+        when(workbookResponse.statusCode()).thenReturn(200);
+        when(workbookResponse.body()).thenReturn(bikeWorkbook());
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn((HttpResponse) pageResponse)
+                .thenReturn((HttpResponse) workbookResponse);
+
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("bike-stations", "manual");
+
+        ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient, org.mockito.Mockito.times(2)).send(requestCaptor.capture(), any(HttpResponse.BodyHandler.class));
+        assertThat(requestCaptor.getAllValues()).extracting(request -> request.uri().toString())
+                .containsExactly(
+                        "https://data.seoul.go.kr/dataList/OA-13252/A/1/datasetView.do",
+                        "https://datafile.seoul.go.kr/bigfile/iot/inf/nio_download.do?&useCache=false"
+                );
+        assertThat(requestCaptor.getAllValues().get(1).method()).isEqualTo("POST");
+
+        ArgumentCaptor<List<Map<String, String>>> rowsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("BIKE"), rowsCaptor.capture());
+        assertThat(rowsCaptor.getValue()).hasSize(2)
+                .allSatisfy(row -> assertThat(row.get("district")).isEqualTo("금천구"));
+        assertThat(rowsCaptor.getValue()).extracting(row -> row.get("stationId"))
+                .containsExactly("1701", "1702");
+        assertThat(rowsCaptor.getValue().get(0))
+                .containsEntry("stationName", "가산디지털단지역")
+                .containsEntry("rackTotCnt", "15")
+                .containsEntry("stationLatitude", "37.481")
+                .containsEntry("stationLongitude", "126.882");
+        assertThat(result.status()).isEqualTo("success");
+        assertThat(result.fetchedCount()).isEqualTo(2);
+        assertThat(result.requestUrl()).isEqualTo("https://data.seoul.go.kr/dataList/OA-13252/A/1/datasetView.do");
+    }
+
+    @Test
+    void approvedAirQualityCollectorUsesDataGoKrHttpsAndMasksTheKey() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceAirQualitySnapshot(eq(datasetId), anyList())).thenReturn(1);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+        HttpResponse<String> response = successResponse("""
+                {"row":[{"MSRSTE_NM":"금천구","MSRDT":"202606192300","PM10":"20","PM25":"10"}]}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(response);
+
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-secret", true,
+                5, 0, 0, true,
+                500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("air-quality", "manual");
+
+        assertThat(result.status()).isEqualTo("success");
+        verify(repository).replaceAirQualitySnapshot(
+                eq(datasetId),
+                argThat(rows -> rows.size() == 1 && "금천구".equals(rows.get(0).get("stationName")))
+        );
+        assertThat(result.requestUrl()).startsWith("https://apis.data.go.kr/B552584/");
+        assertThat(result.requestUrl()).contains("[redacted]").doesNotContain("data-key");
+        ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(requestCaptor.capture(), any(HttpResponse.BodyHandler.class));
+        assertThat(requestCaptor.getValue().uri().toString())
+                .startsWith("https://apis.data.go.kr/B552584/")
+                .contains("serviceKey=data-key");
+    }
+
+    @Test
+    void emptyResponseFailsBeforeReplacingExistingSnapshot() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.recordCollectionLog(eq(datasetId), anyString(), anyString(), any(), any(), any(Integer.class), any(Integer.class), any(), anyString(), anyString()))
+                .thenReturn(UUID.randomUUID());
+        HttpResponse<String> emptyResponse = successResponse("""
+                {"body":{"totalCount":"0","items":[]}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(emptyResponse);
+
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncStores("manual");
+
+        assertThat(result.status()).isEqualTo("failed");
+        assertThat(result.message()).isEqualTo("Public data collection failed.");
+        verify(repository, never()).replaceStoreBusinesses(any(), anyList());
+        verify(repository).recordCollectionLog(
+                eq(datasetId), eq("API"), eq("FAILED"), any(), any(),
+                eq(0), eq(0), eq("No 상가업소 정보 records were returned from the API."),
+                anyString(), eq("manual")
+        );
+        assertThat(result.requestUrl()).startsWith("https://apis.data.go.kr/");
+    }
+
+    @Test
+    void heatShelterSourceIsRecordedButCollectionStaysDisabledWithoutSeparateCredential() {
+        when(repository.upsertDataset(any())).thenReturn(UUID.randomUUID());
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncDataset("heat-shelters", "manual");
+
+        assertThat(result.status()).isEqualTo("skipped");
+        assertThat(result.message()).contains("Collection disabled");
+        verifyNoInteractions(httpClient);
+    }
+
+    @Test
+    void schoolZonesUseOfficialRepresentativePointsAndFilterToGeumcheon() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("SCHOOL_ZONE"), anyList())).thenReturn(1);
+        HttpResponse<String> schoolResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {"TRGET_FCLTY_NM":"금천초등학교","RDNMADR":"서울특별시 금천구 시흥대로 1","LATITUDE":"37.45","LONGITUDE":"126.90","INSTITUTION_NM":"서울특별시 금천구"},
+                  {"TRGET_FCLTY_NM":"구로초등학교","RDNMADR":"서울특별시 구로구 구로로 1","LATITUDE":"37.50","LONGITUDE":"126.88","INSTITUTION_NM":"서울특별시 구로구"}
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(schoolResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncSchoolZones("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("SCHOOL_ZONE"), rows.capture());
+        assertThat(rows.getValue()).singleElement().satisfies(row ->
+                assertThat(row.get("TRGET_FCLTY_NM")).isEqualTo("금천초등학교")
+        );
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void evCollectorStoresLocationAndChargingSpecificationWithoutRealtimeStatus() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("EV_CHARGER"), anyList())).thenReturn(1);
+        HttpResponse<String> pageResponse = successResponse("""
+                <span onclick="javascript:downloadFile('5');">서울특별시 금천구_전기차충전소 정보_20250228.xlsx</span>
+                """);
+        HttpResponse<byte[]> workbookResponse = mock(HttpResponse.class);
+        when(workbookResponse.statusCode()).thenReturn(200);
+        when(workbookResponse.body()).thenReturn(evWorkbook());
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn((HttpResponse) pageResponse)
+                .thenReturn((HttpResponse) workbookResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncEvChargers("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("EV_CHARGER"), rows.capture());
+        assertThat(rows.getValue()).singleElement().satisfies(row -> {
+            assertThat(row).containsEntry("sourceOriginalId", "서울시:금천 충전소:01");
+            assertThat(row).containsEntry("CHARGER_TYPE_NM", "DC콤보");
+            assertThat(row).containsEntry("CAPACITY", "100kW");
+            assertThat(row).containsEntry("REFERENCE_DATE", "2025-02-28");
+            assertThat(row).doesNotContainKeys("충전기상태", "stat", "statUpdDt");
+        });
+        assertThat(result.status()).isEqualTo("success");
+    }
+
     @SuppressWarnings("unchecked")
     private HttpResponse<String> successResponse(String body) {
         HttpResponse<String> response = mock(HttpResponse.class);
         when(response.statusCode()).thenReturn(200);
         when(response.body()).thenReturn(body);
         return response;
+    }
+
+    private byte[] bikeWorkbook() throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("대여소현황");
+            addBikeRow(sheet.createRow(5), 1701, " 가산디지털단지역 ", "금천구", 37.481, 126.882, 10, 5);
+            addBikeRow(sheet.createRow(6), 1702, "금천구청역", "금천구", 37.456, 126.895, 0, 12);
+            addBikeRow(sheet.createRow(7), 9999, "구로역", "구로구", 37.503, 126.882, 20, 0);
+            workbook.write(output);
+            return output.toByteArray();
+        }
+    }
+
+    private byte[] evWorkbook() throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("전기차충전소");
+            String[] headers = {
+                    "운영기관", "충전소", "충전기ID", "충전기타입", "충전기상태", "시설구분(대)",
+                    "시설구분(소)", "지역", "시군구", "주소", "지번 주소", "상세위치", "이용가능시간",
+                    "이용자 제한", "충전용량", "위도", "경도"
+            };
+            var header = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i += 1) header.createCell(i).setCellValue(headers[i]);
+            addEvRow(sheet.createRow(1), "서울시", "금천 충전소", "01", "DC콤보", "충전중",
+                    "금천구", "서울특별시 금천구 가산로 1", "100kW", 37.47, 126.89);
+            addEvRow(sheet.createRow(2), "서울시", "구로 충전소", "01", "AC완속", "사용가능",
+                    "구로구", "서울특별시 구로구 구로로 1", "7kW", 37.50, 126.88);
+            workbook.write(output);
+            return output.toByteArray();
+        }
+    }
+
+    private void addEvRow(
+            org.apache.poi.ss.usermodel.Row row,
+            String operator,
+            String station,
+            String chargerId,
+            String chargerType,
+            String realtimeStatus,
+            String district,
+            String address,
+            String capacity,
+            double latitude,
+            double longitude
+    ) {
+        row.createCell(0).setCellValue(operator);
+        row.createCell(1).setCellValue(station);
+        row.createCell(2).setCellValue(chargerId);
+        row.createCell(3).setCellValue(chargerType);
+        row.createCell(4).setCellValue(realtimeStatus);
+        row.createCell(8).setCellValue(district);
+        row.createCell(9).setCellValue(address);
+        row.createCell(14).setCellValue(capacity);
+        row.createCell(15).setCellValue(latitude);
+        row.createCell(16).setCellValue(longitude);
+    }
+
+    private void addBikeRow(
+            org.apache.poi.ss.usermodel.Row row,
+            int id,
+            String name,
+            String district,
+            double latitude,
+            double longitude,
+            int lcdRacks,
+            int qrRacks
+    ) {
+        row.createCell(0).setCellValue(id);
+        row.createCell(1).setCellValue(name);
+        row.createCell(2).setCellValue(district);
+        row.createCell(3).setCellValue("서울특별시 " + district + " 테스트로 1");
+        row.createCell(4).setCellValue(latitude);
+        row.createCell(5).setCellValue(longitude);
+        row.createCell(7).setCellValue(lcdRacks);
+        row.createCell(8).setCellValue(qrRacks);
+        row.createCell(9).setCellValue(qrRacks > 0 ? "QR" : "LCD");
     }
 }

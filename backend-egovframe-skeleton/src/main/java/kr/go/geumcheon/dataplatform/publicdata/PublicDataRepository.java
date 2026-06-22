@@ -1,6 +1,7 @@
 package kr.go.geumcheon.dataplatform.publicdata;
 
 import kr.go.geumcheon.dataplatform.dataset.DatasetSummary;
+import kr.go.geumcheon.dataplatform.dataset.DatasetOperationalStatusSummary;
 import kr.go.geumcheon.dataplatform.facility.FacilitySummary;
 
 import java.time.Instant;
@@ -12,9 +13,15 @@ public interface PublicDataRepository {
 
     List<DatasetSummary> listDatasets();
 
+    List<DatasetOperationalStatusSummary> listDatasetOperationalStatuses();
+
     List<FacilitySummary> listFacilities(MapQuery query);
 
+    long countFacilities(MapQuery query);
+
     List<StoreSummary> listStores(MapQuery query);
+
+    long countStores(MapQuery query);
 
     List<AirQualitySummary> listAirQuality();
 
@@ -35,6 +42,8 @@ public interface PublicDataRepository {
     int replaceFacilitySnapshot(UUID datasetId, String category, List<Map<String, String>> rows);
 
     int replacePopulationSnapshot(UUID datasetId, List<Map<String, String>> rows);
+
+    Integer latestSuccessfulSourceCount(UUID datasetId);
 
     List<PopulationSummary> listPopulation();
 

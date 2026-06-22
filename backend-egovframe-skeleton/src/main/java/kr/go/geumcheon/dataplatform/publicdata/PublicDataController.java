@@ -1,6 +1,8 @@
 package kr.go.geumcheon.dataplatform.publicdata;
 
 import kr.go.geumcheon.dataplatform.api.ApiResponse;
+import kr.go.geumcheon.dataplatform.api.PaginationMeta;
+import kr.go.geumcheon.dataplatform.api.PublicApiMetaFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,21 +50,66 @@ public class PublicDataController {
             @RequestParam(required = false) Double maxLat,
             @RequestParam(required = false) Double maxLng,
             @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "GEUMCHEON") String scope,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "200") int size
     ) {
-        MapQuery query = new MapQuery(minLat, minLng, maxLat, maxLng, category, page, size);
-        return ApiResponse.ok(repository.listStores(query), sourceMode());
+        MapQuery query = new MapQuery(minLat, minLng, maxLat, maxLng, category, scope, page, size);
+        List<StoreSummary> rows = repository.listStores(query);
+        long total = repository.countStores(query);
+        return ApiResponse.ok(
+                rows,
+                sourceMode(),
+                PublicApiMetaFactory.forDataset(
+                        repository, "stores", null, PaginationMeta.of(query.page(), query.size(), total)
+                )
+        );
+    }
+
+    @GetMapping("/stores/count")
+    public ApiResponse<SpatialScopeCountSummary> storeCount(
+            @RequestParam(defaultValue = "GEUMCHEON") String scope,
+            @RequestParam(required = false) String category
+    ) {
+        MapQuery query = new MapQuery(null, null, null, null, category, scope, 0, 1);
+        return ApiResponse.ok(
+                new SpatialScopeCountSummary(repository.countStores(query), query.spatialScopes()),
+                sourceMode()
+        );
     }
 
     @GetMapping("/air-quality")
     public ApiResponse<List<AirQualitySummary>> airQuality() {
-        return ApiResponse.ok(repository.listAirQuality(), sourceMode());
+        List<AirQualitySummary> rows = repository.listAirQuality();
+        String observedAt = rows.stream()
+                .map(AirQualitySummary::measuredAt)
+                .filter(value -> value != null && !value.isBlank())
+                .max(String::compareTo)
+                .orElse(null);
+        return ApiResponse.ok(
+                rows,
+                sourceMode(),
+                PublicApiMetaFactory.forDataset(
+                        repository, "air-quality", observedAt, PaginationMeta.of(0, rows.size(), rows.size())
+                )
+        );
     }
 
     @GetMapping("/population")
     public ApiResponse<List<PopulationSummary>> population() {
-        return ApiResponse.ok(repository.listPopulation(), sourceMode());
+        List<PopulationSummary> rows = repository.listPopulation();
+        String observedAt = rows.stream()
+                .map(PopulationSummary::observedAt)
+                .filter(value -> value != null && !value.isBlank())
+                .max(String::compareTo)
+                .orElse(null);
+        return ApiResponse.ok(
+                rows,
+                sourceMode(),
+                PublicApiMetaFactory.forDataset(
+                        repository, "population", observedAt, PaginationMeta.of(0, rows.size(), rows.size())
+                )
+        );
     }
 
     private String sourceMode() {

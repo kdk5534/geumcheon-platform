@@ -2,13 +2,22 @@ package kr.go.geumcheon.dataplatform.publicdata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.go.geumcheon.dataplatform.dataset.DatasetOperationalPolicy;
 import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
+import kr.go.geumcheon.dataplatform.dataset.DatasetPolicyRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -23,7 +32,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class PublicDataCollectorService {
@@ -39,6 +52,37 @@ public class PublicDataCollectorService {
     private static final String HEAT_SHELTER_KEY = "heat-shelters";
     private static final String SCHOOL_ZONE_KEY  = "school-zones";
     private static final String EV_CHARGER_KEY   = "ev-chargers";
+    private static final String WELFARE_KEY      = "welfare-facilities";
+    private static final String CIVIL_SHELTER_KEY = "civil-defense-shelters";
+    private static final String HOSPITAL_KEY     = "hospitals";
+    private static final String PHARMACY_KEY     = "pharmacies";
+    private static final String CHILDCARE_KEY    = "childcare-centers";
+    private static final Map<String, String> LIVING_FACILITY_SERVICES = Map.of(
+            WELFARE_KEY, "fcltOpenInfo_GC",
+            CIVIL_SHELTER_KEY, "LOCALDATA_114602_GC",
+            HOSPITAL_KEY, "LOCALDATA_010101_GC",
+            PHARMACY_KEY, "LOCALDATA_010106_GC",
+            CHILDCARE_KEY, "ChildCareInfoGC"
+    );
+    private static final String BIKE_DATASET_PAGE_URL =
+            "https://data.seoul.go.kr/dataList/OA-13252/A/1/datasetView.do";
+    private static final String EV_DATASET_PAGE_URL =
+            "https://data.seoul.go.kr/dataList/OA-13233/F/1/datasetView.do";
+    private static final String SEOUL_FILE_DOWNLOAD_URL =
+            "https://datafile.seoul.go.kr/bigfile/iot/inf/nio_download.do?&useCache=false";
+    private static final Pattern BIKE_FILE_SEQUENCE_PATTERN = Pattern.compile(
+            "downloadFile\\('([0-9]+)'\\)[^>]*>\\s*공공자전거 대여소 정보\\([^<]+\\)\\.xlsx",
+            Pattern.CASE_INSENSITIVE
+    );
+    private static final Pattern EV_FILE_SEQUENCE_PATTERN = Pattern.compile(
+            "downloadFile\\('([0-9]+)'\\)[^>]*>\\s*서울특별시 금천구_전기차충전소 정보_([0-9]{8})\\.xlsx",
+            Pattern.CASE_INSENSITIVE
+    );
+    // 서울 API에 자치구 필드가 없는 시설 데이터용 금천구 인근 bbox.
+    private static final double BIKE_LAT_MIN = 37.43;
+    private static final double BIKE_LAT_MAX = 37.50;
+    private static final double BIKE_LON_MIN = 126.87;
+    private static final double BIKE_LON_MAX = 126.92;
     private static final Logger log = LoggerFactory.getLogger(PublicDataCollectorService.class);
 
     private final PublicDataRepository repository;
@@ -47,6 +91,10 @@ public class PublicDataCollectorService {
     private final HttpClient httpClient;
     private final String dataGoKrApiKey;
     private final String seoulOpenApiKey;
+    private final String wifiRelayBaseUrl;
+    private final String wifiRelayToken;
+    private final String livingFacilityRelayBaseUrl;
+    private final String livingFacilityRelayToken;
     private final boolean collectorEnabled;
     private final int timeoutSeconds;
     private final int retryCount;
@@ -54,6 +102,7 @@ public class PublicDataCollectorService {
     private final int storePageSize;
     private final int storeMaxPages;
     private final int storePageDelayMillis;
+    private final boolean allowInsecureSeoulHttp;
     private final AtomicBoolean collectorRunning = new AtomicBoolean(false);
 
     @Autowired
@@ -63,10 +112,15 @@ public class PublicDataCollectorService {
             ObjectMapper objectMapper,
             @Value("${geumcheon.api-keys.data-go-kr:}") String dataGoKrApiKey,
             @Value("${geumcheon.api-keys.seoul-open-api:}") String seoulOpenApiKey,
+            @Value("${geumcheon.wifi-relay.base-url:http://127.0.0.1:18088}") String wifiRelayBaseUrl,
+            @Value("${geumcheon.wifi-relay.token:}") String wifiRelayToken,
+            @Value("${geumcheon.living-facility-relay.base-url:http://127.0.0.1:18089}") String livingFacilityRelayBaseUrl,
+            @Value("${geumcheon.living-facility-relay.token:}") String livingFacilityRelayToken,
             @Value("${geumcheon.collector.enabled:false}") boolean collectorEnabled,
             @Value("${geumcheon.collector.default-timeout-seconds:20}") int timeoutSeconds,
             @Value("${geumcheon.collector.retry-count:3}") int retryCount,
             @Value("${geumcheon.collector.retry-delay-seconds:5}") int retryDelaySeconds,
+            @Value("${geumcheon.collector.allow-insecure-seoul-http:false}") boolean allowInsecureSeoulHttp,
             @Value("${geumcheon.collector.store-page-size:100}") int storePageSize,
             @Value("${geumcheon.collector.store-max-pages:1}") int storeMaxPages,
             @Value("${geumcheon.collector.store-page-delay-millis:0}") int storePageDelayMillis
@@ -81,9 +135,14 @@ public class PublicDataCollectorService {
                 timeoutSeconds,
                 retryCount,
                 retryDelaySeconds,
+                allowInsecureSeoulHttp,
                 storePageSize,
                 storeMaxPages,
                 storePageDelayMillis,
+                wifiRelayBaseUrl,
+                wifiRelayToken,
+                livingFacilityRelayBaseUrl,
+                livingFacilityRelayToken,
                 HttpClient.newBuilder()
                         .connectTimeout(Duration.ofSeconds(Math.max(timeoutSeconds, 5)))
                         .build()
@@ -105,11 +164,93 @@ public class PublicDataCollectorService {
             int storePageDelayMillis,
             HttpClient httpClient
     ) {
+        this(
+                repository, datasetRegistry, objectMapper,
+                dataGoKrApiKey, seoulOpenApiKey, collectorEnabled,
+                timeoutSeconds, retryCount, retryDelaySeconds, false,
+                storePageSize, storeMaxPages, storePageDelayMillis,
+                "http://127.0.0.1:18088", "", "http://127.0.0.1:18089", "", httpClient
+        );
+    }
+
+    PublicDataCollectorService(
+            PublicDataRepository repository,
+            DatasetRegistry datasetRegistry,
+            ObjectMapper objectMapper,
+            String dataGoKrApiKey,
+            String seoulOpenApiKey,
+            boolean collectorEnabled,
+            int timeoutSeconds,
+            int retryCount,
+            int retryDelaySeconds,
+            boolean allowInsecureSeoulHttp,
+            int storePageSize,
+            int storeMaxPages,
+            int storePageDelayMillis,
+            HttpClient httpClient
+    ) {
+        this(
+                repository, datasetRegistry, objectMapper,
+                dataGoKrApiKey, seoulOpenApiKey, collectorEnabled,
+                timeoutSeconds, retryCount, retryDelaySeconds, allowInsecureSeoulHttp,
+                storePageSize, storeMaxPages, storePageDelayMillis,
+                "http://127.0.0.1:18088", "", "http://127.0.0.1:18089", "", httpClient
+        );
+    }
+
+    PublicDataCollectorService(
+            PublicDataRepository repository,
+            DatasetRegistry datasetRegistry,
+            ObjectMapper objectMapper,
+            String dataGoKrApiKey,
+            String seoulOpenApiKey,
+            boolean collectorEnabled,
+            int timeoutSeconds,
+            int retryCount,
+            int retryDelaySeconds,
+            boolean allowInsecureSeoulHttp,
+            int storePageSize,
+            int storeMaxPages,
+            int storePageDelayMillis,
+            String wifiRelayBaseUrl,
+            String wifiRelayToken,
+            HttpClient httpClient
+    ) {
+        this(repository, datasetRegistry, objectMapper, dataGoKrApiKey, seoulOpenApiKey,
+                collectorEnabled, timeoutSeconds, retryCount, retryDelaySeconds,
+                allowInsecureSeoulHttp, storePageSize, storeMaxPages, storePageDelayMillis,
+                wifiRelayBaseUrl, wifiRelayToken, "http://127.0.0.1:18089", "", httpClient);
+    }
+
+    PublicDataCollectorService(
+            PublicDataRepository repository,
+            DatasetRegistry datasetRegistry,
+            ObjectMapper objectMapper,
+            String dataGoKrApiKey,
+            String seoulOpenApiKey,
+            boolean collectorEnabled,
+            int timeoutSeconds,
+            int retryCount,
+            int retryDelaySeconds,
+            boolean allowInsecureSeoulHttp,
+            int storePageSize,
+            int storeMaxPages,
+            int storePageDelayMillis,
+            String wifiRelayBaseUrl,
+            String wifiRelayToken,
+            String livingFacilityRelayBaseUrl,
+            String livingFacilityRelayToken,
+            HttpClient httpClient
+    ) {
         this.repository = repository;
         this.datasetRegistry = datasetRegistry;
         this.objectMapper = objectMapper;
         this.dataGoKrApiKey = dataGoKrApiKey;
         this.seoulOpenApiKey = seoulOpenApiKey;
+        this.wifiRelayBaseUrl = normalizeWifiRelayBaseUrl(wifiRelayBaseUrl);
+        this.wifiRelayToken = wifiRelayToken == null ? "" : wifiRelayToken.trim();
+        this.livingFacilityRelayBaseUrl = normalizeRelayBaseUrl(livingFacilityRelayBaseUrl, 18089, "Living facility");
+        this.livingFacilityRelayToken = livingFacilityRelayToken == null ? "" : livingFacilityRelayToken.trim();
         this.collectorEnabled = collectorEnabled;
         this.timeoutSeconds = timeoutSeconds;
         this.retryCount = Math.max(0, retryCount);
@@ -117,6 +258,7 @@ public class PublicDataCollectorService {
         this.storePageSize = Math.max(1, storePageSize);
         this.storeMaxPages = Math.max(1, storeMaxPages);
         this.storePageDelayMillis = Math.max(0, storePageDelayMillis);
+        this.allowInsecureSeoulHttp = allowInsecureSeoulHttp;
         this.httpClient = httpClient;
     }
 
@@ -127,16 +269,21 @@ public class PublicDataCollectorService {
     public List<PublicDataRepository.CollectorSpec> specs() {
         return List.of(
                 collectorSpec(STATS_STORE_KEY,  hasValue(dataGoKrApiKey)),
-                collectorSpec(AIR_QUALITY_KEY,  hasValue(seoulOpenApiKey)),
-                collectorSpec(BIKE_KEY,         hasValue(seoulOpenApiKey)),
-                collectorSpec(CCTV_KEY,         hasValue(seoulOpenApiKey)),
-                collectorSpec(PARKING_KEY,      hasValue(seoulOpenApiKey)),
+                collectorSpec(AIR_QUALITY_KEY,  hasValue(dataGoKrApiKey)),
+                collectorSpec(BIKE_KEY,         true),
+                collectorSpec(CCTV_KEY,         false),
+                collectorSpec(PARKING_KEY,      hasValue(dataGoKrApiKey)),
                 collectorSpec(POPULATION_KEY,   hasValue(dataGoKrApiKey)),
                 // P4 신규
-                collectorSpec(WIFI_KEY,         hasValue(seoulOpenApiKey)),
-                collectorSpec(HEAT_SHELTER_KEY, hasValue(seoulOpenApiKey)),
-                collectorSpec(SCHOOL_ZONE_KEY,  hasValue(seoulOpenApiKey)),
-                collectorSpec(EV_CHARGER_KEY,   hasValue(seoulOpenApiKey))
+                collectorSpec(WIFI_KEY,         hasValue(wifiRelayToken)),
+                collectorSpec(HEAT_SHELTER_KEY, false),
+                collectorSpec(SCHOOL_ZONE_KEY,  hasValue(dataGoKrApiKey)),
+                collectorSpec(EV_CHARGER_KEY,   true)
+                , collectorSpec(WELFARE_KEY, hasValue(livingFacilityRelayToken))
+                , collectorSpec(CIVIL_SHELTER_KEY, hasValue(livingFacilityRelayToken))
+                , collectorSpec(HOSPITAL_KEY, hasValue(livingFacilityRelayToken))
+                , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
+                , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
         );
     }
 
@@ -182,6 +329,21 @@ public class PublicDataCollectorService {
                 .orElseThrow();
 
         Instant startedAt = Instant.now();
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired(datasetKey);
+        // Plain HTTP is never allowed in the main platform. Public Wi-Fi uses the
+        // loopback relay; all direct external source URLs remain HTTPS-only.
+        boolean localTransportOverride = false;
+        if (!policy.collectionEnabled() && !localTransportOverride) {
+            UUID datasetId = repository.upsertDataset(spec);
+            return finishSkipped(
+                    spec,
+                    startedAt,
+                    "-",
+                    "Collection disabled by approved transport security policy.",
+                    triggeredBy,
+                    datasetId
+            );
+        }
         String requestUrl = buildRequestUrl.get();
         String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
         UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
@@ -192,6 +354,34 @@ public class PublicDataCollectorService {
 
         try {
             List<Map<String, String>> rows = fetchRows.fetch(requestUrl, spec.datasetName());
+            if (rows.isEmpty()) {
+                Instant finishedAt = Instant.now();
+                String message = "API returned 0 rows. Existing snapshot preserved.";
+                repository.recordCollectionLog(
+                        result.datasetId(), "API", "FAILED",
+                        startedAt, finishedAt, 0, 0, message, loggedRequestUrl, triggeredBy
+                );
+                return new CollectionRunResult(
+                        spec.datasetKey(), "failed", 0, 0,
+                        message, loggedRequestUrl, startedAt, finishedAt,
+                        Duration.between(startedAt, finishedAt)
+                );
+            }
+            Integer previousSuccessfulCount = repository.latestSuccessfulSourceCount(result.datasetId());
+            // 2026-06 공식 XLSX 전환 전 값(127)은 금천구 bbox에 인접 자치구가 섞인 수치다.
+            // 자치구 열을 직접 사용하는 최초 전환에만 과거 건수 비교를 생략하고, 이후부터는 다시 30% 게이트를 적용한다.
+            if (BIKE_KEY.equals(datasetKey) && Integer.valueOf(127).equals(previousSuccessfulCount)) {
+                previousSuccessfulCount = null;
+            }
+            if (localTransportOverride) {
+                CollectionQualityGate.requireExpectedCountWithLocalTransportOverride(
+                        policy, rows.size(), previousSuccessfulCount
+                );
+            } else {
+                CollectionQualityGate.requireExpectedCount(
+                        policy, rows.size(), previousSuccessfulCount
+                );
+            }
             int saved = saveRows.save(result.datasetId(), rows);
             Instant finishedAt = Instant.now();
             // 응답 행이 있는데 저장이 0건이면 필드 불일치로 기존 데이터가 보존됐지만 수집 자체는 실패다.
@@ -237,11 +427,15 @@ public class PublicDataCollectorService {
             results.add(syncCctvStations(triggeredBy));
             results.add(syncParkingLots(triggeredBy));
             results.add(syncPopulation(triggeredBy));
-            // P4 신규
             results.add(syncPublicWifi(triggeredBy));
             results.add(syncHeatShelters(triggeredBy));
             results.add(syncSchoolZones(triggeredBy));
             results.add(syncEvChargers(triggeredBy));
+            results.add(syncLivingFacility(WELFARE_KEY, "WELFARE", triggeredBy));
+            results.add(syncLivingFacility(CIVIL_SHELTER_KEY, "CIVIL_DEFENSE_SHELTER", triggeredBy));
+            results.add(syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy));
+            results.add(syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy));
+            results.add(syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -266,6 +460,9 @@ public class PublicDataCollectorService {
                     Duration.ZERO
             );
         }
+        if ("소스 미확정".equals(spec.apiStatus())) {
+            return unconfirmedSourceResult(spec);
+        }
         if (!beginCollectorRun()) {
             return busyResult(spec, triggeredBy);
         }
@@ -282,6 +479,11 @@ public class PublicDataCollectorService {
                 case HEAT_SHELTER_KEY -> syncHeatShelters(triggeredBy);
                 case SCHOOL_ZONE_KEY  -> syncSchoolZones(triggeredBy);
                 case EV_CHARGER_KEY   -> syncEvChargers(triggeredBy);
+                case WELFARE_KEY      -> syncLivingFacility(WELFARE_KEY, "WELFARE", triggeredBy);
+                case CIVIL_SHELTER_KEY -> syncLivingFacility(CIVIL_SHELTER_KEY, "CIVIL_DEFENSE_SHELTER", triggeredBy);
+                case HOSPITAL_KEY     -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy);
+                case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
+                case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
                 default               -> missingRoutineResult(spec);
             };
         } finally {
@@ -301,9 +503,9 @@ public class PublicDataCollectorService {
 
     public CollectionRunResult syncAirQuality(String triggeredBy) {
         return runSyncPipeline(
-                AIR_QUALITY_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                AIR_QUALITY_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY is missing.",
                 this::buildAirQualityRequestUrl,
-                this::fetchRowsWithRetry,
+                this::fetchAirQualityRowsWithStation,
                 repository::replaceAirQualitySnapshot,
                 saved -> "Saved " + saved + " air quality record(s).",
                 triggeredBy);
@@ -311,63 +513,106 @@ public class PublicDataCollectorService {
 
     public CollectionRunResult syncBikeStations(String triggeredBy) {
         return runSyncPipeline(
-                BIKE_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildBikeRequestUrl(1),
-                (url, name) -> fetchBikeRowsWithFilter(),
+                BIKE_KEY, "official-https-file", "Official HTTPS file source is unavailable.",
+                () -> BIKE_DATASET_PAGE_URL,
+                (url, name) -> fetchBikeRowsFromOfficialFile(),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "BIKE", rows),
                 saved -> "Saved " + saved + " bike station(s).",
                 triggeredBy);
     }
 
-    // 금천구 bbox (위도 37.43~37.50, 경도 126.87~126.92)
-    private static final double BIKE_LAT_MIN = 37.43;
-    private static final double BIKE_LAT_MAX = 37.50;
-    private static final double BIKE_LON_MIN = 126.87;
-    private static final double BIKE_LON_MAX = 126.92;
+    private List<Map<String, String>> fetchBikeRowsFromOfficialFile() throws Exception {
+        HttpRequest pageRequest = HttpRequest.newBuilder(URI.create(BIKE_DATASET_PAGE_URL))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .GET()
+                .build();
+        HttpResponse<String> pageResponse = httpClient.send(
+                pageRequest,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+        );
+        requireSuccessStatus(pageResponse.statusCode(), "bike-stations dataset page");
 
-    private List<Map<String, String>> fetchBikeRowsWithFilter() throws Exception {
-        List<Map<String, String>> all = new ArrayList<>();
-        int pageSize = 1000;
-        int pageNo = 1;
-        while (true) {
-            int start = (pageNo - 1) * pageSize + 1;
-            int end = pageNo * pageSize;
-            JsonNode root = executeJsonWithRetry(buildBikeRequestUrl(start, end), "bike-stations page " + pageNo);
-            List<Map<String, String>> page = extractRows(root);
-            if (page.isEmpty()) {
-                break;
-            }
-            for (Map<String, String> row : page) {
-                String latStr = row.get("stationLatitude");
-                String lonStr = row.get("stationLongitude");
-                if (latStr == null || lonStr == null) continue;
-                try {
-                    double lat = Double.parseDouble(latStr.trim());
-                    double lon = Double.parseDouble(lonStr.trim());
-                    if (lat >= BIKE_LAT_MIN && lat <= BIKE_LAT_MAX && lon >= BIKE_LON_MIN && lon <= BIKE_LON_MAX) {
-                        all.add(row);
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            if (page.size() < pageSize) {
-                break;
-            }
-            pageNo++;
-            sleepBeforeStorePage();
+        Matcher matcher = BIKE_FILE_SEQUENCE_PATTERN.matcher(pageResponse.body());
+        if (!matcher.find()) {
+            throw new IllegalStateException("Latest official bike-stations XLSX link was not found.");
         }
-        return all;
+        String sequence = matcher.group(1);
+        String form = "infId=OA-13252&seqNo=&seq=" + URLEncoder.encode(sequence, StandardCharsets.UTF_8)
+                + "&infSeq=2";
+        HttpRequest fileRequest = HttpRequest.newBuilder(URI.create(SEOUL_FILE_DOWNLOAD_URL))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+        HttpResponse<byte[]> fileResponse = httpClient.send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
+        requireSuccessStatus(fileResponse.statusCode(), "bike-stations XLSX download");
+        return parseGeumcheonBikeWorkbook(fileResponse.body());
     }
 
-    private String buildBikeRequestUrl(int start, int end) {
-        return "http://openapi.seoul.go.kr:8088/"
-                + normalizeKeyValue(seoulOpenApiKey)
-                + "/json/bikeList/" + start + "/" + end + "/";
+    private List<Map<String, String>> parseGeumcheonBikeWorkbook(byte[] content) throws IOException {
+        if (content == null || content.length == 0) {
+            throw new IllegalStateException("Official bike-stations XLSX was empty.");
+        }
+        List<Map<String, String>> rows = new ArrayList<>();
+        DataFormatter formatter = new DataFormatter();
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(content))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (int rowIndex = 5; rowIndex <= sheet.getLastRowNum(); rowIndex += 1) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null || !"금천구".equals(cellText(row, 2, formatter))) {
+                    continue;
+                }
+                Map<String, String> item = new LinkedHashMap<>();
+                item.put("stationId", cellText(row, 0, formatter));
+                item.put("stationName", cellText(row, 1, formatter));
+                item.put("district", cellText(row, 2, formatter));
+                item.put("addr", cellText(row, 3, formatter));
+                item.put("stationLatitude", numericCellText(row, 4, formatter));
+                item.put("stationLongitude", numericCellText(row, 5, formatter));
+                item.put("rackTotCnt", Integer.toString(
+                        integerCellValue(row, 7, formatter) + integerCellValue(row, 8, formatter)
+                ));
+                item.put("lcdRackCount", cellText(row, 7, formatter));
+                item.put("qrRackCount", cellText(row, 8, formatter));
+                item.put("operationType", cellText(row, 9, formatter));
+                rows.add(item);
+            }
+        }
+        return rows;
     }
 
-    private String buildBikeRequestUrl(int pageNo) {
-        int start = (pageNo - 1) * 1000 + 1;
-        int end = pageNo * 1000;
-        return buildBikeRequestUrl(start, end);
+    private String cellText(Row row, int index, DataFormatter formatter) {
+        Cell cell = row.getCell(index, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        return cell == null ? "" : formatter.formatCellValue(cell).trim();
+    }
+
+    private String numericCellText(Row row, int index, DataFormatter formatter) {
+        Cell cell = row.getCell(index, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) {
+            return "";
+        }
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+            return Double.toString(cell.getNumericCellValue());
+        }
+        return formatter.formatCellValue(cell).trim();
+    }
+
+    private int integerCellValue(Row row, int index, DataFormatter formatter) {
+        String value = cellText(row, index, formatter).replace(",", "");
+        if (value.isBlank()) {
+            return 0;
+        }
+        try {
+            return (int) Double.parseDouble(value);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private void requireSuccessStatus(int statusCode, String sourceName) {
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IllegalStateException(sourceName + " returned HTTP " + statusCode + ".");
+        }
     }
 
     public CollectionRunResult syncCctvStations(String triggeredBy) {
@@ -381,66 +626,35 @@ public class PublicDataCollectorService {
     }
 
     private String buildCctvRequestUrl() {
-        return "http://openapi.seoul.go.kr:8088/"
+        return seoulOpenApiBaseUrl()
                 + normalizeKeyValue(seoulOpenApiKey)
                 + "/json/TB_GC_VVTV_INFO_ID01/1/400/";
     }
 
     public CollectionRunResult syncParkingLots(String triggeredBy) {
         return runSyncPipeline(
-                PARKING_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildParkingRequestUrl(1, 500),
-                (url, name) -> fetchParkingRowsWithFilter(),
+                PARKING_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY is missing.",
+                this::buildParkingRequestUrl,
+                this::fetchRowsWithRetry,
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "PARKING", rows),
                 saved -> "Saved " + saved + " parking lot(s).",
                 triggeredBy);
     }
 
-    private List<Map<String, String>> fetchParkingRowsWithFilter() throws Exception {
-        List<Map<String, String>> all = new ArrayList<>();
-        int pageSize = 500;
-        int pageNo = 1;
-        while (true) {
-            int start = (pageNo - 1) * pageSize + 1;
-            int end = pageNo * pageSize;
-            JsonNode root = executeJsonWithRetry(buildParkingRequestUrl(start, end), "parking-lots page " + pageNo);
-            List<Map<String, String>> page = extractRows(root);
-            if (page.isEmpty()) {
-                break;
-            }
-            for (Map<String, String> row : page) {
-                String latStr = row.get("LAT");
-                String lonStr = row.get("LOT");
-                if (latStr == null || latStr.isBlank() || lonStr == null || lonStr.isBlank()) continue;
-                try {
-                    double lat = Double.parseDouble(latStr.trim());
-                    double lon = Double.parseDouble(lonStr.trim());
-                    if (lat >= BIKE_LAT_MIN && lat <= BIKE_LAT_MAX && lon >= BIKE_LON_MIN && lon <= BIKE_LON_MAX) {
-                        all.add(row);
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            if (page.size() < pageSize) {
-                break;
-            }
-            pageNo++;
-            sleepBeforeStorePage();
-        }
-        return all;
-    }
-
-    private String buildParkingRequestUrl(int start, int end) {
-        return "http://openapi.seoul.go.kr:8088/"
-                + normalizeKeyValue(seoulOpenApiKey)
-                + "/json/GetParkInfo/" + start + "/" + end + "/"
-                + "?ADDR=" + java.net.URLEncoder.encode("금천", java.nio.charset.StandardCharsets.UTF_8);
+    private String buildParkingRequestUrl() {
+        return "https://api.data.go.kr/openapi/tn_pubr_prkplce_info_api"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageNo=1"
+                + "&numOfRows=1000"
+                + "&type=json"
+                + "&instt_nm=" + URLEncoder.encode("서울특별시 금천구", StandardCharsets.UTF_8);
     }
 
     // ─── P4 신규 POINT 시설 수집 ───────────────────────────────────────────────────
 
     /** 서울 열린데이터광장 공통 URL 패턴. serviceId·start·end만 교체. */
     private String buildSeoulOpenUrl(String serviceId, int start, int end) {
-        return "http://openapi.seoul.go.kr:8088/"
+        return seoulOpenApiBaseUrl()
                 + normalizeKeyValue(seoulOpenApiKey)
                 + "/json/" + serviceId + "/" + start + "/" + end + "/";
     }
@@ -502,52 +716,332 @@ public class PublicDataCollectorService {
         // 서비스 ID: TbPublicWifiInfo (서울 열린데이터광장 — 서울시 공공와이파이 위치정보)
         // 필드: X_SWIFI_MAIN_NM(설치장소), INSTL_FLOR_INFO(설치위치), LAT, LNT
         return runSyncPipeline(
-                WIFI_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildSeoulOpenUrl("TbPublicWifiInfo", 1, 1000),
-                (url, name) -> fetchSeoulBboxFiltered("TbPublicWifiInfo", 1000,
-                        new String[]{"LAT"}, new String[]{"LNT", "LNG", "LOT"}),
+                WIFI_KEY, wifiRelayToken, "WIFI_RELAY_TOKEN is missing.",
+                this::buildWifiRelayRequestUrl,
+                this::fetchWifiRelayRows,
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "WIFI", rows),
                 saved -> "Saved " + saved + " public WiFi access point(s).",
                 triggeredBy);
     }
 
-    public CollectionRunResult syncHeatShelters(String triggeredBy) {
-        // 서비스 ID: TvCoolHouseInfo (서울 열린데이터광장 — 서울시 무더위쉼터)
-        // TODO: 서비스 ID 확인 후 교체. 필드: SHTER_NM(시설명), LAT, LOT
+    private String buildWifiRelayRequestUrl() {
+        return URI.create(wifiRelayBaseUrl + "/").resolve("/v1/public-wifi").toString();
+    }
+
+    private List<Map<String, String>> fetchWifiRelayRows(String requestUrl, String datasetName) throws Exception {
+        JsonNode root = executeWifiRelayJsonWithRetry(requestUrl, datasetName);
+        if (!"SUCCESS".equals(root.path("status").asText())) {
+            throw new IllegalStateException("WiFi relay returned a non-success status.");
+        }
+        List<Map<String, String>> rows = extractRows(root);
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("WiFi relay returned 0 validated rows.");
+        }
+        Set<String> identifiers = new java.util.HashSet<>();
+        for (Map<String, String> row : rows) {
+            String identifier = row.get("X_SWIFI_WRDNFC_NO");
+            String name = row.get("X_SWIFI_MAIN_NM");
+            String lat = row.get("LAT");
+            String lon = row.get("LNT");
+            if (!"TbPublicWifiInfo_GC".equals(row.get("sourceService"))
+                    || !"금천구".equals(row.get("district"))
+                    || !hasValue(identifier) || !hasValue(name) || !hasValue(lat) || !hasValue(lon)) {
+                throw new IllegalStateException("WiFi relay row contract validation failed.");
+            }
+            if (!identifiers.add(identifier)) {
+                throw new IllegalStateException("WiFi relay returned a duplicate identifier.");
+            }
+            try {
+                double latitude = Double.parseDouble(lat);
+                double longitude = Double.parseDouble(lon);
+                if (latitude < 37.42 || latitude > 37.51 || longitude < 126.85 || longitude > 126.93) {
+                    throw new IllegalStateException("WiFi relay returned an out-of-range coordinate.");
+                }
+            } catch (NumberFormatException error) {
+                throw new IllegalStateException("WiFi relay returned an invalid coordinate.", error);
+            }
+        }
+        return rows;
+    }
+
+    private JsonNode executeWifiRelayJsonWithRetry(String requestUrl, String datasetName) throws Exception {
+        return executeRelayJsonWithRetry(requestUrl, datasetName, wifiRelayToken, "WiFi");
+    }
+
+    private JsonNode executeRelayJsonWithRetry(
+            String requestUrl, String datasetName, String relayToken, String relayName
+    ) throws Exception {
+        // The living-facility relay already owns upstream retry/backoff. Retrying
+        // again here would multiply calls and exceed the main platform timeout.
+        int attempts = "Living facility".equals(relayName) ? 1 : Math.max(1, retryCount + 1);
+        Exception lastError = null;
+        for (int attempt = 1; attempt <= attempts; attempt += 1) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder(URI.create(requestUrl))
+                        .timeout(Duration.ofSeconds(timeoutSeconds))
+                        .header("Accept", "application/json")
+                        .header("X-Relay-Token", relayToken)
+                        .GET()
+                        .build();
+                HttpResponse<String> response = httpClient.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+                );
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    throw new IllegalStateException(relayName + " relay failed: " + relayErrorCode(response.body()) + ".");
+                }
+                return objectMapper.readTree(response.body());
+            } catch (Exception error) {
+                lastError = error;
+                if (attempt >= attempts) {
+                    break;
+                }
+                logRetry(attempt, attempts, datasetName, error);
+                sleepBeforeRetry();
+            }
+        }
+        throw lastError == null ? new IllegalStateException(relayName + " relay request failed.") : lastError;
+    }
+
+    private String relayErrorCode(String responseBody) {
+        Set<String> allowedCodes = Set.of(
+                "TIMEOUT", "CONNECTION_REFUSED", "NETWORK_ERROR", "UPSTREAM_HTTP_STATUS",
+                "UPSTREAM_CONTRACT", "UPSTREAM_UNAVAILABLE", "QUALITY_GATE", "RATE_LIMITED",
+                "UNAUTHORIZED", "CONFIGURATION_ERROR", "INTERNAL_ERROR"
+                , "SERVICE_NOT_ALLOWED"
+        );
+        try {
+            String code = objectMapper.readTree(responseBody).path("errorCode").asText("");
+            return allowedCodes.contains(code) ? code : "UPSTREAM_UNAVAILABLE";
+        } catch (Exception ignored) {
+            return "UPSTREAM_UNAVAILABLE";
+        }
+    }
+
+    public CollectionRunResult syncLivingFacility(String datasetKey, String category, String triggeredBy) {
+        String serviceId = LIVING_FACILITY_SERVICES.get(datasetKey);
+        if (serviceId == null) {
+            throw new IllegalArgumentException("Unsupported living facility dataset: " + datasetKey);
+        }
         return runSyncPipeline(
-                HEAT_SHELTER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildSeoulOpenUrl("TvCoolHouseInfo", 1, 500),
-                (url, name) -> fetchSeoulBboxFiltered("TvCoolHouseInfo", 500,
-                        new String[]{"LAT"}, new String[]{"LOT", "LNG", "LNT"}),
-                (id, rows) -> repository.replaceFacilitySnapshot(id, "SHELTER", rows),
-                saved -> "Saved " + saved + " heat/cold shelter(s).",
-                triggeredBy);
+                datasetKey, livingFacilityRelayToken, "LIVING_FACILITY_RELAY_TOKEN is missing.",
+                () -> livingFacilityRelayBaseUrl + "/v1/facilities?service="
+                        + URLEncoder.encode(serviceId, StandardCharsets.UTF_8),
+                (url, name) -> fetchLivingFacilityRows(url, name, serviceId),
+                (id, rows) -> repository.replaceFacilitySnapshot(id, category, rows),
+                saved -> "Saved " + saved + " validated living facility record(s).",
+                triggeredBy
+        );
+    }
+
+    private List<Map<String, String>> fetchLivingFacilityRows(
+            String requestUrl, String datasetName, String serviceId
+    ) throws Exception {
+        JsonNode root = executeRelayJsonWithRetry(
+                requestUrl, datasetName, livingFacilityRelayToken, "Living facility"
+        );
+        if (!"SUCCESS".equals(root.path("status").asText())
+                || !serviceId.equals(root.path("sourceService").asText())) {
+            throw new IllegalStateException("Living facility relay contract validation failed.");
+        }
+        List<Map<String, String>> sourceRows = extractRows(root);
+        if (sourceRows.isEmpty()) {
+            throw new IllegalStateException("Living facility relay returned 0 validated rows.");
+        }
+        Set<String> identifiers = new java.util.HashSet<>();
+        List<Map<String, String>> normalized = new ArrayList<>();
+        for (Map<String, String> source : sourceRows) {
+            if (!serviceId.equals(source.get("sourceService"))
+                    || !"금천구".equals(source.get("district"))) {
+                throw new IllegalStateException("Living facility relay row source validation failed.");
+            }
+            Map<String, String> row = normalizeLivingFacilityRow(serviceId, source);
+            String identifier = row.get("sourceOriginalId");
+            if (!hasValue(identifier) || !hasValue(row.get("name")) || !hasValue(row.get("address"))) {
+                throw new IllegalStateException("Living facility relay row required fields are missing.");
+            }
+            if (!identifiers.add(identifier)) {
+                throw new IllegalStateException("Living facility relay returned a duplicate identifier.");
+            }
+            validateOptionalLivingFacilityCoordinates(row);
+            normalized.add(row);
+        }
+        return normalized;
+    }
+
+    private Map<String, String> normalizeLivingFacilityRow(String serviceId, Map<String, String> source) {
+        Map<String, String> row = new LinkedHashMap<>(source);
+        row.put("sourceOriginalId", source.getOrDefault("sourceOriginalId", ""));
+        switch (serviceId) {
+            case "fcltOpenInfo_GC" -> {
+                row.put("name", firstNonBlank(source, new String[]{"FCLT_NM"}));
+                row.put("address", firstNonBlank(source, new String[]{"FCLT_ADDR"}));
+                row.put("description", firstNonBlank(source, new String[]{"FCLT_KIND_NM", "FCLT_TY_NM"}));
+            }
+            case "LOCALDATA_114602_GC" -> {
+                row.put("name", firstNonBlank(source, new String[]{"BPLC_NM"}));
+                row.put("address", firstNonBlank(source, new String[]{"ROAD_NM_ADDR", "LOTNO_ADDR"}));
+                row.put("description", firstNonBlank(source, new String[]{"SALS_STTS_NM"}));
+            }
+            case "LOCALDATA_010101_GC", "LOCALDATA_010106_GC" -> {
+                row.put("name", firstNonBlank(source, new String[]{"BPLCNM"}));
+                row.put("address", firstNonBlank(source, new String[]{"RDNWHLADDR", "SITEWHLADDR"}));
+                row.put("description", firstNonBlank(source, new String[]{"TRDSTATENM", "DTLSTATENM"}));
+            }
+            case "ChildCareInfoGC" -> {
+                row.put("name", firstNonBlank(source, new String[]{"CRNAME"}));
+                row.put("address", firstNonBlank(source, new String[]{"CRADDR"}));
+                row.put("description", firstNonBlank(source, new String[]{"CRTYPENAME"}));
+            }
+            default -> throw new IllegalArgumentException("Unsupported relay service.");
+        }
+        row.values().removeIf(java.util.Objects::isNull);
+        return row;
+    }
+
+    private void validateOptionalLivingFacilityCoordinates(Map<String, String> row) {
+        String lat = row.get("LAT");
+        String lon = row.get("LNG");
+        if (!hasValue(lat) && !hasValue(lon)) return;
+        if (!hasValue(lat) || !hasValue(lon)) {
+            throw new IllegalStateException("Living facility relay returned an incomplete coordinate pair.");
+        }
+        try {
+            double latitude = Double.parseDouble(lat);
+            double longitude = Double.parseDouble(lon);
+            if (latitude < 37.42 || latitude > 37.51 || longitude < 126.85 || longitude > 126.93) {
+                throw new IllegalStateException("Living facility relay returned an out-of-range coordinate.");
+            }
+        } catch (NumberFormatException error) {
+            throw new IllegalStateException("Living facility relay returned an invalid coordinate.", error);
+        }
+    }
+
+    public CollectionRunResult syncHeatShelters(String triggeredBy) {
+        return runSyncPipeline(
+                HEAT_SHELTER_KEY, "", "SAFETY_DATA_API_KEY is missing.",
+                () -> "-",
+                (url, name) -> List.of(),
+                (id, rows) -> 0,
+                saved -> "Saved " + saved + " heat shelter(s).",
+                triggeredBy
+        );
     }
 
     public CollectionRunResult syncSchoolZones(String triggeredBy) {
-        // 서비스 ID: schoolroadinfo (서울 열린데이터광장 — 어린이보호구역)
-        // TODO: 서비스 ID 확인 후 교체. 필드: ZONE_NM(구역명), LAT, LOT or X/Y
         return runSyncPipeline(
-                SCHOOL_ZONE_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildSeoulOpenUrl("schoolroadinfo", 1, 500),
-                (url, name) -> fetchSeoulBboxFiltered("schoolroadinfo", 500,
-                        new String[]{"LAT", "Y"}, new String[]{"LOT", "LNG", "LNT", "X"}),
+                SCHOOL_ZONE_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY is missing.",
+                this::buildSchoolZoneRequestUrl,
+                this::fetchSchoolZoneRows,
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "SCHOOL_ZONE", rows),
                 saved -> "Saved " + saved + " school zone(s).",
                 triggeredBy);
     }
 
     public CollectionRunResult syncEvChargers(String triggeredBy) {
-        // 서비스 ID: EvCharger (서울 열린데이터광장 — 전기차충전소)
-        // TODO: 서비스 ID 확인 후 교체. 필드: STAT_NM(충전소명), LAT, LNG
         return runSyncPipeline(
-                EV_CHARGER_KEY, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
-                () -> buildSeoulOpenUrl("EvCharger", 1, 500),
-                (url, name) -> fetchSeoulBboxFiltered("EvCharger", 500,
-                        new String[]{"LAT"}, new String[]{"LNG", "LOT", "LNT"}),
+                EV_CHARGER_KEY, "official-https-file", "Official HTTPS file source is unavailable.",
+                () -> EV_DATASET_PAGE_URL,
+                (url, name) -> fetchEvRowsFromOfficialFile(),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    private String buildSchoolZoneRequestUrl() {
+        return "https://api.data.go.kr/openapi/tn_pubr_public_child_prtc_zn_api"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageNo=1&numOfRows=1000&type=json"
+                + "&instt_code=3170000";
+    }
+
+    private List<Map<String, String>> fetchSchoolZoneRows(String requestUrl, String datasetName) throws Exception {
+        return fetchRowsWithRetry(requestUrl, datasetName).stream()
+                .filter(row -> containsGeumcheon(firstNonBlankIgnoreCase(
+                        row, "INSTITUTION_NM", "RDNMADR", "LNMADR"
+                )))
+                .toList();
+    }
+
+    private List<Map<String, String>> fetchEvRowsFromOfficialFile() throws Exception {
+        HttpRequest pageRequest = HttpRequest.newBuilder(URI.create(EV_DATASET_PAGE_URL))
+                .timeout(Duration.ofSeconds(timeoutSeconds)).GET().build();
+        HttpResponse<String> pageResponse = httpClient.send(
+                pageRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+        );
+        requireSuccessStatus(pageResponse.statusCode(), "ev-chargers dataset page");
+        Matcher matcher = EV_FILE_SEQUENCE_PATTERN.matcher(pageResponse.body());
+        if (!matcher.find()) throw new IllegalStateException("Latest official EV charger XLSX link was not found.");
+        String form = "infId=OA-13233&seqNo=&seq="
+                + URLEncoder.encode(matcher.group(1), StandardCharsets.UTF_8) + "&infSeq=1";
+        HttpRequest fileRequest = HttpRequest.newBuilder(URI.create(SEOUL_FILE_DOWNLOAD_URL))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form)).build();
+        HttpResponse<byte[]> fileResponse = httpClient.send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
+        requireSuccessStatus(fileResponse.statusCode(), "ev-chargers XLSX download");
+        return parseGeumcheonEvWorkbook(fileResponse.body(), matcher.group(2));
+    }
+
+    private List<Map<String, String>> parseGeumcheonEvWorkbook(byte[] content, String referenceDateCompact) throws IOException {
+        if (content == null || content.length == 0) throw new IllegalStateException("Official EV charger XLSX was empty.");
+        List<Map<String, String>> rows = new ArrayList<>();
+        DataFormatter formatter = new DataFormatter();
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(content))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Row header = sheet.getRow(0);
+            Map<String, Integer> columns = new LinkedHashMap<>();
+            for (int i = 0; i < header.getLastCellNum(); i += 1) columns.put(cellText(header, i, formatter), i);
+            for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex += 1) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null) continue;
+                String district = cellByHeader(row, columns, formatter, "시군구");
+                String address = cellByHeader(row, columns, formatter, "주소");
+                if (!containsGeumcheon(district) && !containsGeumcheon(address)) continue;
+                Map<String, String> item = new LinkedHashMap<>();
+                String operator = cellByHeader(row, columns, formatter, "운영기관");
+                String name = cellByHeader(row, columns, formatter, "충전소");
+                String chargerId = cellByHeader(row, columns, formatter, "충전기ID");
+                item.put("sourceOriginalId", joinNaturalKey(joinNaturalKey(operator, name), chargerId));
+                item.put("STAT_NM", name);
+                item.put("ADDR", address);
+                item.put("LAT", cellByHeader(row, columns, formatter, "위도"));
+                item.put("LNG", cellByHeader(row, columns, formatter, "경도"));
+                item.put("CHARGER_TYPE_NM", cellByHeader(row, columns, formatter, "충전기타입"));
+                item.put("CAPACITY", cellByHeader(row, columns, formatter, "충전용량"));
+                item.put("REFERENCE_DATE", referenceDateCompact.substring(0, 4) + "-"
+                        + referenceDateCompact.substring(4, 6) + "-" + referenceDateCompact.substring(6, 8));
+                item.put("source", "금천구·서울 열린데이터광장");
+                rows.add(item);
+            }
+        }
+        return rows;
+    }
+
+    private String cellByHeader(Row row, Map<String, Integer> columns, DataFormatter formatter, String header) {
+        Integer index = columns.get(header);
+        return index == null ? "" : numericCellText(row, index, formatter);
+    }
+
+    private static String firstNonBlankIgnoreCase(Map<String, String> row, String... keys) {
+        for (String key : keys) {
+            for (Map.Entry<String, String> entry : row.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(key) && entry.getValue() != null && !entry.getValue().isBlank()) {
+                    return entry.getValue().trim();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsGeumcheon(String value) {
+        return value != null && value.contains("금천구");
+    }
+
+    private static String joinNaturalKey(String left, String right) {
+        if (left == null || left.isBlank()) return right;
+        if (right == null || right.isBlank()) return left;
+        return left + ":" + right;
     }
 
     public CollectionRunResult syncPopulation(String triggeredBy) {
@@ -673,9 +1167,14 @@ public class PublicDataCollectorService {
     }
 
     private String buildAirQualityRequestUrl() {
-        return "http://openAPI.seoul.go.kr:8088/"
-                + normalizeKeyValue(seoulOpenApiKey)
-                + "/json/ListAirQualityByDistrictService/1/25/";
+        return "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&returnType=json"
+                + "&numOfRows=100"
+                + "&pageNo=1"
+                + "&stationName=" + URLEncoder.encode("금천구", StandardCharsets.UTF_8)
+                + "&dataTerm=DAILY"
+                + "&ver=1.3";
     }
 
     private String maskRequestUrlForLog(String requestUrl) {
@@ -697,6 +1196,14 @@ public class PublicDataCollectorService {
         String seoulKey = normalizeKeyValue(seoulOpenApiKey);
         if (!seoulKey.isBlank()) {
             masked = masked.replace(seoulKey, "[redacted]");
+        }
+        String relayToken = normalizeKeyValue(wifiRelayToken);
+        if (!relayToken.isBlank()) {
+            masked = masked.replace(relayToken, "[redacted]");
+        }
+        String livingRelayToken = normalizeKeyValue(livingFacilityRelayToken);
+        if (!livingRelayToken.isBlank()) {
+            masked = masked.replace(livingRelayToken, "[redacted]");
         }
         return masked;
     }
@@ -734,6 +1241,21 @@ public class PublicDataCollectorService {
                 0,
                 0,
                 "No collector routine for datasetKey: " + spec.datasetKey(),
+                "-",
+                now,
+                now,
+                Duration.ZERO
+        );
+    }
+
+    private CollectionRunResult unconfirmedSourceResult(PublicDataRepository.CollectorSpec spec) {
+        Instant now = Instant.now();
+        return new CollectionRunResult(
+                spec.datasetKey(),
+                "skipped",
+                0,
+                0,
+                "Source contract is not confirmed; collector is disabled.",
                 "-",
                 now,
                 now,
@@ -866,6 +1388,23 @@ public class PublicDataCollectorService {
         return rows;
     }
 
+    private List<Map<String, String>> fetchAirQualityRowsWithStation(
+            String requestUrl,
+            String datasetName
+    ) throws Exception {
+        List<Map<String, String>> rows = fetchRowsWithRetry(requestUrl, datasetName);
+        List<Map<String, String>> enriched = new ArrayList<>(rows.size());
+        for (Map<String, String> row : rows) {
+            Map<String, String> normalized = new LinkedHashMap<>(row);
+            String stationName = normalized.get("stationName");
+            if (stationName == null || stationName.isBlank()) {
+                normalized.put("stationName", "금천구");
+            }
+            enriched.add(normalized);
+        }
+        return enriched;
+    }
+
     private JsonNode executeJsonWithRetry(String requestUrl, String datasetName) throws Exception {
         int attempts = Math.max(1, retryCount + 1);
         Exception lastError = null;
@@ -913,6 +1452,33 @@ public class PublicDataCollectorService {
 
     private String normalizeKeyValue(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String normalizeWifiRelayBaseUrl(String value) {
+        return normalizeRelayBaseUrl(value, 18088, "WiFi");
+    }
+
+    private String normalizeRelayBaseUrl(String value, int defaultPort, String relayName) {
+        String normalized = value == null || value.isBlank()
+                ? "http://127.0.0.1:" + defaultPort : value.trim();
+        URI uri = URI.create(normalized);
+        String host = uri.getHost();
+        boolean loopback = "127.0.0.1".equals(host) || "localhost".equalsIgnoreCase(host) || "::1".equals(host);
+        if (!"http".equalsIgnoreCase(uri.getScheme()) || !loopback || uri.getPort() < 1024
+                || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null) {
+            throw new IllegalArgumentException(
+                    relayName + " relay URL must be a loopback-only HTTP origin with an explicit internal port."
+            );
+        }
+        String path = uri.getPath();
+        if (path != null && !path.isBlank() && !"/".equals(path)) {
+            throw new IllegalArgumentException(relayName + " relay URL must not contain a path.");
+        }
+        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
+    }
+
+    private String seoulOpenApiBaseUrl() {
+        return "https://openapi.seoul.go.kr/";
     }
 
     private boolean hasValue(String value) {

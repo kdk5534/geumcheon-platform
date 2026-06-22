@@ -11,6 +11,7 @@ public record MapQuery(
         Double maxLat,
         Double maxLng,
         String category,
+        String scope,
         int page,
         int size
 ) {
@@ -24,10 +25,27 @@ public record MapQuery(
         if (size > MAX_SIZE) size = MAX_SIZE;
         if (page < 0) page = 0;
         if (page > MAX_PAGE) page = MAX_PAGE;
+        scope = String.join(",", SpatialScope.parseQuery(scope));
+    }
+
+    public MapQuery(
+            Double minLat,
+            Double minLng,
+            Double maxLat,
+            Double maxLng,
+            String category,
+            int page,
+            int size
+    ) {
+        this(minLat, minLng, maxLat, maxLng, category, SpatialScope.GEUMCHEON.name(), page, size);
     }
 
     public static MapQuery defaults() {
-        return new MapQuery(null, null, null, null, null, 0, DEFAULT_SIZE);
+        return new MapQuery(null, null, null, null, null, SpatialScope.GEUMCHEON.name(), 0, DEFAULT_SIZE);
+    }
+
+    public java.util.List<String> spatialScopes() {
+        return SpatialScope.parseQuery(scope);
     }
 
     /** 네 모서리 좌표가 모두 있을 때만 bbox 절을 추가한다. */

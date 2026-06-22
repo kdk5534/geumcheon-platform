@@ -1,8 +1,11 @@
 // 데이터 카탈로그 페이지: 금천구 공공데이터 목록 검색·필터·정렬·상세 미리보기
 
 import { escapeHtml } from "../core/dom.js";
+import { createDataState } from "../core/data-state.js";
 import { icon } from "../core/icons.js";
 import { injectPageCss } from "../core/assets.js";
+import { renderDataStamp } from "../core/meta.js";
+import { BACKEND_API_BASE } from "../core/state.js";
 
 const CATEGORIES = ["전체", "교통물류", "환경기상", "사회복지", "공공행정", "보건의료", "문화관광", "산업고용", "재난안전"];
 const TYPE_LABELS = { sheet: "시트", chart: "차트", map: "지도", file: "파일", api: "API" };
@@ -21,16 +24,26 @@ const CATEGORY_COLORS = {
 };
 
 let allDatasets = [];
+let operationalStatuses = [];
 let isMounted = false;
+let loadFailed = false;
+let pageController = null;
 
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
+  pageController?.abort();
+  pageController = new AbortController();
   isMounted = true;
-  injectPageCss("css-page-catalog", "./css/pages/catalog.css");
+  loadFailed = false;
+  await injectPageCss("css-page-catalog", "./css/pages/catalog.css");
+  if (!isMounted) return;
   container.innerHTML = buildSkeleton();
 
-  allDatasets = await loadDatasets();
+  [allDatasets, operationalStatuses] = await Promise.all([
+    loadDatasets(pageController.signal),
+    loadOperationalStatuses(pageController.signal),
+  ]);
   if (!isMounted) return;
 
   render(container);
@@ -39,19 +52,120 @@ export async function mount(container) {
 
 export function unmount() {
   isMounted = false;
+  pageController?.abort();
+  pageController = null;
 }
 
 // ─── 데이터 로드 ──────────────────────────────────────────────
 
-async function loadDatasets() {
+async function loadDatasets(signal) {
   try {
-    const res = await fetch("./assets/data/datasets.json");
+    const res = await fetch("./assets/data/datasets.json", { signal });
     if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
     return Array.isArray(data.datasets) ? data.datasets : [];
+  } catch (error) {
+    if (error?.name === "AbortError") return [];
+    loadFailed = true;
+    return [];
+  }
+}
+
+async function loadOperationalStatuses(signal) {
+  try {
+    const response = await fetch(`${BACKEND_API_BASE}/api/public/datasets/status`, { signal });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return payload?.success && Array.isArray(payload.data) ? payload.data : [];
   } catch {
     return [];
   }
+}
+
+export function summarizeOperationalStatuses(statuses = []) {
+  const valid = Array.isArray(statuses) ? statuses : [];
+  const available = valid.filter((status) => status.dataStatus === "AVAILABLE").length;
+  const attention = valid.filter((status) =>
+    status.attemptStatus === "FAILED" && status.dataStatus === "AVAILABLE"
+  ).length;
+  const noSuccess = valid.filter((status) => status.dataStatus === "NO_SUCCESS").length;
+  const latestCollectedAt = valid
+    .map((status) => status.collectedAt || "")
+    .filter(Boolean)
+    .sort((left, right) => right.localeCompare(left))[0] || "";
+  return { total: valid.length, available, attention, noSuccess, latestCollectedAt };
+}
+
+function buildCatalogStatus(total, apiCount) {
+  const operations = summarizeOperationalStatuses(operationalStatuses);
+  const latestUpdatedAt = allDatasets
+    .map((d) => d.updatedAt || "")
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a))[0];
+
+  const collectedAt = operations.latestCollectedAt || latestUpdatedAt;
+  const dataState = createDataState({
+    hasData: total > 0,
+    sourceMode: "local",
+    error: loadFailed ? "catalog-load-failed" : "",
+    collectedAt,
+    sourceName: operations.total ? "금천구 운영 데이터 상태" : "금천구 정적 데이터 카탈로그",
+  });
+  let tone = dataState.tone;
+  let label = dataState.label;
+  let title = "데이터 찾기 화면이 정적 카탈로그 기준으로 동작 중입니다.";
+  let note = "공개 가능한 데이터셋 탐색과 분류, 검색 경험 검증에 맞춘 구조입니다.";
+
+  if (loadFailed) {
+    tone = dataState.tone;
+    label = dataState.label;
+    title = "데이터셋 목록을 불러오지 못했습니다.";
+    note = "정적 카탈로그 파일을 다시 확인하면 검색과 공개 상태 점검을 이어갈 수 있습니다.";
+  } else if (!total) {
+    tone = dataState.tone;
+    label = dataState.label;
+    title = "표시할 데이터셋이 아직 없습니다.";
+    note = "카탈로그 파일이 비어 있거나 초기 적재 전일 수 있습니다.";
+  } else if (apiCount > 0) {
+    tone = dataState.tone;
+    label = dataState.label;
+    title = "검색 가능한 공공 데이터셋과 Open API 목록이 준비되어 있습니다.";
+    note = "카테고리, 형식, 키워드 필터를 함께 써서 사용 가능한 공개 자산을 빠르게 찾을 수 있습니다.";
+  }
+
+  if (operations.total > 0) {
+    title = operations.attention > 0
+      ? `최근 수집 실패 ${operations.attention}건이 있지만 마지막 정상자료는 유지되고 있습니다.`
+      : "운영 데이터셋의 최근 수집 상태와 마지막 정상자료를 확인했습니다.";
+    note = operations.noSuccess > 0
+      ? `정상 수집 이력이 없는 데이터셋 ${operations.noSuccess}건은 공개 지표에서 제외됩니다.`
+      : "최근 시도 실패는 마지막 정상 스냅샷의 삭제나 공개 중단을 의미하지 않습니다.";
+  }
+
+  return `
+    <div class="cat-status-card">
+      <div class="cat-status-head">
+        <span class="cat-state-pill cat-state-pill--${tone}">${escapeHtml(label)}</span>
+        <span class="cat-status-title">${escapeHtml(title)}</span>
+      </div>
+      <div class="cat-status-metrics">
+        <div class="cat-status-metric">
+          <strong>${operations.total || total}</strong>
+          <span>${operations.total ? "운영 데이터셋" : "전체 데이터셋"}</span>
+        </div>
+        <div class="cat-status-metric">
+          <strong>${operations.total ? operations.available : apiCount}</strong>
+          <span>${operations.total ? "정상자료 보유" : "Open API"}</span>
+        </div>
+        <div class="cat-status-metric">
+          <strong>${operations.total ? operations.attention : escapeHtml(latestUpdatedAt ? latestUpdatedAt.replace(/-/g, ".") : "미정")}</strong>
+          <span>${operations.total ? "최근 실패·자료 유지" : "최근 갱신 기준"}</span>
+        </div>
+      </div>
+      <p class="cat-status-note">${escapeHtml(note)}</p>
+      ${renderDataStamp("overview", "데이터 카탈로그")}
+    </div>
+  `;
 }
 
 // ─── HTML 빌더 ────────────────────────────────────────────────
@@ -114,6 +228,8 @@ function render(container) {
       </div>
 
       <!-- 통계 요약 스트립 -->
+      ${buildCatalogStatus(total, apiCount)}
+
       <div class="cat-stats-strip">
         <div class="cat-stat-item">
           <strong>${total}</strong><span>전체 데이터셋</span>

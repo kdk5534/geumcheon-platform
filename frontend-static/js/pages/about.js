@@ -21,7 +21,7 @@ const RELATED_LINKS = [
 ];
 
 const FEATURES = [
-  { icon: '📡', title: '실시간 도시현황', desc: '재난·교통·환경·안전 상황을 지도와 차트로 실시간 모니터링합니다.' },
+  { icon: '📡', title: '최근 도시현황', desc: '재난·교통·환경·안전의 마지막 수집 결과와 기준시각을 지도와 차트로 확인합니다.' },
   { icon: '📈', title: '분야별 지표 대시보드', desc: '인구·경제·복지·보건·환경·교통·안전 7개 분야의 핵심 지표를 한눈에 확인합니다.' },
   { icon: '🗺️', title: '생활지도', desc: '금천구 3개 행정동의 시설·교통·안전 정보를 지도 위에서 탐색합니다.' },
   { icon: '🏪', title: '상권분석', desc: '업종별·지역별 상권 현황과 트렌드를 차트와 테이블로 분석합니다.' },
@@ -60,8 +60,8 @@ export function mount(container) {
           <span class="about-hero-stat-label">금천구 인구</span>
         </div>
         <div class="about-hero-stat">
-          <strong class="about-hero-stat-val">실시간</strong>
-          <span class="about-hero-stat-label">갱신 데이터</span>
+          <strong class="about-hero-stat-val">항목별</strong>
+          <span class="about-hero-stat-label">갱신 주기</span>
         </div>
       </div>
     </div>

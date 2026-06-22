@@ -2,14 +2,31 @@
 
 import {
   state,
-  BACKEND_API_BASE, ADMIN_API_TIMEOUT_MS,
+  BACKEND_API_BASE,
   UPLOAD_LOG_KEY, DATASET_CONFIG_KEY,
-  CSV_EXTENSIONS, EXCEL_EXTENSIONS, ALLOWED_UPLOAD_MODES,
   datasetFieldSchemas, fieldAliases
 } from "../core/state.js";
 import { escapeHtml, formatBytes, formatAdminAuthSavedAt } from "../core/dom.js";
 import { fetchWithTimeout } from "../core/api.js";
 import { injectPageCss } from "../core/assets.js";
+import { buildAdminAuthHeader, fetchAdminJson, previewCsvOnBackend } from "./admin-api.js";
+import { getUploadFileKind, parseCsv } from "./admin-upload.js";
+import {
+  canCommitUpload,
+  datasetUploadLabel,
+  defaultAdminDatasets,
+  friendlyAdminError,
+  isDatasetUploadable,
+  mapBackendLog,
+  mapBackendLogs,
+  mergeDatasetEdits as mergeDatasetEditsModel,
+  normalizeAdminDataset,
+  normalizeUploadStatus,
+  uploadStatusClass,
+  uploadStatusLabel,
+  validateAdminAuthDraft,
+  validateAdminDatasetDraft,
+} from "./admin-model.js";
 
 const UPLOAD_LOG_LIMIT = 20;
 
@@ -175,10 +192,31 @@ function buildHtml() {
 
 async function initAdminPage() {
   syncAdminAuthForm();
+  syncAdminAccess();
+  if (!state.adminAuth) return;
   await Promise.all([
     loadAdminDatasets(),
     loadBackendUploadLogs()
   ]);
+}
+
+function syncAdminAccess() {
+  const sections = [...document.querySelectorAll(".admin-page > .admin-section:not(#adminAccessGate)")];
+  sections.slice(1).forEach((section) => {
+    section.hidden = !state.adminAuth;
+  });
+
+  let gate = document.getElementById("adminAccessGate");
+  if (!state.adminAuth && !gate && sections[0]) {
+    gate = document.createElement("div");
+    gate.id = "adminAccessGate";
+    gate.className = "admin-section";
+    gate.setAttribute("role", "status");
+    gate.innerHTML = "<h3 class=\"admin-section-title\">관리자 인증이 필요합니다</h3><p>데이터셋 관리, 업로드, 운영 로그는 인증 후에만 표시됩니다.</p>";
+    sections[0].insertAdjacentElement("afterend", gate);
+  } else if (state.adminAuth) {
+    gate?.remove();
+  }
 }
 
 // ─── 관리자 인증 ──────────────────────────────────────────────
@@ -226,27 +264,12 @@ function renderAdminAuthValidation(errors = []) {
   renderAdminAuthMessage(errors[0] || "입력값을 확인해 주세요.", "error");
 }
 
-function validateAdminAuthDraft(draft) {
-  const errors = [];
-  const loginId = draft.loginId.trim();
-  const password = draft.password;
-  if (!loginId) errors.push("관리자 ID를 입력해 주세요.");
-  else if (loginId.length > 64) errors.push("관리자 ID는 64자 이내로 입력해 주세요.");
-  if (!password || password.trim().length === 0) errors.push("관리자 비밀번호를 입력해 주세요.");
-  else if (password.length > 128) errors.push("관리자 비밀번호는 128자 이내로 입력해 주세요.");
-  return { valid: errors.length === 0, errors, loginId, password };
-}
-
-function buildAdminAuthHeader(loginId, password) {
-  const bytes = new TextEncoder().encode(`${loginId}:${password}`);
-  let binary = "";
-  bytes.forEach((b) => { binary += String.fromCharCode(b); });
-  return `Basic ${btoa(binary)}`;
-}
-
 function clearAdminAuthSession(message = "", tone = "") {
   state.adminAuth = null;
+  state.adminDatasets = [];
+  state.adminDatasetBase = [];
   syncAdminAuthForm();
+  syncAdminAccess();
   if (message) renderAdminAuthMessage(message, tone);
 }
 
@@ -270,6 +293,7 @@ async function handleAdminAuthSubmit(event) {
     await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/datasets`, {}, candidateAuth);
     state.adminAuth = candidateAuth;
     syncAdminAuthForm();
+    syncAdminAccess();
     await Promise.all([loadAdminDatasets(), loadBackendUploadLogs()]);
     if (state.adminAuth?.authHeader === candidateAuth.authHeader) renderAdminAuthMessage("인증 저장 완료", "success");
   } catch (error) {
@@ -290,7 +314,6 @@ async function handleAdminAuthClear(event) {
   event.preventDefault();
   clearAdminAuthSession();
   renderAdminAuthMessage("인증 삭제 완료", "success");
-  await Promise.all([loadAdminDatasets(), loadBackendUploadLogs()]);
 }
 
 // ─── 인증 스토리지 ────────────────────────────────────────────
@@ -315,32 +338,9 @@ async function loadAdminDatasets() {
   renderDatasetSelect();
 }
 
-function defaultAdminDatasets() {
-  return [
-    normalizeAdminDataset({ datasetKey: "facilities", datasetName: "생활시설 통합",    domain: "생활", sourceName: "금천구 열린데이터광장", refreshCycle: "수시",  uploadMode: "CSV",     requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true }),
-    normalizeAdminDataset({ datasetKey: "stores",     datasetName: "상가업소 정보",    domain: "상권", sourceName: "소상공인시장진흥공단",  refreshCycle: "수시",  uploadMode: "API/CSV", requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true }),
-    normalizeAdminDataset({ datasetKey: "air-quality",datasetName: "대기 현황",        domain: "실시간",sourceName: "서울 열린데이터광장", refreshCycle: "시간",  uploadMode: "API",     requiredMapping: false, supportsUploadCommit: false, publicVisible: true }),
-    normalizeAdminDataset({ datasetKey: "population", datasetName: "주민등록 인구",    domain: "인구", sourceName: "행안부/서울 열린데이터광장", refreshCycle: "월",uploadMode: "CSV",     requiredMapping: true,  supportsUploadCommit: true,  publicVisible: true })
-  ];
-}
-
-function normalizeAdminDataset(d) {
-  return {
-    datasetKey: d.datasetKey || d.key || "",
-    datasetName: d.datasetName || d.name || d.datasetKey || "데이터셋",
-    domain: d.domain || "기타",
-    sourceName: d.sourceName || d.source || "Mock",
-    refreshCycle: d.refreshCycle || "수시",
-    uploadMode: d.uploadMode || "CSV",
-    requiredMapping: Boolean(d.requiredMapping),
-    supportsUploadCommit: d.supportsUploadCommit ?? ["facilities", "stores", "population"].includes(d.datasetKey),
-    publicVisible: d.publicVisible !== false
-  };
-}
-
 function mergeDatasetEdits(base) {
   const edits = readDatasetEdits();
-  return base.map((d) => ({ ...d, ...(edits[d.datasetKey] || {}) }));
+  return mergeDatasetEditsModel(base, edits);
 }
 
 function renderDatasetManager() {
@@ -467,31 +467,6 @@ function resetCurrentDataset() {
   renderDatasetEditor("초기값으로 복원했습니다.");
 }
 
-function validateAdminDatasetDraft(draft) {
-  const errors = [];
-  const warnings = [];
-  const normalized = {
-    datasetKey: draft.datasetKey,
-    datasetName: draft.datasetName || "",
-    domain: draft.domain || "기타",
-    sourceName: draft.sourceName || "Mock",
-    refreshCycle: draft.refreshCycle || "수시",
-    uploadMode: draft.uploadMode || "CSV",
-    requiredMapping: Boolean(draft.requiredMapping),
-    publicVisible: Boolean(draft.publicVisible)
-  };
-  if (!normalized.datasetKey) errors.push("데이터셋 키가 비어 있습니다.");
-  if (!normalized.datasetName) errors.push("데이터명은 반드시 입력해야 합니다.");
-  else if (normalized.datasetName.length > 40) errors.push("데이터명은 40자 이내로 입력해 주세요.");
-  if (normalized.domain.length > 20) errors.push("분야는 20자 이내로 입력해 주세요.");
-  if (normalized.sourceName.length > 60) errors.push("출처는 60자 이내로 입력해 주세요.");
-  if (normalized.refreshCycle.length > 20) errors.push("갱신주기는 20자 이내로 입력해 주세요.");
-  if (!ALLOWED_UPLOAD_MODES.has(normalized.uploadMode)) errors.push("업로드 방식은 CSV, API, API/CSV 중 하나여야 합니다.");
-  if (!normalized.publicVisible) warnings.push("화면 공개가 꺼져 있어 업로드 선택 목록에서 제외됩니다.");
-  if (!String(normalized.uploadMode || "").includes("CSV")) warnings.push("CSV 업로드 목록에는 표시되지 않습니다.");
-  return { valid: errors.length === 0, errors, warnings, normalized };
-}
-
 function renderDatasetValidation(errors = [], warnings = []) {
   const status = document.getElementById("datasetEditorStatus");
   const editor = document.getElementById("datasetEditor");
@@ -523,21 +498,6 @@ function currentUploadDataset() {
 function selectedUploadDataset() {
   const selectVal = document.getElementById("datasetSelect")?.value || state.selectedUploadDatasetKey || "";
   return state.adminDatasets.find((d) => d.datasetKey === selectVal) || null;
-}
-
-function isDatasetUploadable(d) {
-  return Boolean(d?.publicVisible) && String(d.uploadMode || "").includes("CSV");
-}
-
-function canCommitUpload(d) {
-  return isDatasetUploadable(d) && Boolean(d?.supportsUploadCommit);
-}
-
-function datasetUploadLabel(d) {
-  if (!d.publicVisible) return "업로드 숨김";
-  if (canCommitUpload(d)) return `${d.uploadMode} 업로드 가능`;
-  if (isDatasetUploadable(d)) return `${d.uploadMode} 미리보기만 가능`;
-  return "API 수집 전용";
 }
 
 // ─── 데이터셋 스토리지 ────────────────────────────────────────
@@ -848,27 +808,7 @@ function uploadToneClass(tone = "info") {
   return { error: "is-error", warning: "is-warning", success: "is-success", info: "is-info" }[tone] || "is-info";
 }
 
-function normalizeUploadStatus(status) { return String(status || "").trim().toUpperCase(); }
-function uploadStatusClass(status) { const n = normalizeUploadStatus(status); return n ? `is-${n.toLowerCase()}` : ""; }
-function uploadStatusLabel(status) { return { SUCCESS: "성공", FAILED: "실패", LOCAL: "로컬", SKIPPED: "건너뜀" }[normalizeUploadStatus(status)] || status; }
-
 // ─── 파일 파싱 ────────────────────────────────────────────────
-
-function parseCsv(text) {
-  const rows = []; let row = []; let cell = ""; let quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i], n = text[i + 1];
-    if (c === '"' && quoted && n === '"') { cell += '"'; i++; }
-    else if (c === '"') { quoted = !quoted; }
-    else if (c === ',' && !quoted) { row.push(cell.trim()); cell = ""; }
-    else if ((c === '\n' || c === '\r') && !quoted) {
-      if (c === '\r' && n === '\n') i++;
-      row.push(cell.trim()); rows.push(row); row = []; cell = "";
-    } else { cell += c; }
-  }
-  if (cell.length > 0 || row.length > 0) { row.push(cell.trim()); rows.push(row); }
-  return rows.filter((r) => r.some((v) => v !== ""));
-}
 
 async function readCsvText(file) {
   const buf = await file.arrayBuffer();
@@ -879,11 +819,6 @@ async function readCsvText(file) {
 }
 
 // ─── 파일 유효성 ──────────────────────────────────────────────
-
-function fileExtension(file) { const n = String(file?.name || "").toLowerCase(); const d = n.lastIndexOf('.'); return d >= 0 ? n.slice(d + 1) : ""; }
-function isCsvFile(file) { return CSV_EXTENSIONS.has(fileExtension(file)) || file?.type === "text/csv"; }
-function isExcelFile(file) { const e = fileExtension(file); return EXCEL_EXTENSIONS.has(e) || file?.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || file?.type === "application/vnd.ms-excel"; }
-function getUploadFileKind(file) { if (isCsvFile(file)) return "csv"; if (isExcelFile(file)) return "excel"; return "unsupported"; }
 
 function validateUploadSelection(dataset, file) {
   const fileKind = getUploadFileKind(file);
@@ -910,60 +845,23 @@ function fieldLabel(key) { const f = currentFieldSchema().fields.find((item) => 
 function guessFieldKey(header) {
   const norm = normalizeFieldName(header);
   const schema = currentFieldSchema();
+  if (state.uploadPreview?.datasetKey === "cctv-stations") {
+    const cctvHeaders = {
+      "관리번호": "id",
+      "설치목적구분": "purpose",
+      "소재지도로명주소": "roadAddress",
+      "소재지지번주소": "lotAddress",
+      "관리기관전화번호": "phone",
+      "wgs84위도": "latitude",
+      "wgs84경도": "longitude"
+    };
+    if (cctvHeaders[norm]) return cctvHeaders[norm];
+  }
   const match = schema.fields.find((f) => (fieldAliases[f.key] || []).some((a) => normalizeFieldName(a) === norm));
   return match?.key || "";
 }
 
 // ─── 백엔드 API ───────────────────────────────────────────────
-
-async function fetchAdminJson(url, options = {}, authOverride = null) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ADMIN_API_TIMEOUT_MS);
-  const authHeader = (authOverride ?? state.adminAuth)?.authHeader || "";
-  try {
-    const res = await fetch(url, { ...options, signal: ctrl.signal, headers: { ...(authHeader ? { Authorization: authHeader } : {}), ...(options.headers || {}) } });
-    let payload = null;
-    try { payload = await res.json(); } catch {}
-    if (!res.ok) {
-      const e = new Error(payload?.message || `Admin API failed: ${res.status}`);
-      e.isHttpFailure = true;
-      e.status = res.status;
-      e.payload = payload;
-      throw e;
-    }
-    if (!payload) {
-      const e = new Error("Admin API returned an empty response.");
-      e.isHttpFailure = true;
-      throw e;
-    }
-    if (payload.success === false) { const e = new Error(payload.message || "Admin API failed."); e.isApiFailure = true; throw e; }
-    return payload;
-  } finally { clearTimeout(timer); }
-}
-
-async function previewCsvOnBackend(datasetKey, file) {
-  const form = new FormData();
-  form.append("file", file);
-  const res = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/uploads/preview?datasetKey=${encodeURIComponent(datasetKey)}`, { method: "POST", body: form });
-  return res.data;
-}
-
-function mapBackendLog(log) {
-  return { datasetName: log.datasetName || log.datasetKey || "데이터셋", fileName: log.fileName || "-", rowCount: log.rowCount || 0, columnCount: log.columnCount || 0, savedRowCount: log.savedRowCount || 0, skippedRowCount: log.skippedRowCount || 0, createdAt: log.createdAt ? new Date(log.createdAt).toLocaleString("ko-KR") : new Date().toLocaleString("ko-KR"), status: log.status, message: log.message };
-}
-
-function mapBackendLogs(logs = []) { return logs.map(mapBackendLog); }
-
-function friendlyAdminError(error) {
-  const msg = String(error?.message || "");
-  if (error?.status === 401 || msg.includes("401")) return "아이디 또는 비밀번호가 맞지 않습니다.";
-  if (error?.status === 403 || msg.includes("403")) return "관리자 API 접근이 거부되었습니다.";
-  if (msg.toLowerCase().includes("excel")) return msg || "Excel 미리보기를 처리하지 못했습니다.";
-  if (msg.includes("CSV upload commit is not supported")) return "이 데이터셋은 미리보기까지만 지원됩니다.";
-  if (error?.isApiFailure) return msg || "업로드를 처리하지 못했습니다.";
-  if (error?.isHttpFailure) return msg || "백엔드 요청이 실패했습니다.";
-  return "백엔드가 없어 로컬로 미리 봅니다.";
-}
 
 // ─── 이벤트 바인딩 ────────────────────────────────────────────
 

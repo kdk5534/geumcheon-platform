@@ -1,8 +1,8 @@
-// 실시간 도시현황 페이지: 재난·교통·환경·안전 실시간 모니터링 대시보드
+// 최근 도시현황 페이지: 재난·교통·환경·안전의 마지막 수집 결과 대시보드
 
 import { loadECharts, createChart, disposeChart, BASE_OPTION, CHART_PALETTE, CHART_COLORS } from '../core/charts.js';
 import { escapeHtml } from '../core/dom.js';
-import { injectPageCss, loadLeaflet } from '../core/assets.js';
+import { injectPageCss, loadLeaflet, createBaseTileLayer } from '../core/assets.js';
 
 const DATA_URL = './assets/data/realtime.json';
 
@@ -68,7 +68,7 @@ function renderEvents(events) {
   </div>`;
 }
 
-// ─── 렌더: 실시간 환경 지표 바 ─────────────────────────────────
+// ─── 렌더: 최근 환경 지표 바 ───────────────────────────────────
 function renderIndicators(indicators) {
   const entries = Object.entries(indicators);
   return `<div class="rt-env-grid">
@@ -113,10 +113,7 @@ async function initMap(data) {
   if (!mapEl || rtMap) return;
 
   rtMap = window.L.map(mapEl, { zoomControl: true, scrollWheelZoom: false }).setView([37.4565, 126.8954], 13);
-  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 18
-  }).addTo(rtMap);
+  createBaseTileLayer(window.L).addTo(rtMap);
 
   // 이벤트 마커 추가 (location 텍스트 기반 금천구 근사 위치)
   const coords = {
@@ -159,16 +156,16 @@ export async function mount(container) {
 
   container.innerHTML = `
     <div class="page-header">
-      <h2 class="page-header-title">실시간 도시현황</h2>
-      <p class="page-header-sub">금천구 재난·교통·환경·안전 현황을 실시간으로 모니터링합니다.</p>
+      <h2 class="page-header-title">최근 도시현황</h2>
+      <p class="page-header-sub">금천구 재난·교통·환경·안전의 마지막 수집 결과와 기준시각을 함께 확인합니다.</p>
     </div>
     <div class="rt-body">
       <div class="rt-map-panel">
         <div class="rt-map-toolbar">
-          <span class="rt-live-badge">● LIVE</span>
+          <span class="rt-live-badge">최근 수집</span>
           <span class="rt-updated" id="rt-updated">로딩 중...</span>
         </div>
-        <div id="rt-map" class="rt-map-container" aria-label="실시간 도시현황 지도"></div>
+        <div id="rt-map" class="rt-map-container" aria-label="최근 도시현황 지도"></div>
         <div class="rt-map-legend">
           <span class="rt-legend-dot" style="background:#e84040"></span>위급&nbsp;&nbsp;
           <span class="rt-legend-dot" style="background:#de7b12"></span>주의&nbsp;&nbsp;

@@ -7,8 +7,11 @@ import { currentCommercialIndustryData } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
 import { injectPageCss } from "../core/assets.js";
+import { loadStoreScopeCount } from "../core/api.js";
+import { buildCommercialMatrix, csvDataUrl, matrixToCsv } from "../core/visualization.js";
 
 const INDUSTRIES = ["카페", "음식점", "편의점", "학원"];
+const COMMERCIAL_DONGS = ["가산동", "독산동", "시흥동"];
 
 // 모듈-레벨 차트 인스턴스 (unmount 시 dispose)
 let chartBar   = null;
@@ -16,14 +19,17 @@ let chartDonut = null;
 let chartLine  = null;
 let chartCross = null; // 동×업종 교차 누적 막대
 let isMounted  = false;
+let commercialScope = "GEUMCHEON";
 
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 export async function mount(container) {
   isMounted = true;
+  commercialScope = "GEUMCHEON";
   injectPageCss("css-page-commercial", "./css/pages/commercial.css");
   container.innerHTML = buildHtml();
   bindEvents(container);
+  refreshScopeCount();
 
   renderKpi();
 
@@ -83,8 +89,8 @@ function buildHtml() {
         </div>
         <div class="page-banner-stats">
           <div class="page-banner-stat">
-            <span class="page-banner-stat-val">${totalStores ? totalStores.toLocaleString() : "—"}</span>
-            <span class="page-banner-stat-label">총 점포</span>
+            <span id="cml-scope-total" class="page-banner-stat-val">${totalStores ? totalStores.toLocaleString() : "—"}</span>
+            <span class="page-banner-stat-label">조회 범위 점포</span>
           </div>
           <div class="page-banner-stat">
             <span class="page-banner-stat-val">${industryCount || "—"}</span>
@@ -98,6 +104,13 @@ function buildHtml() {
         <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
 
+      <div class="cml-scope-bar" role="group" aria-label="상권 공간 범위 선택">
+        <span class="cml-filter-label">공간 범위</span>
+        <button class="cml-scope-btn is-active" data-scope="GEUMCHEON" aria-pressed="true">금천구만</button>
+        <button class="cml-scope-btn" data-scope="BORDER_AREA" aria-pressed="false">경계 생활권 포함</button>
+        <span id="cml-scope-note" class="cml-scope-note">기본값 · 공식 통계는 금천구 내부만 사용</span>
+      </div>
+
       <div class="cml-filter-bar" role="group" aria-label="업종 선택">
         <span class="cml-filter-label">업종</span>
         ${filterBtns}
@@ -108,41 +121,45 @@ function buildHtml() {
       <div class="cml-charts-grid">
         <div class="cml-chart-card">
           <div class="cml-chart-header">
-            <h3>행정동별 분포</h3>
+            <h3 id="cml-bar-title">어느 동에 ${escapeHtml(state.industry)} 점포가 많나요?</h3>
             <span id="cml-bar-badge" class="cml-industry-badge">${escapeHtml(state.industry)}</span>
           </div>
           <div id="cml-chart-bar" class="cml-echart" aria-label="행정동별 점포 수 막대차트"></div>
+          <p class="cml-chart-summary">막대 길이와 값 라벨로 행정동별 점포 수를 비교합니다. 막대축은 0에서 시작합니다.</p>
         </div>
 
         <div class="cml-chart-card">
           <div class="cml-chart-header">
-            <h3>업종 구성 비율</h3>
+            <h3>조회한 점포는 어떤 업종으로 구성되나요?</h3>
             <span class="cml-industry-badge">전체</span>
           </div>
           <div id="cml-chart-donut" class="cml-echart" aria-label="업종 구성 도넛차트"></div>
+          <p class="cml-chart-summary">색상에 의존하지 않고 아래 데이터 표에서 업종별 정확한 값과 합계를 확인할 수 있습니다.</p>
         </div>
 
         <div class="cml-chart-card cml-chart-card--wide reveal">
           <div class="cml-chart-header">
-            <h3>월별 점포 수 추이</h3>
+            <h3 id="cml-line-title">${escapeHtml(state.industry)} 점포 수는 월별로 어떻게 변했나요?</h3>
             <span id="cml-line-badge" class="cml-industry-badge">${escapeHtml(state.industry)}</span>
           </div>
           <div id="cml-chart-line" class="cml-echart cml-echart--tall" aria-label="월별 점포 수 추이 라인차트"></div>
+          <p class="cml-chart-summary">가로축은 월, 세로축은 점포 수입니다. 정확한 값은 각 점의 툴팁과 원자료에서 확인합니다.</p>
           ${renderDataStamp("commercial", `${state.industry} 업종`)}
         </div>
 
         <div class="cml-chart-card cml-chart-card--wide reveal">
           <div class="cml-chart-header">
-            <h3>행정동 × 업종 점포 수 비교</h3>
+            <h3>동마다 업종 구성은 어떻게 다른가요?</h3>
             <span class="cml-industry-badge">전체 업종</span>
           </div>
           <div id="cml-chart-cross" class="cml-echart cml-echart--tall" aria-label="행정동별 업종 교차 막대차트"></div>
+          <p class="cml-chart-summary">누적 막대와 동일한 값을 바로 아래 표와 CSV로 제공합니다.</p>
         </div>
 
         <div class="cml-chart-card cml-chart-card--wide reveal">
           <div class="cml-chart-header">
             <h3>행정동별 업종 현황 데이터</h3>
-            <span class="cml-industry-badge">전체 업종</span>
+            <a class="cml-download-link" href="${commercialCsvHref()}" download="geumcheon-commercial-by-dong.csv">CSV 내려받기</a>
           </div>
           ${buildCrossTable()}
         </div>
@@ -319,38 +336,13 @@ function buildLineOption() {
 /** 행정동 × 업종 데이터 테이블 */
 function buildCrossTable() {
   const commercial = state.data?.commercial ?? {};
-  const DONGS = ["가산동", "독산동", "시흥동"];
-
-  const rows = DONGS.map((dong) => {
-    const cells = INDUSTRIES.map((ind) => {
-      const byDong = commercial[ind]?.byDong ?? [];
-      const found  = byDong.find((d) => d.name === dong);
-      const v      = found ? Number(found.count || 0) : 0;
-      return `<td class="cml-dt-val">${v.toLocaleString()}</td>`;
-    });
-    const total = INDUSTRIES.reduce((s, ind) => {
-      const byDong = commercial[ind]?.byDong ?? [];
-      const found  = byDong.find((d) => d.name === dong);
-      return s + (found ? Number(found.count || 0) : 0);
-    }, 0);
-    return `<tr><td class="cml-dt-dong">${escapeHtml(dong)}</td>${cells.join("")}<td class="cml-dt-total">${total.toLocaleString()}</td></tr>`;
-  });
-
-  const footCells = INDUSTRIES.map((ind) => {
-    const total = DONGS.reduce((s, dong) => {
-      const byDong = commercial[ind]?.byDong ?? [];
-      const found  = byDong.find((d) => d.name === dong);
-      return s + (found ? Number(found.count || 0) : 0);
-    }, 0);
-    return `<td class="cml-dt-total">${total.toLocaleString()}</td>`;
-  });
-  const grandTotal = INDUSTRIES.reduce((s, ind) => {
-    return s + DONGS.reduce((s2, dong) => {
-      const byDong = commercial[ind]?.byDong ?? [];
-      const found  = byDong.find((d) => d.name === dong);
-      return s2 + (found ? Number(found.count || 0) : 0);
-    }, 0);
-  }, 0);
+  const matrix = buildCommercialMatrix(commercial, INDUSTRIES, COMMERCIAL_DONGS);
+  const rows = matrix.rows.map((row) => `
+    <tr><th scope="row" class="cml-dt-dong">${escapeHtml(row.dong)}</th>
+      ${row.values.map((value) => `<td class="cml-dt-val">${value.toLocaleString()}</td>`).join("")}
+      <td class="cml-dt-total">${row.total.toLocaleString()}</td></tr>
+  `);
+  const footCells = matrix.columnTotals.map((total) => `<td class="cml-dt-total">${total.toLocaleString()}</td>`);
 
   return `
     <div class="cml-table-wrap">
@@ -367,7 +359,7 @@ function buildCrossTable() {
           <tr>
             <td class="cml-dt-foot">소계</td>
             ${footCells.join("")}
-            <td class="cml-dt-foot cml-dt-total">${grandTotal.toLocaleString()}</td>
+            <td class="cml-dt-foot cml-dt-total">${matrix.grandTotal.toLocaleString()}</td>
           </tr>
         </tfoot>
       </table>
@@ -375,10 +367,15 @@ function buildCrossTable() {
   `;
 }
 
+function commercialCsvHref() {
+  const matrix = buildCommercialMatrix(state.data?.commercial ?? {}, INDUSTRIES, COMMERCIAL_DONGS);
+  return csvDataUrl(matrixToCsv(matrix));
+}
+
 /** 행정동 × 업종 교차 누적 막대 */
 function buildCrossOption() {
   const commercial = state.data?.commercial ?? {};
-  const DONGS = ["가산동", "독산동", "시흥동"];
+  const DONGS = COMMERCIAL_DONGS;
 
   const series = INDUSTRIES.map((ind, idx) => {
     const values = DONGS.map((dong) => {
@@ -453,6 +450,18 @@ function buildCrossOption() {
 
 function bindEvents(container) {
   container.addEventListener("click", (e) => {
+    const scopeBtn = e.target.closest(".cml-scope-btn");
+    if (scopeBtn) {
+      commercialScope = scopeBtn.dataset.scope === "BORDER_AREA" ? "BORDER_AREA" : "GEUMCHEON";
+      container.querySelectorAll(".cml-scope-btn").forEach((button) => {
+        const active = button.dataset.scope === commercialScope;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      refreshScopeCount();
+      return;
+    }
+
     const btn = e.target.closest(".cml-filter-btn");
     if (!btn) return;
 
@@ -466,8 +475,12 @@ function bindEvents(container) {
     // 배지 갱신
     const barBadge  = document.getElementById("cml-bar-badge");
     const lineBadge = document.getElementById("cml-line-badge");
+    const barTitle = document.getElementById("cml-bar-title");
+    const lineTitle = document.getElementById("cml-line-title");
     if (barBadge)  barBadge.textContent  = state.industry;
     if (lineBadge) lineBadge.textContent = state.industry;
+    if (barTitle) barTitle.textContent = `어느 동에 ${state.industry} 점포가 많나요?`;
+    if (lineTitle) lineTitle.textContent = `${state.industry} 점포 수는 월별로 어떻게 변했나요?`;
 
     renderKpi();
 
@@ -475,4 +488,23 @@ function bindEvents(container) {
     if (chartBar)  chartBar.setOption(buildBarOption());
     if (chartLine) chartLine.setOption(buildLineOption());
   });
+}
+
+async function refreshScopeCount() {
+  const selectedScope = commercialScope;
+  const queryScope = selectedScope === "BORDER_AREA"
+    ? "GEUMCHEON,BORDER_AREA"
+    : "GEUMCHEON";
+  const note = document.getElementById("cml-scope-note");
+  if (note) {
+    note.textContent = selectedScope === "BORDER_AREA"
+      ? "금천구 + 경계 생활권 · 외부 참고자료 제외"
+      : "기본값 · 금천구 내부만";
+  }
+
+  const summary = await loadStoreScopeCount(queryScope);
+  if (!isMounted || commercialScope !== selectedScope || !summary) return;
+
+  const total = document.getElementById("cml-scope-total");
+  if (total) total.textContent = Number(summary.count || 0).toLocaleString();
 }

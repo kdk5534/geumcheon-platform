@@ -75,7 +75,7 @@ async function renderChart(domain) {
     { type: 'value', splitLine: { show: false }, axisLabel: { fontSize: 11, formatter: (v) => v } },
   ];
 
-  const colors = [domain.color, '#bd1d77', '#245b9e', '#6556a3', '#b56b17'];
+  const colors = [domain.color, '#3f7180', '#2d5f82', '#596f87', '#b56b17'];
 
   const echartseries = series.map((s, i) => ({
     name: s.name,

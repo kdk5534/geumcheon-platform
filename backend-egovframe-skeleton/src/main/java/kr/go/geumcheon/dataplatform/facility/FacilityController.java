@@ -1,6 +1,8 @@
 package kr.go.geumcheon.dataplatform.facility;
 
 import kr.go.geumcheon.dataplatform.api.ApiResponse;
+import kr.go.geumcheon.dataplatform.api.PaginationMeta;
+import kr.go.geumcheon.dataplatform.api.PublicApiMetaFactory;
 import kr.go.geumcheon.dataplatform.publicdata.MapQuery;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,14 +40,46 @@ public class FacilityController {
             @RequestParam(required = false) Double maxLat,
             @RequestParam(required = false) Double maxLng,
             @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "GEUMCHEON") String scope,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "200") int size
     ) {
-        MapQuery query = new MapQuery(minLat, minLng, maxLat, maxLng, category, page, size);
-        return ApiResponse.ok(repository.listFacilities(query), sourceMode());
+        MapQuery query = new MapQuery(minLat, minLng, maxLat, maxLng, category, scope, page, size);
+        List<FacilitySummary> rows = repository.listFacilities(query);
+        long total = repository.countFacilities(query);
+        return ApiResponse.ok(
+                rows,
+                sourceMode(),
+                PublicApiMetaFactory.forDataset(
+                        repository,
+                        datasetKeyForCategory(category),
+                        null,
+                        PaginationMeta.of(query.page(), query.size(), total)
+                )
+        );
     }
 
     private String sourceMode() {
         return "mock".equalsIgnoreCase(runtimeMode) ? "mock" : "db";
+    }
+
+    private String datasetKeyForCategory(String category) {
+        if (category == null || category.isBlank() || "전체".equals(category)) return "facilities";
+        return switch (category.toUpperCase()) {
+            case "WIFI" -> "public-wifi";
+            case "BIKE" -> "bike-stations";
+            case "CCTV" -> "cctv-stations";
+            case "PARKING" -> "parking-lots";
+            case "PARKING_SPACE_REFERENCE" -> "parking-spaces";
+            case "SHELTER" -> "heat-shelters";
+            case "SCHOOL_ZONE" -> "school-zones";
+            case "EV_CHARGER" -> "ev-chargers";
+            case "WELFARE" -> "welfare-facilities";
+            case "CIVIL_DEFENSE_SHELTER" -> "civil-defense-shelters";
+            case "HOSPITAL" -> "hospitals";
+            case "PHARMACY" -> "pharmacies";
+            case "CHILDCARE" -> "childcare-centers";
+            default -> "facilities";
+        };
     }
 }

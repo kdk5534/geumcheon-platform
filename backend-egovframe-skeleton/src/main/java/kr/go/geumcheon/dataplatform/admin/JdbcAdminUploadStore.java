@@ -216,6 +216,7 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
 
         return switch (request.datasetKey()) {
             case "facilities" -> saveFacilityRows(datasetId, request, draft, parsedRows);
+            case "cctv-stations" -> saveCctvRows(datasetId, request, draft, parsedRows);
             case "stores" -> saveStoreRows(datasetId, request, draft, parsedRows);
             case "population" -> savePopulationRows(datasetId, request, draft, parsedRows);
             default -> throw new IllegalArgumentException("CSV upload commit is not supported for datasetKey: " + request.datasetKey());
@@ -245,6 +246,36 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
                     )
                     VALUES (?, ?, ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CURRENT_TIMESTAMP)
                     """, batchRows);
+            classifyFacilityRows(datasetId);
+        }
+        return batchRows.size();
+    }
+
+    private int saveCctvRows(UUID datasetId, UploadCommitRequest request, CsvUploadDraft draft, List<List<String>> parsedRows) {
+        jdbcTemplate.update("DELETE FROM facility WHERE dataset_id = ?", datasetId);
+        List<Object[]> batchRows = new ArrayList<>();
+        for (Map<String, String> row : mappedRows(draft.headers(), parsedRows, request.columnMappings())) {
+            Object[] params = buildCctvRowParams(datasetId, row);
+            if (params != null) {
+                batchRows.add(params);
+            }
+        }
+        if (!batchRows.isEmpty()) {
+            jdbcTemplate.batchUpdate("""
+                    INSERT INTO facility (
+                        dataset_id,
+                        facility_category,
+                        facility_name,
+                        address_road,
+                        phone,
+                        source_original_id,
+                        geom,
+                        properties,
+                        data_base_time
+                    )
+                    VALUES (?, 'CCTV', ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CAST(? AS jsonb), CURRENT_TIMESTAMP)
+                    """, batchRows);
+            classifyFacilityRows(datasetId);
         }
         return batchRows.size();
     }
@@ -273,6 +304,14 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
                     )
                     VALUES (?, ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CAST(? AS jsonb), CURRENT_TIMESTAMP, TRUE)
                     """, batchRows);
+            jdbcTemplate.update("""
+                    UPDATE store_business
+                    SET spatial_scope = classify_geumcheon_spatial_scope(
+                        COALESCE(address_road, address_jibun),
+                        geom
+                    )
+                    WHERE dataset_id = ?
+                    """, datasetId);
         }
         return batchRows.size();
     }
@@ -327,6 +366,17 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
         return mappedRows;
     }
 
+    private void classifyFacilityRows(UUID datasetId) {
+        jdbcTemplate.update("""
+                UPDATE facility
+                SET spatial_scope = classify_geumcheon_spatial_scope(
+                    COALESCE(address_road, address_jibun),
+                    geom
+                )
+                WHERE dataset_id = ?
+                """, datasetId);
+    }
+
     private Object[] buildFacilityRowParams(UUID datasetId, Map<String, String> row) {
         String category = row.get("category");
         String name = row.get("name");
@@ -350,6 +400,31 @@ public class JdbcAdminUploadStore implements AdminUploadStore {
                 latitude,
                 longitude,
                 latitude
+        };
+    }
+
+    private Object[] buildCctvRowParams(UUID datasetId, Map<String, String> row) {
+        String id = row.get("id");
+        Double latitude = parseDouble(row.get("latitude"));
+        Double longitude = parseDouble(row.get("longitude"));
+        if (isBlank(id) || latitude == null || longitude == null) {
+            return null;
+        }
+
+        String purpose = row.get("purpose");
+        String name = isBlank(purpose) ? "CCTV " + id : purpose + " CCTV " + id;
+        String address = !isBlank(row.get("roadAddress")) ? row.get("roadAddress") : row.get("lotAddress");
+        return new Object[] {
+                datasetId,
+                name,
+                address,
+                row.get("phone"),
+                id,
+                longitude,
+                latitude,
+                longitude,
+                latitude,
+                toJson(row)
         };
     }
 

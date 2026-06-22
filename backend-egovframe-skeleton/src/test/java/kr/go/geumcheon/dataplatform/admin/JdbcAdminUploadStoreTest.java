@@ -62,6 +62,47 @@ class JdbcAdminUploadStoreTest {
     }
 
     @Test
+    void recordUploadSavesCctvRowsUsingManagementNumberAsStableName() throws Exception {
+        JdbcAdminUploadStore store = new JdbcAdminUploadStore(jdbcTemplate, objectMapper, tempDir.toString());
+        UUID datasetId = UUID.randomUUID();
+        when(jdbcTemplate.queryForObject(contains("RETURNING dataset_id"), eq(UUID.class), any(), any(), any(), any(), any(), any()))
+                .thenReturn(datasetId);
+
+        List<String> headers = List.of("id", "purpose", "roadAddress", "lotAddress", "phone", "latitude", "longitude");
+        Map<String, String> mappings = Map.of(
+                "id", "id",
+                "purpose", "purpose",
+                "roadAddress", "roadAddress",
+                "lotAddress", "lotAddress",
+                "phone", "phone",
+                "latitude", "latitude",
+                "longitude", "longitude"
+        );
+        UploadLogSummary summary = store.recordUpload(
+                new UploadCommitRequest("cctv-stations", "upload-cctv", "cctv.csv", 1, headers.size(), mappings),
+                datasetRegistry.find("cctv-stations").toAdminDatasetSummary(),
+                mappings.size(),
+                draft(
+                        "cctv-stations",
+                        "cctv.csv",
+                        headers,
+                        "id,purpose,roadAddress,lotAddress,phone,latitude,longitude\nCCTV-1,생활방범,서울 금천구 독산로 1,,02-0000-0000,37.46,126.90"
+                ),
+                List.of(List.of("CCTV-1", "생활방범", "서울 금천구 독산로 1", "", "02-0000-0000", "37.46", "126.90"))
+        );
+
+        ArgumentCaptor<List> batchCaptor = ArgumentCaptor.forClass(List.class);
+        verify(jdbcTemplate).update("DELETE FROM facility WHERE dataset_id = ?", datasetId);
+        verify(jdbcTemplate).batchUpdate(contains("INSERT INTO facility"), batchCaptor.capture());
+        assertThat(batchCaptor.getValue()).hasSize(1);
+        Object[] values = (Object[]) batchCaptor.getValue().get(0);
+        assertThat(values[1]).isEqualTo("생활방범 CCTV CCTV-1");
+        assertThat(values[4]).isEqualTo("CCTV-1");
+        assertThat(summary.savedRowCount()).isEqualTo(1);
+        assertThat(summary.skippedRowCount()).isZero();
+    }
+
+    @Test
     void recordUploadSavesPopulationRows() throws Exception {
         JdbcAdminUploadStore store = new JdbcAdminUploadStore(jdbcTemplate, objectMapper, tempDir.toString());
         UUID datasetId = UUID.randomUUID();

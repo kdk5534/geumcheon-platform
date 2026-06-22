@@ -99,6 +99,8 @@ CREATE TABLE facility (
     source_original_id VARCHAR(200),
     properties JSONB,
     geom GEOMETRY(Point, 4326),
+    spatial_scope VARCHAR(30) NOT NULL DEFAULT 'EXTERNAL_REFERENCE'
+        CHECK (spatial_scope IN ('GEUMCHEON', 'BORDER_AREA', 'EXTERNAL_REFERENCE')),
     data_base_time TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -109,6 +111,7 @@ CREATE INDEX idx_facility_category ON facility(facility_category);
 CREATE INDEX idx_facility_dong_code ON facility(dong_code);
 CREATE INDEX idx_facility_geom ON facility USING GIST (geom);
 CREATE INDEX idx_facility_source_original_id ON facility(source_original_id);
+CREATE INDEX idx_facility_spatial_scope ON facility(spatial_scope);
 
 -- 5. Realtime and periodic indicators
 CREATE TABLE indicator (
@@ -167,6 +170,8 @@ CREATE TABLE store_business (
     closed_date DATE,
     properties JSONB,
     data_base_time TIMESTAMP,
+    spatial_scope VARCHAR(30) NOT NULL DEFAULT 'EXTERNAL_REFERENCE'
+        CHECK (spatial_scope IN ('GEUMCHEON', 'BORDER_AREA', 'EXTERNAL_REFERENCE')),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -177,6 +182,7 @@ CREATE INDEX idx_store_business_industry_middle ON store_business(industry_middl
 CREATE INDEX idx_store_business_industry_small ON store_business(industry_small_code);
 CREATE INDEX idx_store_business_dong_code ON store_business(dong_code);
 CREATE INDEX idx_store_business_geom ON store_business USING GIST (geom);
+CREATE INDEX idx_store_business_spatial_scope ON store_business(spatial_scope);
 CREATE INDEX idx_store_business_source_store_id ON store_business(source_store_id);
 
 CREATE TABLE commercial_analysis_snapshot (

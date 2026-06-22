@@ -38,6 +38,7 @@ INSERT INTO facility (
     address_road,
     phone,
     source_original_id,
+    spatial_scope,
     geom,
     data_base_time,
     properties
@@ -49,6 +50,7 @@ SELECT
     seed.address_road,
     seed.phone,
     seed.source_original_id,
+    'GEUMCHEON',
     ST_SetSRID(ST_MakePoint(seed.longitude, seed.latitude), 4326),
     CURRENT_TIMESTAMP,
     jsonb_build_object('source', 'seed-mock')

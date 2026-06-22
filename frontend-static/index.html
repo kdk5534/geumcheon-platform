@@ -44,10 +44,10 @@
       </div>
     </div>
 
-    <!-- PULSE BAR: 실시간 도시 텔레메트리 스트립 (가산 정밀기기 컨셉) -->
-    <div class="pulse-bar" role="complementary" aria-label="실시간 도시현황 요약" id="pulse-bar">
+    <!-- PULSE BAR: 주요 생활 지표 요약 -->
+    <div class="pulse-bar" role="complementary" aria-label="주요 생활 지표 요약" id="pulse-bar">
       <div class="pulse-bar-inner">
-        <span class="pulse-bar-label">실시간</span>
+        <span class="pulse-bar-label">지표 요약</span>
         <div class="pulse-bar-items" id="pulse-items">
           <span class="pulse-item" data-key="temp">
             <span class="pulse-dot pulse-dot--ok"></span>
@@ -79,7 +79,7 @@
             <span class="pulse-val" id="pulse-pop">--</span>
           </span>
         </div>
-        <span class="pulse-bar-time" id="pulse-time" aria-live="polite"></span>
+        <a class="pulse-bar-time" href="#/about">기준시각은 항목별 표시</a>
       </div>
     </div>
 
@@ -101,16 +101,11 @@
       </button>
 
       <nav class="nav" id="main-nav" aria-label="주요 메뉴">
-        <a href="#/home"        data-route="home"       >상황판</a>
-        <a href="#/realtime"    data-route="realtime"   >실시간 도시현황</a>
-        <a href="#/indicators"  data-route="indicators" >분야별 지표</a>
-        <a href="#/map"         data-route="map"        >생활지도</a>
-        <a href="#/commercial"  data-route="commercial" >상권분석</a>
-        <a href="#/catalog"     data-route="catalog"    >데이터 카탈로그</a>
-        <a href="#/about"       data-route="about"      >이용안내</a>
-        <a href="#/api"         data-route="api"        >API 상태</a>
-        <a href="#/api-logs"    data-route="api-logs"   >API 로그</a>
-        <a href="#/admin"       data-route="admin"      >관리자</a>
+        <a href="#/home"     data-route="home">오늘의 금천</a>
+        <a href="#/nearby"   data-route="nearby">내 주변</a>
+        <a href="#/dong"     data-route="dong">우리 동</a>
+        <a href="#/topics"   data-route="topics">분야별</a>
+        <a href="#/datasets" data-route="catalog">데이터 찾기</a>
       </nav>
     </header>
 
@@ -136,7 +131,7 @@
             <li><a href="https://www.geumcheon.go.kr" target="_blank" rel="noopener noreferrer">금천구청 공식 홈페이지</a></li>
             <li><a href="https://data.go.kr" target="_blank" rel="noopener noreferrer">공공데이터포털</a></li>
             <li><a href="https://data.seoul.go.kr" target="_blank" rel="noopener noreferrer">서울 열린데이터광장</a></li>
-            <li><a href="#/admin">플랫폼 관리자</a></li>
+            <li><a href="#/about">이용안내</a></li>
           </ul>
         </div>
       </div>

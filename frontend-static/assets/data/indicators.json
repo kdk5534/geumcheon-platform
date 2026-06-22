@@ -6,7 +6,7 @@
       "label": "인구",
       "icon": "users",
       "color": "#0d93cf",
-      "link": "#/population",
+      "link": "#/dong?section=population",
       "kpis": [
         { "label": "총 인구", "value": "247,483", "unit": "명", "change": "+0.2%", "changeDir": "up" },
         { "label": "세대 수", "value": "107,621", "unit": "세대", "change": "+1.1%", "changeDir": "up" },
@@ -46,7 +46,7 @@
       "label": "경제·상권",
       "icon": "bar-chart",
       "color": "#bd1d77",
-      "link": "#/commercial",
+      "link": "#/topics?topic=economy",
       "kpis": [
         { "label": "등록 사업체", "value": "24,381", "unit": "개소", "change": "+1.8%", "changeDir": "up" },
         { "label": "종사자 수", "value": "183,420", "unit": "명", "change": "+2.1%", "changeDir": "up" },
@@ -216,7 +216,7 @@
       "label": "안전",
       "icon": "shield",
       "color": "#bd493c",
-      "link": "#/geo",
+      "link": "#/topics?topic=safety",
       "kpis": [
         { "label": "범죄 발생", "value": "142", "unit": "건/월", "change": "-8.4%", "changeDir": "down" },
         { "label": "화재 발생", "value": "4", "unit": "건/월", "change": "-33.3%", "changeDir": "down" },

@@ -215,6 +215,12 @@
   animation: pulse-dot 2.5s ease-in-out infinite;
 }
 
+.home-mode-badge--ok::before { background: #34d399; }
+.home-mode-badge--warn::before { background: #f59e0b; }
+.home-mode-badge--err::before { background: #f87171; }
+.home-mode-badge--info::before { background: #7dd3fc; }
+.home-mode-badge--muted::before { background: rgba(255,255,255,0.5); }
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
@@ -279,6 +285,11 @@
   scrollbar-color: var(--line) transparent;
 }
 
+.home-dash-left:focus-visible {
+  outline: 3px solid var(--focus-ring, #2563eb);
+  outline-offset: 2px;
+}
+
 .home-panel-hdr-label {
   margin-bottom: var(--space-2);
   font-size: var(--text-xs);
@@ -290,13 +301,13 @@
 
 .home-kpi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 6px;
 }
 
 .home-kpi-tile {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   background: var(--surface);
@@ -415,6 +426,120 @@
   margin-top: var(--space-2);
 }
 
+.home-chart-fallback {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+}
+
+.home-chart-fallback li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.home-chart-fallback strong {
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .home-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.home-kpi-change,
+.home-kpi-source {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.home-kpi-source {
+  overflow-wrap: anywhere;
+}
+
+.home-data-state {
+  margin-top: var(--space-2);
+}
+
+.home-data-state-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-data-state-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.home-state-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.home-state-pill--ok {
+  background: rgba(16, 185, 129, 0.14);
+  color: #047857;
+}
+
+.home-state-pill--warn {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.home-state-pill--err {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+}
+
+.home-state-pill--info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.home-state-pill--muted {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+}
+
+.home-data-state-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.home-data-state-note {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.home-data-state-card .data-stamp {
+  margin: 0;
+  font-size: 11px;
+}
+
 .home-stat-card {
   padding: var(--space-3) var(--space-3);
   background: linear-gradient(135deg, rgba(12,127,184,0.06) 0%, rgba(13,147,207,0.06) 100%);
@@ -466,6 +591,8 @@
   /* min-height: 0 단독으로는 flex 자식의 height: 100%가 작동 안 함 */
   height: 100%;
   min-height: 600px;
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* 지표 토글 바 */
@@ -478,7 +605,20 @@
   border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: blur(4px);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 20;
+  min-height: 42px;
+}
+
+.home-map-metric-title {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.home-map-metric-note {
+  margin-left: var(--space-2);
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .home-map-metric-label {
@@ -522,7 +662,20 @@
   flex: 1;
   min-height: 560px;
   position: relative;
+  isolation: isolate;
+  z-index: 0;
+  overflow: hidden;
 }
+
+.home-map-pane > .leaflet-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.home-map-pane .leaflet-pane { z-index: 1; }
+.home-map-pane .leaflet-top,
+.home-map-pane .leaflet-bottom { z-index: 10; }
 
 /* Leaflet 재정의: 지도가 컨테이너를 꽉 채우도록 */
 .home-map-pane .leaflet-container {
@@ -660,7 +813,7 @@
 .home-rt-live-badge {
   font-size: 10px;
   font-weight: 900;
-  color: #bd1d77;
+  color: #3f7180;
   letter-spacing: 0.04em;
   animation: pulse-dot 1.4s ease-in-out infinite;
   flex-shrink: 0;
@@ -750,9 +903,29 @@ a.home-mini-notice-title:hover {
 /* 분석 바로가기 2×3 그리드 */
 .home-quick-links {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-1);
   padding: var(--space-3);
+}
+
+.home-question-widget {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--blue-wash);
+}
+
+.home-question-widget strong {
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.home-question-widget span {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 
 .home-quick-link {
@@ -792,8 +965,8 @@ a.home-mini-notice-title:hover {
   align-items: center;
   gap: var(--space-3);
   margin: var(--space-6) 0 var(--space-3);
-  padding-left: var(--space-4);
-  border-left: 4px solid var(--green);
+  padding: 0 0 var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .home-section-label h2 {
@@ -810,9 +983,12 @@ a.home-mini-notice-title:hover {
    KPI 스파크라인
 ───────────────────────────────────────── */
 .metric-sparkline {
+  display: none;
   height: 40px;
   margin: var(--space-2) 0;
 }
+
+.metric-sparkline.is-chart-ready { display: block; }
 
 /* ─────────────────────────────────────────
    인사이트 차트 섹션
@@ -1154,7 +1330,7 @@ a.home-mini-notice-title:hover {
   content: "";
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 3px;
+  height: 0;
   background: var(--metric-accent, var(--green));
 }
 
@@ -1387,6 +1563,18 @@ a.home-mini-notice-title:hover {
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-4);
   background: var(--surface);
+}
+
+#home-metrics .metric-card {
+  min-height: 132px;
+  border-left-color: var(--metric-accent, var(--blue));
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px rgba(16, 45, 66, 0.06);
+}
+
+.home-dong-table-wrap:focus-visible {
+  outline: 3px solid var(--focus-ring, #2563eb);
+  outline-offset: 2px;
 }
 
 .home-dong-table {

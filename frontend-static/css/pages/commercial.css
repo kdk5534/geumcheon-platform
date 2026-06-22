@@ -1,5 +1,44 @@
 /* 상권분석 페이지 전용 스타일 */
 
+.cml-scope-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.cml-scope-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cml-scope-btn.is-active {
+  border-color: #b56b17;
+  background: #fef3e2;
+  color: #7a4300;
+}
+
+.cml-scope-note {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .cml-scope-note { width: 100%; margin-left: 0; }
+}
+
 /* ─────────────────────────────────────────
    페이지 래퍼
 ───────────────────────────────────────── */
@@ -326,4 +365,18 @@
   .cml-kpi-row {
     grid-template-columns: 1fr;
   }
+}
+.cml-chart-summary {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.cml-download-link {
+  color: var(--blue);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }

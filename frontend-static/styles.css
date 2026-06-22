@@ -1,21 +1,21 @@
 :root {
-  --ink: #14201b;
-  --muted: #65736d;
-  --line: #d8e0dd;
-  --line-strong: #bbc8c4;
+  --ink: #152b3b;
+  --muted: #5f7380;
+  --line: #d7e0e6;
+  --line-strong: #b5c4ce;
   --surface: #ffffff;
-  --wash: #f0f7fc;
-  --panel: #f7fbfe;
-  --green: #0c7fb8;
-  --blue: #245b9e;
-  --teal: #0d93cf;
-  --magenta: #bd1d77;
-  --magenta-wash: #fbe6f1;
+  --wash: #eef3f6;
+  --panel: #f6f8fa;
+  --green: #176f76;
+  --blue: #315f7b;
+  --teal: #1c6d80;
+  --magenta: #3f7180;
+  --magenta-wash: #e8f1f3;
   --amber: #b56b17;
   --red: #bd493c;
-  --violet: #6556a3;
-  --navy: #0d2a45;
-  --shadow: 0 14px 32px rgba(12, 40, 70, 0.09);
+  --violet: #596f87;
+  --navy: #102d42;
+  --shadow: 0 10px 26px rgba(16, 45, 66, 0.08);
 }
 
 * {
@@ -80,6 +80,8 @@ select {
 
 /* ─── 유틸리티 바 (topbar 위, 스크롤 시 사라짐) ──────────────── */
 .util-bar {
+  position: relative;
+  z-index: 1200;
   background: var(--navy);
   color: rgba(255, 255, 255, 0.55);
   font-size: 12px;
@@ -139,7 +141,7 @@ select {
 .topbar {
   position: sticky;
   top: 34px; /* pulse-bar 높이(34px) 아래에 스택 */
-  z-index: 20;
+  z-index: 1190;
   /* ::after 강조선 기준 */
   isolation: isolate;
   display: flex;
@@ -294,6 +296,7 @@ select {
 .shell {
   width: var(--container);
   margin: 0 auto;
+  min-height: 100vh;
   padding: 20px 0 48px;
 }
 
@@ -1943,11 +1946,11 @@ button {
   flex-direction: column;
   padding: 14px 16px;
   min-height: 128px;
-  border-top: 3px solid transparent;
+  border-top: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-top-width: 3px;
+  border-left: 3px solid var(--metric-accent, var(--blue));
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-base), transform var(--transition-base);
 }
@@ -1957,10 +1960,10 @@ button {
   transform: translateY(-2px);
 }
 
-.metric-card:nth-child(1) { border-top-color: var(--green); }
-.metric-card:nth-child(2) { border-top-color: var(--amber); }
-.metric-card:nth-child(3) { border-top-color: var(--red,  #c0392b); }
-.metric-card:nth-child(4) { border-top-color: var(--blue); }
+.metric-card:nth-child(1),
+.metric-card:nth-child(2),
+.metric-card:nth-child(3),
+.metric-card:nth-child(4) { border-top-color: var(--line); }
 
 .metric-card-header {
   display: flex;

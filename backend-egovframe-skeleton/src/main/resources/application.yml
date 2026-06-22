@@ -25,6 +25,17 @@ geumcheon:
     sgis: ${SGIS_API_KEY:}
     kosis: ${KOSIS_API_KEY:}
     worknet: ${WORKNET_API_KEY:}
+  wifi-relay:
+    base-url: ${WIFI_RELAY_BASE_URL:http://127.0.0.1:18088}
+    token: ${WIFI_RELAY_TOKEN:}
+    schedule-enabled: ${WIFI_RELAY_SCHEDULE_ENABLED:false}
+    cron: ${WIFI_RELAY_CRON:0 10 * * * *}
+  living-facility-relay:
+    base-url: ${LIVING_FACILITY_RELAY_BASE_URL:http://127.0.0.1:18089}
+    token: ${LIVING_FACILITY_RELAY_TOKEN:}
+  air-quality:
+    schedule-enabled: ${AIR_QUALITY_SCHEDULE_ENABLED:true}
+    cron: ${AIR_QUALITY_CRON:0 5 */3 * * *}
   collector:
     enabled: ${COLLECTOR_ENABLED:false}
     default-timeout-seconds: ${COLLECTOR_DEFAULT_TIMEOUT_SECONDS:20}

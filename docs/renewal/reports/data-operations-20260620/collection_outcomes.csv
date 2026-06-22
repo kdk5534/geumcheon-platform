@@ -1,0 +1,9 @@
+dataset,success,failed,skipped,latest_status,last_success_saved
+상가업소,16,3,0,SUCCESS,24045
+대기질,19,6,1,SUCCESS,23
+따릉이,11,1,4,SKIPPED,127
+CCTV,13,1,4,SKIPPED,935
+주차장,12,6,1,FAILED,131
+인구,13,2,0,FAILED,10
+공공 Wi-Fi,3,2,4,SKIPPED,1644
+

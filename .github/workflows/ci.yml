@@ -24,8 +24,11 @@ jobs:
       - name: Run backend tests
         run: mvn -B test
 
-  frontend-syntax:
+  frontend-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-static
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,13 +36,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend-static/package-lock.json
 
-      - name: Check frontend entry script
-        run: node --check frontend-static/serve-static.mjs
+      - name: Install frontend dependencies
+        run: npm ci
 
-      - name: Check frontend modules
-        shell: bash
-        run: |
-          # ubuntu-latest uses bash here, so find/xargs is intentional.
-          find frontend-static/js -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+      - name: Run syntax and unit tests
+        run: npm run check:syntax && npm run test:unit
+
+      - name: Run browser regression tests
+        run: npx playwright test

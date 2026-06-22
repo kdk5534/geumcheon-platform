@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>금천구 공공데이터 플랫폼 운영 우선순위</title>
+  <style>
+    :root { --ink:#171411; --muted:#665f58; --line:#ddd7d0; --paper:#faf8f5; --panel:#fff; --blue:#2e4780; --blue-bg:#eaf1fe; --orange:#804126; --orange-bg:#ffedde; }
+    * { box-sizing: border-box; }
+    body { font-family:"Malgun Gothic","Segoe UI",sans-serif; margin:0; background:var(--paper); color:var(--ink); }
+    main { max-width:980px; margin:0 auto; padding:48px 24px 72px; }
+    header, section { margin-bottom:38px; }
+    h1 { font-size:34px; letter-spacing:-.04em; line-height:1.2; margin:0 0 10px; }
+    h2 { font-size:24px; letter-spacing:-.025em; line-height:1.3; margin:0 0 14px; }
+    h3 { font-size:18px; margin:0 0 8px; }
+    p, li { line-height:1.72; }
+    .meta { color:var(--muted); font-size:14px; }
+    .executive-summary-box { padding:24px 26px; background:linear-gradient(180deg,#f6f0e8 0%,#efe7dc 100%); border:1px solid #ddd1c2; border-radius:18px; box-shadow:0 12px 28px rgba(23,20,17,.06); }
+    .executive-summary-box ul { margin:0; padding-left:22px; }
+    .executive-summary-box li + li { margin-top:11px; }
+    .metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:18px; }
+    .metric { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; }
+    .metric strong { display:block; font-size:25px; margin-bottom:4px; }
+    .metric span { color:var(--muted); font-size:13px; line-height:1.45; }
+    .finding { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; margin:16px 0; }
+    .finding p:last-child { margin-bottom:0; }
+    figure { margin:22px 0 10px; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; }
+    figure img { width:100%; height:auto; display:block; }
+    figcaption { color:var(--muted); font-size:13px; line-height:1.55; margin-top:10px; }
+    table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); font-size:14px; }
+    th, td { padding:13px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; line-height:1.5; }
+    th { background:#f2ede6; }
+    tr:last-child td { border-bottom:0; }
+    .priority { display:inline-block; min-width:36px; text-align:center; font-weight:700; border-radius:999px; padding:3px 8px; }
+    .p0 { color:var(--orange); background:var(--orange-bg); }
+    .p1 { color:var(--blue); background:var(--blue-bg); }
+    .p2 { color:#555; background:#eceff3; }
+    .callout { padding:18px 20px; background:#f2ede6; border-left:4px solid var(--orange); border-radius:10px; }
+    .steps { counter-reset:step; list-style:none; padding:0; }
+    .steps li { counter-increment:step; position:relative; padding:0 0 18px 46px; }
+    .steps li::before { content:counter(step); position:absolute; left:0; top:1px; width:30px; height:30px; border-radius:50%; background:var(--blue); color:#fff; display:grid; place-items:center; font-weight:700; }
+    a { color:var(--blue); }
+    @media (max-width:760px) { .metric-grid { grid-template-columns:1fr 1fr; } h1 { font-size:28px; } main { padding:32px 16px 56px; } table { font-size:13px; } }
+  </style>
+</head>
+<body>
+  <main data-report-audience="product stakeholders">
+    <header data-contract-section="title">
+      <h1>금천구 공공데이터 플랫폼 운영 우선순위</h1>
+      <div class="meta">데이터 수집·범위·최신성 진단 · 2026년 6월 20일 07:20 KST 기준</div>
+    </header>
+
+    <section class="executive-summary-box" data-contract-section="executive-summary">
+      <h2>핵심 요약</h2>
+      <ul>
+        <li><strong>공간 범위 교정을 완료했다.</strong> 행을 삭제하지 않고 GEUMCHEON / BORDER_AREA / EXTERNAL_REFERENCE로 분류했으며, 상가 24,045행은 금천구 15,516행과 경계 생활권 8,529행으로 나뉜다.</li>
+        <li><strong>주차장 입자도 전환을 완료했다.</strong> 공식 시설 25건은 <code>parking-lots</code>, 구 공간 좌표 131건은 <code>parking-spaces</code>로 분리해 독립 기준선으로 관리한다.</li>
+        <li><strong>수집기는 작동하지만 공개 신뢰 모델이 부족하다.</strong> 상가·대기질은 최신 실행이 성공했으나 인구·주차장은 실패했고, 따릉이·CCTV·Wi-Fi는 정책상 중단됐다. 화면에는 최신 시도와 마지막 정상 스냅샷을 분리해서 보여줘야 한다.</li>
+      </ul>
+    </section>
+
+    <section data-contract-section="headline-metrics">
+      <h2>현재 상태를 결정하는 네 가지 숫자</h2>
+      <div class="metric-grid">
+        <div class="metric"><strong>15,516</strong><span>상가 공식 통계 기본 범위<br>GEUMCHEON</span></div>
+        <div class="metric"><strong>8,529</strong><span>선택 가능한 경계 생활권<br>BORDER_AREA</span></div>
+        <div class="metric"><strong>25 + 131</strong><span>공식 주차장 시설 + 구 공간 참고자료<br>독립 기준선</span></div>
+        <div class="metric"><strong>3종</strong><span>정책 중단 상태<br>따릉이·CCTV API·공공 Wi-Fi</span></div>
+      </div>
+    </section>
+
+    <section data-contract-section="key-findings">
+      <h2>수집 성공만으로는 공개 가능한 데이터가 되지 않는다</h2>
+      <p><strong>로그 기준으로는 반복 수집이 상당 부분 성공했다.</strong> 그러나 성공 이력에는 개발 검증 실행이 섞여 있고, 현재 상태는 데이터셋마다 다르다. 대기질과 상가는 최신 실행이 성공했지만 주차장과 인구는 최신 실행이 실패했으며, 세 시설 데이터셋은 승인된 전송정책 때문에 건너뛰었다. 따라서 아래 그림은 SLA 달성률이 아니라 수집 경로의 안정성과 예외 유형을 읽는 근거다.</p>
+      <figure>
+        <img src="collection_outcomes.png" alt="데이터셋별 수집 성공 실패 정책 중단 횟수">
+        <figcaption>로컬 PostgreSQL의 전체 수집 로그 집계. 최신 정상 스냅샷은 실패·중단 후에도 유지되므로, 최근 실행 상태와 공개 데이터 최신성을 별도 지표로 관리해야 한다.</figcaption>
+      </figure>
+
+      <div class="finding">
+        <h3>범위 밖 데이터를 지우지 않고 용도별로 분리했다</h3>
+        <p>상가와 시설에 <code>spatial_scope</code>를 추가하고 GEUMCHEON / BORDER_AREA / EXTERNAL_REFERENCE로 분류했다. 공식 통계와 일반 공개 조회는 GEUMCHEON만 사용한다. 상권분석은 화면 기본값을 ‘금천구만’으로 두고 사용자가 선택할 때만 BORDER_AREA를 더하며, EXTERNAL_REFERENCE는 대사 목적으로만 보존한다.</p>
+      </div>
+      <figure>
+        <img src="address_scope.png" alt="상가와 주차장의 주소 기준 금천구 및 기타 지역 구성비">
+        <figcaption>상가는 저장 행 단위, 주차장은 기존 원천의 공간 행 단위다. 주차장 비율은 시설 수 비율로 해석하면 안 된다.</figcaption>
+      </figure>
+
+      <div class="finding">
+        <h3>주차장 품질 게이트 기준선을 입자도별로 분리했다</h3>
+        <p>기존 131행은 11개 원천 ID에 여러 공간 좌표가 연결된 구 서울 원천이다. 신규 공공데이터포털 응답 25건은 주차장 시설 단위다. 승인된 마이그레이션은 전자를 <code>parking-spaces</code>, 후자를 <code>parking-lots</code>로 분리했다. 공식 25건은 모두 금천구 범위로 저장됐고, 참고 공간 131건은 삭제하지 않은 채 기본 공개 통계에서 제외했다.</p>
+      </div>
+    </section>
+
+    <section data-contract-section="priority-recommendations">
+      <h2>개발 우선순위는 범위 교정 → 주차장 전환 → 운영 상태 모델 순이다</h2>
+      <table>
+        <thead><tr><th>우선순위</th><th>작업</th><th>근거와 기대효과</th><th>완료 기준</th></tr></thead>
+        <tbody>
+          <tr><td><span class="priority p0">완료</span></td><td><strong>공간 범위 분류와 공개 기본값</strong></td><td>외부 행을 보존하면서 공식 통계와 경계 생활권 분석을 분리한다.</td><td>3단계 분류, 기본 GEUMCHEON, 상권 선택 조회, 회귀 테스트 완료</td></tr>
+          <tr><td><span class="priority p0">완료</span></td><td><strong>주차장 원천·입자도 전환</strong></td><td>시설 25건과 공간행 131건을 독립 데이터셋으로 분리했다.</td><td>공식 25건 저장, 참고 131건 보존, 기본 조회 분리 완료</td></tr>
+          <tr><td><span class="priority p1">P1</span></td><td><strong>최신 시도/마지막 성공 분리</strong></td><td>인구 시간초과와 주차장 게이트 실패가 정상 스냅샷 부재로 오해되는 것을 막는다.</td><td>상태 API와 UI에 두 시각·상태·오류유형·지연시간 표시</td></tr>
+          <tr><td><span class="priority p1">P1</span></td><td><strong>수집정책·카탈로그 정합화</strong></td><td>CSV 운영 CCTV와 정책 중단 API를 구분하고, 실제 SLA와 화면의 ‘매일/수시’를 일치시킨다.</td><td>자동/CSV/중단 상태 표준화, 데이터명·원천명·주기 일치 테스트</td></tr>
+          <tr><td><span class="priority p2">P2</span></td><td><strong>후보 3종 비공개 유지</strong></td><td>무더위쉼터·어린이보호구역·전기차충전소는 확정 원천이 없고 현재 실행은 모두 실패했다.</td><td>공식 원천·이용조건·담당자 승인 후에만 운영 카탈로그 승격</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section data-contract-section="recommended-next-steps">
+      <h2>권장 실행 순서</h2>
+      <ol class="steps">
+        <li><strong>공식 행정경계 도형으로 간이 경계를 교체한다.</strong> 현재 승인된 3단계 분류와 공개 기본값은 유지하고 경계 품질만 높인다.</li>
+        <li><strong>주차장 두 기준선을 독립 운영한다.</strong> 공식 시설은 <code>parking-lots</code>, 구 공간 참고자료는 <code>parking-spaces</code> 안에서만 변동을 비교한다.</li>
+        <li><strong>운영 상태 모델을 고친 뒤 자동수집 범위를 넓힌다.</strong> 최신 시도 실패가 마지막 정상 데이터까지 무효화하지 않도록 API·관리자 화면·공개 화면에 동일한 상태 정의를 적용한다.</li>
+        <li><strong>그 다음에 후보 데이터셋과 시각화 단계로 이동한다.</strong> 범위와 입자도가 정리되지 않은 상태에서 지표·차트를 늘리면 오류를 더 보기 좋게 포장할 뿐이다.</li>
+      </ol>
+    </section>
+
+    <section data-contract-section="further-questions">
+      <h2>추가 확인이 결론을 바꿀 수 있는 항목</h2>
+      <ul>
+        <li>신규 주차장 25개 중 기존 11개 원천 ID와 동일하거나 명칭·주소가 유사한 시설은 몇 개인가?</li>
+        <li>따릉이·Wi-Fi에도 상권과 같은 경계 생활권 선택 UI를 제공할 필요가 있는가?</li>
+        <li>CCTV 935건의 공개 위치 정밀도와 재배포 범위를 어느 부서가 최종 승인할지?</li>
+      </ul>
+    </section>
+
+    <section data-contract-section="caveats-and-assumptions">
+      <h2>해석상 주의</h2>
+      <div class="callout">
+        <p>이번 판단은 현재 로컬 DB와 저장소의 구현 상태를 기준으로 한다. 현재 행정경계는 프런트 동 경계를 합친 간이 경계이므로 공식 경계로 교체할 때 경계 인접 행을 재분류해야 한다. 운영 로그의 성공 비율은 개발 검증 실행이 섞여 있어 SLA 달성률이 아니다. 근거 정의와 재현 방법은 <a href="source-notes.md">분석 근거 메모</a>에 보존했다.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

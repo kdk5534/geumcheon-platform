@@ -7,14 +7,19 @@ public record ApiResponse<T>(
         T data,
         String message,
         Instant timestamp,
-        String sourceMode
+        String sourceMode,
+        ApiMeta meta
 ) {
     public static <T> ApiResponse<T> ok(T data) {
         return ok(data, null);
     }
 
     public static <T> ApiResponse<T> ok(T data, String sourceMode) {
-        return new ApiResponse<>(true, data, null, Instant.now(), sourceMode);
+        return ok(data, sourceMode, null);
+    }
+
+    public static <T> ApiResponse<T> ok(T data, String sourceMode, ApiMeta meta) {
+        return new ApiResponse<>(true, data, null, Instant.now(), sourceMode, meta);
     }
 
     public static <T> ApiResponse<T> fail(String message) {
@@ -22,6 +27,6 @@ public record ApiResponse<T>(
     }
 
     public static <T> ApiResponse<T> fail(String message, String sourceMode) {
-        return new ApiResponse<>(false, null, message, Instant.now(), sourceMode);
+        return new ApiResponse<>(false, null, message, Instant.now(), sourceMode, null);
     }
 }

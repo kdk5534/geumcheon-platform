@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -27,6 +28,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleNotFound(NoResourceFoundException error) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail("Resource not found: " + error.getResourcePath()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(ResponseStatusException error) {
+        return ResponseEntity.status(error.getStatusCode())
+                .body(ApiResponse.fail(error.getReason()));
     }
 
     /** 그 외 미처리 예외 → 500 */

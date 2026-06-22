@@ -2,6 +2,20 @@ param(
     [string]$DatasetKey
 )
 
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+$EnvFile = Join-Path $ProjectRoot ".env"
+if (Test-Path -LiteralPath $EnvFile) {
+    Get-Content -LiteralPath $EnvFile -Encoding UTF8 | ForEach-Object {
+        if ($_ -match '^([^#][^=]+)=(.*)$') {
+            $Name = $matches[1].Trim()
+            $Value = $matches[2].Trim().Trim('"').Trim("'")
+            if (-not [string]::IsNullOrWhiteSpace($Name)) {
+                Set-Item -Path ("Env:" + $Name) -Value $Value
+            }
+        }
+    }
+}
+
 $BackendBase = $env:BACKEND_URL
 if ([string]::IsNullOrWhiteSpace($BackendBase)) {
     $BackendBase = "http://localhost:8080"
@@ -14,7 +28,7 @@ if ([string]::IsNullOrWhiteSpace($LoginId)) {
 
 $Password = $env:ADMIN_INITIAL_PASSWORD
 if ([string]::IsNullOrWhiteSpace($Password)) {
-    $Password = "admin1234"
+    throw "ADMIN_INITIAL_PASSWORD is required."
 }
 
 $AuthBytes = [System.Text.Encoding]::ASCII.GetBytes("$LoginId`:$Password")
@@ -26,11 +40,11 @@ $Headers = @{
 
 $SyncUri = "$BackendBase/api/admin/public-data/sync"
 if (-not [string]::IsNullOrWhiteSpace($DatasetKey)) {
-    $SyncUri = "$SyncUri?datasetKey=$([uri]::EscapeDataString($DatasetKey))"
+    $SyncUri = "${SyncUri}?datasetKey=$([uri]::EscapeDataString($DatasetKey))"
 }
 
 try {
-    $SyncResponse = Invoke-RestMethod -Method Post -Uri $SyncUri -Headers $Headers -TimeoutSec 30
+    $SyncResponse = Invoke-RestMethod -Method Post -Uri $SyncUri -Headers $Headers -TimeoutSec 180
     $SyncResponse | ConvertTo-Json -Depth 10
 } catch {
     Write-Error "Public data sync failed: $($_.Exception.Message)"

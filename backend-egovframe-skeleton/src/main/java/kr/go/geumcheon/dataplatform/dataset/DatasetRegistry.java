@@ -378,6 +378,21 @@ public class DatasetRegistry {
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
         // Phase 1 — 생활편의·문화 신규
+        items.put("museums", new DatasetDefinition(
+                "museums", "박물관·미술관", "문화", "공공데이터포털 전국박물관미술관정보표준데이터",
+                "연 1회", "data.go.kr 표준데이터 API (좌표 포함)", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "시설명"),
+                        new DatasetFieldDefinition("address", "소재지도로명주소"),
+                        new DatasetFieldDefinition("facilityType", "시설유형"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://api.data.go.kr/openapi/tn_pubr_public_museum_artgr_info_api",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         items.put("libraries", new DatasetDefinition(
                 "libraries", "도서관", "생활", "공공데이터포털 전국도서관표준데이터",
                 "연 1회", "data.go.kr 표준데이터 API — 자동승인 (좌표 포함)", true, "API", false, false, true,

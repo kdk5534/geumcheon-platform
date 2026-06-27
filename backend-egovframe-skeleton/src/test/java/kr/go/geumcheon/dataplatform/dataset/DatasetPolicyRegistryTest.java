@@ -65,6 +65,14 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
+    void museumPolicyIsEnabledWithAnnualFreshness() {
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("museums");
+        assertThat(policy.collectionEnabled()).isTrue();
+        assertThat(policy.naturalKey()).isEqualTo("name+address");
+        assertThat(policy.freshnessSla().toDays()).isEqualTo(365);
+    }
+
+    @Test
     void libraryPolicyIsEnabledWithAnnualFreshness() {
         DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("libraries");
         assertThat(policy.collectionEnabled()).isTrue();

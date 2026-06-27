@@ -61,12 +61,23 @@ class DatasetRegistryTest {
         assertThat(registry.getRequired("pharmacies").sourceUrl()).contains("OA-16327");
         assertThat(registry.getRequired("childcare-centers").sourceUrl()).contains("OA-20318");
         // Phase 1 신규
+        assertThat(registry.getRequired("street-lights").sourceUrl()).contains("scrty_lmp");
         assertThat(registry.getRequired("fire-hydrants").sourceUrl()).contains("ffus_wtrcns");
         assertThat(registry.getRequired("museums").sourceUrl()).contains("museum_artgr");
         assertThat(registry.getRequired("libraries").sourceUrl()).contains("15013109");
         assertThat(registry.getRequired("parks").sourceUrl()).contains("15012890");
         assertThat(registry.getRequired("traditional-markets").sourceUrl()).contains("15012894");
         assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15117154");
+    }
+
+    @Test
+    void streetLightIsSafetyStandardDataWithCoords() {
+        var def = registry.getRequired("street-lights");
+        assertThat(def.datasetName()).isEqualTo("보안등");
+        assertThat(def.domain()).isEqualTo("안전");
+        assertThat(def.authKeyRequired()).isTrue();
+        assertThat(def.spatialType()).isEqualTo("POINT");
+        assertThat(def.requiredFields()).contains("latitude", "longitude");
     }
 
     @Test

@@ -69,6 +69,9 @@ function facilityCategory(item: RawFacility) {
       SHELTER: "무더위쉼터",
       SCHOOL_ZONE: "스쿨존",
       CIVIL_DEFENSE_SHELTER: "민방위대피소",
+      // Phase 1 신규 — 안전·환경
+      STREET_LIGHT: "보안등",
+      FIRE_HYDRANT: "소방용수시설",
       // Phase 1 신규 — 생활편의·문화
       MUSEUM: "박물관·미술관",
       LIBRARY: "도서관",

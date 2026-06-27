@@ -704,6 +704,50 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void streetLightStandardApiFiltersToGeumcheonByInsttNmAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("STREET_LIGHT"), anyList())).thenReturn(1);
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "lmpLcNm": "독산1동-001",
+                    "rdnmadr": "서울특별시 금천구 독산로 10",
+                    "lnmadr": "",
+                    "insttNm": "서울특별시 금천구",
+                    "latitude": "37.4693",
+                    "longitude": "126.8975",
+                    "installationType": "한전주"
+                  },
+                  {
+                    "lmpLcNm": "종로구-001",
+                    "rdnmadr": "서울특별시 종로구 옥인6길 15",
+                    "lnmadr": "",
+                    "insttNm": "서울특별시 종로구",
+                    "latitude": "37.5814",
+                    "longitude": "126.9645"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncStreetLights("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("STREET_LIGHT"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        assertThat(rows.getValue().get(0).get("insttNm")).contains("금천구");
+        assertThat(rows.getValue().get(0).get("latitude")).isEqualTo("37.4693");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void fireHydrantStandardApiFiltersToGeumcheonBySignguNmAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

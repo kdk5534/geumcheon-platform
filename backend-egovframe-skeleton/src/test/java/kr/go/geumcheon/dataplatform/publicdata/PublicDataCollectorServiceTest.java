@@ -702,6 +702,33 @@ class PublicDataCollectorServiceTest {
         row.createCell(16).setCellValue(longitude);
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void knowledgeIndustryCenterCsvIsLoadedAndNormalizedToFacilityFormat() {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("KNOWLEDGE_INDUSTRY_CENTER"), anyList())).thenReturn(2);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncKnowledgeIndustryCenters("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("KNOWLEDGE_INDUSTRY_CENTER"), rows.capture());
+        assertThat(rows.getValue()).isNotEmpty();
+        Map<String, String> firstRow = rows.getValue().get(0);
+        assertThat(firstRow.get("STAT_NM")).isEqualTo("금천첨단R&D산업센터");
+        assertThat(firstRow.get("LAT")).isNotBlank();
+        assertThat(firstRow.get("LNG")).isNotBlank();
+        assertThat(firstRow.get("ADDR")).contains("금천구");
+        assertThat(firstRow.get("source")).isEqualTo("공공데이터포털 금천구 지식산업센터 정보");
+        assertThat(result.status()).isEqualTo("success");
+        verifyNoInteractions(httpClient);
+    }
+
     private void addBikeRow(
             org.apache.poi.ss.usermodel.Row row,
             int id,

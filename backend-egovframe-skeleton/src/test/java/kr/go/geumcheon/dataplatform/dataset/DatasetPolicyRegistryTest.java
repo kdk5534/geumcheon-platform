@@ -65,6 +65,16 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
+    void knowledgeIndustryCenterPolicyIsEnabledWithLongRetention() {
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("knowledge-industry-center");
+        assertThat(policy.collectionEnabled()).isTrue();
+        assertThat(policy.naturalKey()).isEqualTo("name+address");
+        assertThat(policy.minimumRows()).isEqualTo(1);
+        assertThat(policy.maximumRows()).isEqualTo(500);
+        assertThat(policy.lastGoodRetention().toDays()).isGreaterThanOrEqualTo(365);
+    }
+
+    @Test
     void firstWaveLivingFacilitiesUseApprovedIsolatedRelayButKeepTermsReview() {
         assertThat(Set.of(
                 "welfare-facilities", "civil-defense-shelters", "hospitals",

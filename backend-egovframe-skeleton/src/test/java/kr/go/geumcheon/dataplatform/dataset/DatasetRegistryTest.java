@@ -60,5 +60,19 @@ class DatasetRegistryTest {
         assertThat(registry.getRequired("hospitals").sourceUrl()).contains("OA-16176");
         assertThat(registry.getRequired("pharmacies").sourceUrl()).contains("OA-16327");
         assertThat(registry.getRequired("childcare-centers").sourceUrl()).contains("OA-20318");
+        // Phase 1 신규
+        assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15034153");
+    }
+
+    @Test
+    void knowledgeIndustryCenterIsG밸리SpecializedIndustrialDataset() {
+        var def = registry.getRequired("knowledge-industry-center");
+        assertThat(def.datasetName()).isEqualTo("지식산업센터");
+        assertThat(def.domain()).isEqualTo("산업");
+        assertThat(def.authKeyRequired()).isFalse();
+        assertThat(def.envVarName()).isEmpty();
+        assertThat(def.spatialType()).isEqualTo("POINT");
+        assertThat(def.publicVisible()).isTrue();
+        assertThat(def.apiStatus()).isEqualTo("번들 CSV 자동적재");
     }
 }

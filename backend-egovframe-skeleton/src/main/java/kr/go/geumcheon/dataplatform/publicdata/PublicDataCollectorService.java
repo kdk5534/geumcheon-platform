@@ -57,6 +57,8 @@ public class PublicDataCollectorService {
     private static final String HOSPITAL_KEY     = "hospitals";
     private static final String PHARMACY_KEY     = "pharmacies";
     private static final String CHILDCARE_KEY    = "childcare-centers";
+    // Phase 1 — 생활편의·문화 신규
+    private static final String PARK_KEY = "parks";
     // Phase 1 — 산업·상권(G밸리 특화) 신규
     private static final String TRADITIONAL_MARKET_KEY = "traditional-markets";
     private static final String KNOWLEDGE_INDUSTRY_CENTER_KEY = "knowledge-industry-center";
@@ -307,7 +309,9 @@ public class PublicDataCollectorService {
                 , collectorSpec(HOSPITAL_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
-                // Phase 1 신규
+                // Phase 1 신규 — 생활편의·문화
+                , collectorSpec(PARK_KEY, hasValue(dataGoKrApiKey))
+                // Phase 1 신규 — 산업·상권
                 , collectorSpec(TRADITIONAL_MARKET_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(KNOWLEDGE_INDUSTRY_CENTER_KEY, hasValue(dataGoKrApiKey))
         );
@@ -466,7 +470,9 @@ public class PublicDataCollectorService {
             results.add(runSafely(HOSPITAL_KEY, triggeredBy, () -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy)));
             results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
             results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
-            // Phase 1 신규
+            // Phase 1 신규 — 생활편의·문화
+            results.add(runSafely(PARK_KEY, triggeredBy, () -> syncParks(triggeredBy)));
+            // Phase 1 신규 — 산업·상권
             results.add(runSafely(TRADITIONAL_MARKET_KEY, triggeredBy, () -> syncTraditionalMarkets(triggeredBy)));
             results.add(runSafely(KNOWLEDGE_INDUSTRY_CENTER_KEY, triggeredBy, () -> syncKnowledgeIndustryCenters(triggeredBy)));
             return results;
@@ -517,7 +523,9 @@ public class PublicDataCollectorService {
                 case HOSPITAL_KEY     -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy);
                 case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
                 case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
-                // Phase 1 신규
+                // Phase 1 신규 — 생활편의·문화
+                case PARK_KEY -> syncParks(triggeredBy);
+                // Phase 1 신규 — 산업·상권
                 case TRADITIONAL_MARKET_KEY -> syncTraditionalMarkets(triggeredBy);
                 case KNOWLEDGE_INDUSTRY_CENTER_KEY -> syncKnowledgeIndustryCenters(triggeredBy);
                 default               -> missingRoutineResult(spec);
@@ -982,6 +990,32 @@ public class PublicDataCollectorService {
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    // ─── 도시공원 (data.go.kr 표준데이터 API, 좌표 포함, 자동승인) ──────────────
+
+    public CollectionRunResult syncParks(String triggeredBy) {
+        return runSyncPipeline(
+                PARK_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                this::buildParkRequestUrl,
+                this::fetchParkRows,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "PARK", rows),
+                saved -> "도시공원 " + saved + "건 저장 완료.",
+                triggeredBy);
+    }
+
+    private String buildParkRequestUrl() {
+        return "https://api.data.go.kr/openapi/tn_pubr_public_cty_park_info_api"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageNo=1&numOfRows=1000&type=json";
+    }
+
+    private List<Map<String, String>> fetchParkRows(String requestUrl, String datasetName) throws Exception {
+        return fetchRowsWithRetry(requestUrl, datasetName).stream()
+                .filter(row -> containsGeumcheon(firstNonBlankIgnoreCase(
+                        row, "RDNMADR", "LNMADR", "PARK_NM"
+                )))
+                .toList();
     }
 
     // ─── 전통시장 (data.go.kr 표준데이터 API, 좌표 포함) ─────────────────────────

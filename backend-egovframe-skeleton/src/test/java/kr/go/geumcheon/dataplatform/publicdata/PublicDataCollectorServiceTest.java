@@ -704,6 +704,53 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void parkStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("PARK"), anyList())).thenReturn(1);
+        // data.go.kr 표준데이터 응답: 금천구 공원 1건 + 동작구 공원 1건 (금천구만 저장돼야 함)
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "PARK_NM": "가산공원",
+                    "RDNMADR": "서울특별시 금천구 가산디지털1로 60",
+                    "LNMADR": "서울특별시 금천구 가산동 505",
+                    "PARK_SE": "어린이공원",
+                    "LATITUDE": "37.4789",
+                    "LONGITUDE": "126.8820"
+                  },
+                  {
+                    "PARK_NM": "동작공원",
+                    "RDNMADR": "서울특별시 동작구 사당로 1",
+                    "LNMADR": "서울특별시 동작구 사당동 100",
+                    "PARK_SE": "근린공원",
+                    "LATITUDE": "37.4900",
+                    "LONGITUDE": "126.9600"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncParks("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("PARK"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("PARK_NM")).isEqualTo("가산공원");
+        assertThat(row.get("RDNMADR")).contains("금천구");
+        assertThat(row.get("LATITUDE")).isEqualTo("37.4789");
+        assertThat(row.get("LONGITUDE")).isEqualTo("126.8820");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void traditionalMarketStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

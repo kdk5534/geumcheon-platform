@@ -102,6 +102,7 @@ async function loadAllFacilities(signal?: AbortSignal) {
     "SCHOOL_ZONE",
     "CIVIL_DEFENSE_SHELTER",
     // Phase 1 신규 — 생활편의·문화
+    "MUSEUM",
     "LIBRARY",
     "PARK",
     // Phase 1 신규 — G밸리 산업·상권

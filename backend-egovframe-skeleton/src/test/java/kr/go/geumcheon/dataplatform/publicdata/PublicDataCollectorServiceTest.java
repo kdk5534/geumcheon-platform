@@ -704,6 +704,55 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void museumStandardApiFiltersToGeumcheonByInsttNmAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("MUSEUM"), anyList())).thenReturn(1);
+        // insttNm 필드로 금천구 필터 — "서울특별시 금천구" 1건 + "서울특별시 종로구" 1건
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "fcltyNm": "금천문화예술회관",
+                    "fcltyType": "공립",
+                    "rdnmadr": "서울특별시 금천구 시흥대로 168",
+                    "lnmadr": "",
+                    "insttNm": "서울특별시 금천구",
+                    "latitude": "37.4562",
+                    "longitude": "126.8971"
+                  },
+                  {
+                    "fcltyNm": "종로박물관",
+                    "fcltyType": "사립",
+                    "rdnmadr": "서울특별시 종로구 평창로 1",
+                    "lnmadr": "",
+                    "insttNm": "서울특별시 종로구",
+                    "latitude": "37.6100",
+                    "longitude": "126.9700"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncMuseums("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("MUSEUM"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("fcltyNm")).isEqualTo("금천문화예술회관");
+        assertThat(row.get("insttNm")).contains("금천구");
+        assertThat(row.get("latitude")).isEqualTo("37.4562");
+        assertThat(row.get("longitude")).isEqualTo("126.8971");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void libraryStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

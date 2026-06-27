@@ -58,6 +58,7 @@ public class PublicDataCollectorService {
     private static final String PHARMACY_KEY     = "pharmacies";
     private static final String CHILDCARE_KEY    = "childcare-centers";
     // Phase 1 — 생활편의·문화 신규
+    private static final String MUSEUM_KEY  = "museums";
     private static final String LIBRARY_KEY = "libraries";
     private static final String PARK_KEY = "parks";
     // Phase 1 — 산업·상권(G밸리 특화) 신규
@@ -311,6 +312,7 @@ public class PublicDataCollectorService {
                 , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
                 // Phase 1 신규 — 생활편의·문화
+                , collectorSpec(MUSEUM_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(LIBRARY_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(PARK_KEY, hasValue(dataGoKrApiKey))
                 // Phase 1 신규 — 산업·상권
@@ -473,6 +475,7 @@ public class PublicDataCollectorService {
             results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
             results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
             // Phase 1 신규 — 생활편의·문화
+            results.add(runSafely(MUSEUM_KEY, triggeredBy, () -> syncMuseums(triggeredBy)));
             results.add(runSafely(LIBRARY_KEY, triggeredBy, () -> syncLibraries(triggeredBy)));
             results.add(runSafely(PARK_KEY, triggeredBy, () -> syncParks(triggeredBy)));
             // Phase 1 신규 — 산업·상권
@@ -527,6 +530,7 @@ public class PublicDataCollectorService {
                 case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
                 case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
                 // Phase 1 신규 — 생활편의·문화
+                case MUSEUM_KEY  -> syncMuseums(triggeredBy);
                 case LIBRARY_KEY -> syncLibraries(triggeredBy);
                 case PARK_KEY -> syncParks(triggeredBy);
                 // Phase 1 신규 — 산업·상권
@@ -994,6 +998,33 @@ public class PublicDataCollectorService {
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    // ─── 박물관·미술관 (data.go.kr 표준데이터 API, 좌표 포함) ──────────────
+
+    public CollectionRunResult syncMuseums(String triggeredBy) {
+        return runSyncPipeline(
+                MUSEUM_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                this::buildMuseumRequestUrl,
+                this::fetchMuseumRows,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "MUSEUM", rows),
+                saved -> "박물관·미술관 " + saved + "건 저장 완료.",
+                triggeredBy);
+    }
+
+    private String buildMuseumRequestUrl() {
+        return "https://api.data.go.kr/openapi/tn_pubr_public_museum_artgr_info_api"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageNo=1&numOfRows=1000&type=json";
+    }
+
+    private List<Map<String, String>> fetchMuseumRows(String requestUrl, String datasetName) throws Exception {
+        // insttNm 필드: "서울특별시 금천구" 형식으로 시군구 포함 — 금천구 필터 기준
+        return fetchRowsWithRetry(requestUrl, datasetName).stream()
+                .filter(row -> containsGeumcheon(firstNonBlankIgnoreCase(
+                        row, "rdnmadr", "lnmadr", "insttNm", "fcltyNm"
+                )))
+                .toList();
     }
 
     // ─── 도서관 (data.go.kr 표준데이터 API, 좌표 포함, 자동승인) ──────────────

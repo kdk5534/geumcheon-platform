@@ -4,7 +4,7 @@ import { expect, test } from "./fixtures.mjs";
 const require = createRequire(import.meta.url);
 const axePath = require.resolve("axe-core/axe.min.js");
 
-for (const route of ["#/home", "#/nearby", "#/dong", "#/topics", "#/datasets"]) {
+for (const route of ["#/home", "#/nearby", "#/dong", "#/welfare", "#/realtime", "#/safety", "#/topics", "#/datasets"]) {
   test(`${route} 중대 접근성 오류 없음`, async ({ page }) => {
     await page.goto(`/${route}`);
     await page.addScriptTag({ path: axePath });

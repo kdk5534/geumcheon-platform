@@ -9,7 +9,7 @@ import {
 import { escapeHtml, formatBytes, formatAdminAuthSavedAt } from "../core/dom.js";
 import { fetchWithTimeout } from "../core/api.js";
 import { injectPageCss } from "../core/assets.js";
-import { buildAdminAuthHeader, fetchAdminJson, previewCsvOnBackend } from "./admin-api.js";
+import { fetchAdminJson, getAdminSession, loginAdminSession, logoutAdminSession, previewCsvOnBackend } from "./admin-api.js";
 import { getUploadFileKind, parseCsv } from "./admin-upload.js";
 import {
   canCommitUpload,
@@ -29,12 +29,15 @@ import {
 } from "./admin-model.js";
 
 const UPLOAD_LOG_LIMIT = 20;
+let governanceRequests = [];
+let governanceAuditEvents = [];
 
 // ─── 공개 인터페이스 ──────────────────────────────────────────
 
 /** 관리자 페이지를 container에 마운트한다. */
 export async function mount(container) {
-  injectPageCss("css-page-admin", "./css/pages/admin.css");
+  await injectPageCss("css-page-admin", "./css/pages/admin.css");
+  await injectPageCss("css-professional-dashboard", "./css/professional-dashboard.css");
   container.innerHTML = buildHtml();
   await initAdminPage();
   bindEvents(container);
@@ -48,20 +51,17 @@ export function unmount() {}
 function buildHtml() {
   return `
     <div class="admin-page">
-      <div class="page-banner" style="--banner-from:#1f2a1f;--banner-to:#21342f">
-        <div class="page-banner-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
-        </div>
-        <div class="page-banner-copy">
-          <p class="page-banner-eyebrow">관리자</p>
-          <h2 class="page-banner-title">데이터셋 관리 · CSV 업로드</h2>
-          <p class="page-banner-desc">데이터셋 메타데이터 관리, CSV·Excel 업로드, 컬럼 매핑 및 검증을 지원합니다.</p>
-        </div>
-        <a class="page-banner-back" href="#/home">◀ 홈으로</a>
-      </div>
+      <header class="admin-command-head">
+        <div><p>DATA OPERATIONS CONSOLE</p><h1>데이터 운영 콘솔</h1><span>수집 상태를 먼저 확인하고, 변경 영향과 공개 여부를 검토합니다.</span></div>
+        <a href="#/home">공개 화면으로</a>
+      </header>
+
+      <nav class="admin-work-nav" aria-label="관리자 업무 메뉴">
+        <a href="#admin-health" class="is-active">현황</a><a href="#admin-datasets">데이터셋</a><a href="#admin-collection">수집</a><a href="#admin-upload">업로드</a><a href="#admin-audit">감사</a>
+      </nav>
 
       <!-- 관리자 인증 -->
-      <div class="admin-section">
+      <div class="admin-section admin-auth-section">
         <div class="admin-section-header">
           <h3 class="admin-section-title">관리자 인증</h3>
           <span class="admin-section-badge">백엔드 API 접근 필요</span>
@@ -86,13 +86,28 @@ function buildHtml() {
           </form>
           <div class="admin-auth-info">
             <p id="adminAuthStatus" class="admin-auth-status" aria-live="polite">인증 없음</p>
-            <p class="admin-auth-hint">인증 정보는 세션 스토리지에 저장되며, 탭을 닫으면 삭제됩니다.</p>
+            <p class="admin-auth-hint">인증은 서버 세션과 HttpOnly 쿠키로 유지되며 비밀번호를 브라우저에 저장하지 않습니다.</p>
           </div>
         </div>
       </div>
 
+      <section class="admin-section admin-health" id="admin-health">
+        <div class="admin-section-header"><div><span>DATA HEALTH</span><h3 class="admin-section-title">공개 데이터 건강 상태</h3></div><span class="admin-section-badge" id="adminHealthBadge">확인 중</span></div>
+        <div class="admin-health-grid">
+          <article><span>수집 정상</span><strong id="adminHealthSuccess">—</strong><small>최근 확인된 데이터셋</small></article>
+          <article><span>갱신 지연</span><strong id="adminHealthDelayed">—</strong><small>SLA 또는 마지막 시도 기준</small></article>
+          <article><span>최근 실패</span><strong id="adminHealthFailed">—</strong><small>정상 스냅샷은 유지</small></article>
+          <article><span>공개 영향</span><strong id="adminHealthImpact">—</strong><small>공개 상태 데이터셋</small></article>
+        </div>
+        <div class="admin-health-detail">
+          <div><span>마지막 정상 스냅샷</span><strong id="adminLastSnapshot">로그 확인 후 표시</strong></div>
+          <div><span>운영 원칙</span><strong>실패 시 직전 정상값 유지 · 비밀값 마스킹</strong></div>
+          <a href="#admin-audit">최근 변경 기록 보기</a>
+        </div>
+      </section>
+
       <!-- 데이터셋 관리 -->
-      <div class="admin-section">
+      <div class="admin-section" id="admin-datasets">
         <div class="admin-section-header">
           <h3 class="admin-section-title">데이터셋 관리</h3>
         </div>
@@ -147,7 +162,12 @@ function buildHtml() {
       </div>
 
       <!-- CSV 업로드 -->
-      <div class="admin-section">
+      <div class="admin-section admin-collection-placeholder" id="admin-collection">
+        <div class="admin-section-header"><div><span>COLLECTION</span><h3 class="admin-section-title">수집 작업</h3></div><span class="admin-section-badge">운영자 초안</span></div>
+        <div class="admin-workflow-row"><div><span>01</span><strong>수집 실행</strong><small>원천 응답과 품질 게이트 확인</small></div><i></i><div><span>02</span><strong>변경 검토</strong><small>행 수·오류·공개 영향 확인</small></div><i></i><div><span>03</span><strong>공개 승인</strong><small>검토자 승인 후 반영</small></div></div>
+      </div>
+
+      <div class="admin-section" id="admin-upload">
         <div class="admin-section-header">
           <h3 class="admin-section-title">CSV / Excel 업로드</h3>
         </div>
@@ -171,17 +191,33 @@ function buildHtml() {
             ${renderUploadPreviewState({ title: "CSV 미리보기", status: "대기", message: "파일을 선택하면 미리보기가 표시됩니다.", tone: "info" })}
           </div>
           <div class="upload-commit-row">
-            <button type="button" id="commitUpload" class="btn-primary" disabled>확정 업로드</button>
+            <button type="button" id="commitUpload" class="btn-primary" disabled>승인 요청</button>
           </div>
         </div>
       </div>
 
       <!-- 업로드 로그 -->
-      <div class="admin-section">
+      <section class="admin-section" id="admin-approvals">
+        <div class="admin-section-header">
+          <div><span>APPROVAL QUEUE</span><h3 class="admin-section-title">변경 요청과 공개 승인</h3></div>
+          <span class="admin-section-badge" id="approvalQueueCount">0건 대기</span>
+        </div>
+        <form id="changeRequestForm" class="governance-create-form">
+          <label>요청 유형<select name="requestType"><option value="DATASET_PUBLICATION">데이터 공개</option><option value="DATASET_SETTING">데이터셋 설정</option><option value="TRANSLATION_PUBLICATION">번역 공개</option></select></label>
+          <label>대상 키<input name="targetKey" required maxlength="200" placeholder="예: facilities"></label>
+          <label class="is-wide">제목<input name="title" required maxlength="300" placeholder="변경 목적을 한 문장으로 입력"></label>
+          <label class="is-wide">공개 영향<textarea name="description" rows="2" placeholder="변경 행 수, 오류, 공개 영향, 복구 방법을 기록하세요."></textarea></label>
+          <button type="submit" class="btn-primary">초안 만들기</button>
+        </form>
+        <div id="approvalQueue" class="governance-list" aria-live="polite"></div>
+      </section>
+
+      <div class="admin-section" id="admin-audit">
         <div class="admin-section-header">
           <h3 class="admin-section-title">업로드 로그</h3>
           <span class="admin-section-badge">최근 20건</span>
         </div>
+        <div id="governanceAudit" class="governance-audit" aria-live="polite"></div>
         <div id="uploadLogs" aria-live="polite"></div>
       </div>
     </div>
@@ -193,11 +229,41 @@ function buildHtml() {
 async function initAdminPage() {
   syncAdminAuthForm();
   syncAdminAccess();
+  try {
+    const session = await getAdminSession();
+    state.adminAuth = {
+      loginId: session.data.loginId,
+      roles: session.data.roles || [],
+      savedAt: new Date().toISOString(),
+    };
+  } catch {
+    state.adminAuth = null;
+  }
+  syncAdminAuthForm();
+  syncAdminAccess();
   if (!state.adminAuth) return;
   await Promise.all([
     loadAdminDatasets(),
-    loadBackendUploadLogs()
+    loadBackendUploadLogs(),
+    loadGovernanceData()
   ]);
+  renderAdminHealth();
+}
+
+function renderAdminHealth() {
+  const datasets = Array.isArray(state.adminDatasets) ? state.adminDatasets : [];
+  const logs = Array.isArray(state.uploadLogs) ? state.uploadLogs : [];
+  const failed = logs.filter((item) => normalizeUploadStatus(item.status) === "FAILED").length;
+  const publicCount = datasets.filter((item) => item.publicVisible).length;
+  const success = Math.max(0, datasets.length - failed);
+  const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+  set("adminHealthSuccess", `${success}종`);
+  set("adminHealthDelayed", "상태 API 연동 예정");
+  set("adminHealthFailed", `${failed}건`);
+  set("adminHealthImpact", `${publicCount}종`);
+  set("adminLastSnapshot", logs[0]?.createdAt || "정상 로그 없음");
+  const badge = document.getElementById("adminHealthBadge");
+  if (badge) { badge.textContent = failed ? "확인 필요" : "운영 확인"; badge.classList.toggle("is-warning", failed > 0); }
 }
 
 function syncAdminAccess() {
@@ -210,9 +276,19 @@ function syncAdminAccess() {
   if (!state.adminAuth && !gate && sections[0]) {
     gate = document.createElement("div");
     gate.id = "adminAccessGate";
-    gate.className = "admin-section";
+    gate.className = "admin-section admin-access-gate";
     gate.setAttribute("role", "status");
-    gate.innerHTML = "<h3 class=\"admin-section-title\">관리자 인증이 필요합니다</h3><p>데이터셋 관리, 업로드, 운영 로그는 인증 후에만 표시됩니다.</p>";
+    gate.innerHTML = `
+      <div class="admin-access-gate-copy">
+        <span>LOCKED OPERATIONS</span>
+        <h3 class="admin-section-title">운영 기능은 인증 후 표시됩니다</h3>
+        <p>데이터셋 관리, 업로드 승인, 감사 로그는 서버 세션 인증과 역할 권한을 확인한 뒤 열립니다.</p>
+      </div>
+      <div class="admin-access-gate-steps" aria-label="관리자 접근 절차">
+        <div><strong>01</strong><span>관리자 ID와 비밀번호 입력</span></div>
+        <div><strong>02</strong><span>HttpOnly 세션 쿠키 발급</span></div>
+        <div><strong>03</strong><span>역할별 메뉴와 변경 이력 표시</span></div>
+      </div>`;
     sections[0].insertAdjacentElement("afterend", gate);
   } else if (state.adminAuth) {
     gate?.remove();
@@ -284,18 +360,22 @@ async function handleAdminAuthSubmit(event) {
   clearAdminAuthValidation();
   if (!validation.valid) { renderAdminAuthValidation(validation.errors); return; }
 
-  const candidateAuth = { loginId: validation.loginId, authHeader: buildAdminAuthHeader(validation.loginId, validation.password), savedAt: new Date().toISOString() };
   const previousAuth = state.adminAuth;
   if (submitBtn) submitBtn.disabled = true;
   renderAdminAuthMessage("인증 확인 중", "info");
 
   try {
-    await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/datasets`, {}, candidateAuth);
-    state.adminAuth = candidateAuth;
+    const response = await loginAdminSession(validation.loginId, validation.password);
+    state.adminAuth = {
+      loginId: response.data.loginId,
+      roles: response.data.roles || [],
+      savedAt: new Date().toISOString(),
+    };
     syncAdminAuthForm();
     syncAdminAccess();
-    await Promise.all([loadAdminDatasets(), loadBackendUploadLogs()]);
-    if (state.adminAuth?.authHeader === candidateAuth.authHeader) renderAdminAuthMessage("인증 저장 완료", "success");
+    await Promise.all([loadAdminDatasets(), loadBackendUploadLogs(), loadGovernanceData()]);
+    renderAdminHealth();
+    renderAdminAuthMessage("서버 세션 로그인 완료", "success");
   } catch (error) {
     state.adminAuth = previousAuth;
     if (previousAuth) {
@@ -312,8 +392,9 @@ async function handleAdminAuthSubmit(event) {
 
 async function handleAdminAuthClear(event) {
   event.preventDefault();
+  try { await logoutAdminSession(); } catch {}
   clearAdminAuthSession();
-  renderAdminAuthMessage("인증 삭제 완료", "success");
+  renderAdminAuthMessage("로그아웃 완료", "success");
 }
 
 // ─── 인증 스토리지 ────────────────────────────────────────────
@@ -639,11 +720,16 @@ function refreshUploadValidation() {
   const statusEl = document.getElementById("mappingStatus");
   const issues = validateUploadMapping();
   const commitAllowed = canCommitUpload(currentUploadDataset());
+  const reviewerAllowed = (state.adminAuth?.roles || []).some((role) => ["ADMIN", "REVIEWER", "ROLE_ADMIN", "ROLE_REVIEWER"].includes(role));
+  const operatorAllowed = (state.adminAuth?.roles || []).some((role) => ["ADMIN", "OPERATOR", "ROLE_ADMIN", "ROLE_OPERATOR"].includes(role));
   if (statusEl) {
     statusEl.className = `mapping-status ${issues.length > 0 ? "has-issue" : "is-ok"}`;
-    statusEl.textContent = issues.length > 0 ? issues.join(" · ") : !commitAllowed ? "미리보기만 가능 · 확정 저장 미지원" : currentUploadDataset()?.requiredMapping ? "필수 매핑 완료" : "매핑 선택 사항";
+    statusEl.textContent = issues.length > 0 ? issues.join(" · ") : !commitAllowed ? "미리보기만 가능 · 확정 저장 미지원" : reviewerAllowed ? (currentUploadDataset()?.requiredMapping ? "필수 매핑 완료 · 검토자 반영 가능" : "매핑 선택 사항 · 검토자 반영 가능") : "필수 검증 완료 · 승인 요청 가능";
   }
-  if (commitBtn) commitBtn.disabled = !state.uploadPreview || issues.length > 0 || !commitAllowed;
+  if (commitBtn) {
+    commitBtn.textContent = reviewerAllowed ? "검토자 확정 반영" : "승인 요청";
+    commitBtn.disabled = !state.uploadPreview || issues.length > 0 || !commitAllowed || (!reviewerAllowed && !operatorAllowed);
+  }
 }
 
 function validateUploadMapping() {
@@ -675,19 +761,28 @@ async function commitCsvUpload() {
 
   const preview = state.uploadPreview;
   const dataset = currentUploadDataset();
+  const reviewerAllowed = (state.adminAuth?.roles || []).some((role) => ["ADMIN", "REVIEWER", "ROLE_ADMIN", "ROLE_REVIEWER"].includes(role));
   if (!canCommitUpload(dataset)) {
     renderUploadSummary(summary, { title: preview.fileName, status: "확정 불가", message: "이 데이터셋은 미리보기까지만 지원됩니다.", tone: "warning" });
     return;
   }
   if (commitBtn) commitBtn.disabled = true;
-  renderUploadSummary(summary, { title: preview.fileName, status: "확정 중", message: `매핑 ${Object.values(state.uploadMapping).filter(Boolean).length}개 반영 중`, tone: "info" });
+  renderUploadSummary(summary, { title: preview.fileName, status: reviewerAllowed ? "확정 중" : "승인 요청 중", message: `매핑 ${Object.values(state.uploadMapping).filter(Boolean).length}개 검증 완료`, tone: "info" });
 
   try {
-    const response = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/uploads/commit`, {
+    const response = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/uploads/${reviewerAllowed ? "commit" : "stage"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ datasetKey: preview.datasetKey, uploadId: preview.uploadId, fileName: preview.fileName, rowCount: preview.rowCount, columnCount: preview.columnCount, columnMappings: state.uploadMapping })
     });
+    if (!reviewerAllowed) {
+      state.uploadPreview = null;
+      state.uploadMapping = {};
+      renderColumnMapping();
+      await loadGovernanceData();
+      renderUploadSummary(summary, { title: preview.fileName, status: "검토 대기", message: "원본 파일과 검증 정보를 보관했습니다. 다른 검토자가 승인해야 공개 데이터에 반영됩니다.", tone: "success" });
+      return;
+    }
     state.uploadLogs = [mapBackendLog(response.data), ...state.uploadLogs].slice(0, UPLOAD_LOG_LIMIT);
     const msg = await refreshFacilitiesAfterUpload(preview);
     renderUploadLogs();
@@ -865,16 +960,115 @@ function guessFieldKey(header) {
 
 // ─── 이벤트 바인딩 ────────────────────────────────────────────
 
+async function loadGovernanceData() {
+  try {
+    const requests = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/change-requests?limit=50`);
+    governanceRequests = Array.isArray(requests.data) ? requests.data : [];
+  } catch {
+    governanceRequests = [];
+  }
+  try {
+    const audit = await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/audit-events?limit=20`);
+    governanceAuditEvents = Array.isArray(audit.data) ? audit.data : [];
+  } catch {
+    governanceAuditEvents = [];
+  }
+  renderGovernance();
+}
+
+function renderGovernance() {
+  const queue = document.getElementById("approvalQueue");
+  const audit = document.getElementById("governanceAudit");
+  const waiting = governanceRequests.filter((item) => item.status === "PENDING_REVIEW").length;
+  const count = document.getElementById("approvalQueueCount");
+  if (count) count.textContent = `${waiting}건 대기`;
+
+  if (queue) {
+    queue.innerHTML = governanceRequests.length ? governanceRequests.map((item) => {
+      const canSubmit = item.status === "DRAFT" && item.requestedBy === state.adminAuth?.loginId;
+      const canReview = item.status === "PENDING_REVIEW" && item.requestedBy !== state.adminAuth?.loginId
+        && (state.adminAuth?.roles || []).some((role) => /ADMIN|REVIEWER/.test(role));
+      return `<article class="governance-item">
+        <div><span class="governance-status is-${escapeHtml(item.status.toLowerCase())}">${escapeHtml(governanceStatusLabel(item.status))}</span><strong>${escapeHtml(item.title)}</strong></div>
+        <p>${escapeHtml(item.description || "영향 설명 없음")}</p>
+        <small>${escapeHtml(item.targetType)} · ${escapeHtml(item.targetKey)} · 요청 ${escapeHtml(item.requestedBy)}</small>
+        <div class="governance-actions">
+          ${canSubmit ? `<button type="button" data-governance-action="submit" data-request-id="${escapeHtml(item.requestId)}" class="btn-secondary">검토 요청</button>` : ""}
+          ${canReview ? `<button type="button" data-governance-action="approve" data-request-id="${escapeHtml(item.requestId)}" class="btn-primary">승인</button><button type="button" data-governance-action="reject" data-request-id="${escapeHtml(item.requestId)}" class="btn-secondary">반려</button>` : ""}
+        </div>
+      </article>`;
+    }).join("") : `<div class="governance-empty">등록된 변경 요청이 없습니다.</div>`;
+  }
+
+  if (audit) {
+    audit.innerHTML = governanceAuditEvents.length ? `<h4>변경 감사 기록</h4>${governanceAuditEvents.map((item) => `<div class="governance-audit-row"><span>${escapeHtml(item.actionCode)}</span><strong>${escapeHtml(item.targetKey || "-")}</strong><small>${escapeHtml(item.actorLoginId || "system")} · ${escapeHtml(formatGovernanceTime(item.occurredAt))}</small></div>`).join("")}` : "";
+  }
+}
+
+async function handleChangeRequestSubmit(event) {
+  event.preventDefault();
+  const form = new FormData(event.currentTarget);
+  const targetKey = String(form.get("targetKey") || "").trim();
+  const title = String(form.get("title") || "").trim();
+  if (!targetKey || !title) return;
+  await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/change-requests`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requestType: form.get("requestType"), targetType: "DATASET", targetKey, title,
+      description: String(form.get("description") || "").trim(),
+      changePayload: {}, impactSummary: { reviewRequired: true, rollbackAvailable: true },
+    }),
+  });
+  event.currentTarget.reset();
+  await loadGovernanceData();
+}
+
+async function handleGovernanceAction(button) {
+  const action = button.dataset.governanceAction;
+  const requestId = button.dataset.requestId;
+  if (!action || !requestId) return;
+  const options = action === "submit" ? { method: "POST" } : {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ comment: action === "approve" ? "검토 완료" : "보완 후 재요청" }),
+  };
+  button.disabled = true;
+  try {
+    await fetchAdminJson(`${BACKEND_API_BASE}/api/admin/change-requests/${encodeURIComponent(requestId)}/${action}`, options);
+    if (action === "approve") {
+      await loadBackendUploadLogs();
+      renderUploadLogs();
+      renderAdminHealth();
+    }
+    await loadGovernanceData();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function governanceStatusLabel(status) {
+  return ({ DRAFT: "초안", PENDING_REVIEW: "검토 대기", APPROVED: "승인", REJECTED: "반려", APPLIED: "반영", ROLLED_BACK: "복구" })[status] || status;
+}
+
+function formatGovernanceTime(value) {
+  if (!value) return "시각 없음";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("ko-KR");
+}
+
 function bindEvents(container) {
   container.addEventListener("submit", (e) => {
     if (e.target.id === "adminAuthForm") handleAdminAuthSubmit(e);
     if (e.target.id === "datasetEditor") handleDatasetEditorSubmit(e);
+    if (e.target.id === "changeRequestForm") handleChangeRequestSubmit(e);
   });
 
   container.addEventListener("click", (e) => {
     if (e.target.id === "clearAdminAuth") handleAdminAuthClear(e);
     if (e.target.id === "resetDataset") resetCurrentDataset();
     if (e.target.id === "commitUpload") commitCsvUpload();
+    const governanceButton = e.target.closest("[data-governance-action]");
+    if (governanceButton) handleGovernanceAction(governanceButton);
     const dsBtn = e.target.closest("[data-dataset-key]");
     if (dsBtn) handleDatasetListClick(e);
   });

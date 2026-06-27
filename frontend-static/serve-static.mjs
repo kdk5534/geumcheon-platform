@@ -10,7 +10,7 @@ const allowPortFallback = !process.env.PORT;
 let activePort = requestedPort;
 
 // 프론트엔드에 노출할 화이트리스트 키 목록 (DB 비밀번호 등은 절대 포함 금지)
-const FRONTEND_ENV_KEYS = ["VWORLD_API_KEY"];
+const FRONTEND_ENV_KEYS = ["ENABLE_SAMPLE_DATA", "APPROVED_LANGUAGES", "ENABLE_BACKEND_API", "ENABLE_EXTERNAL_ASSETS"];
 
 /** 프로젝트 루트의 .env 파일을 파싱해 KEY=VALUE 맵을 반환한다. */
 async function loadEnv() {

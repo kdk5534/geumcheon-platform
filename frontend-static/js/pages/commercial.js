@@ -2,11 +2,11 @@
 
 import { state } from "../core/state.js";
 import { escapeHtml, revealOnScroll } from "../core/dom.js";
-import { renderDataStamp } from "../core/meta.js";
+import { getSectionMeta, renderDataStamp, sourceModeText } from "../core/meta.js";
 import { currentCommercialIndustryData } from "../core/selectors.js";
 import { loadECharts, createChart, disposeChart, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
-import { injectPageCss } from "../core/assets.js";
+import { injectPageCss, isExternalAssetsEnabled } from "../core/assets.js";
 import { loadStoreScopeCount } from "../core/api.js";
 import { buildCommercialMatrix, csvDataUrl, matrixToCsv } from "../core/visualization.js";
 
@@ -26,17 +26,21 @@ let commercialScope = "GEUMCHEON";
 export async function mount(container) {
   isMounted = true;
   commercialScope = "GEUMCHEON";
-  injectPageCss("css-page-commercial", "./css/pages/commercial.css");
+  await injectPageCss("css-page-commercial", "./css/pages/commercial.css");
+  await injectPageCss("css-professional-dashboard", "./css/professional-dashboard.css");
   container.innerHTML = buildHtml();
   bindEvents(container);
   refreshScopeCount();
 
   renderKpi();
+  renderCommercialFallbackCharts();
 
   try {
     await loadECharts();
   } catch (e) {
-    console.error("ECharts 로드 실패:", e);
+    if (isExternalAssetsEnabled()) console.warn("ECharts fallback:", e?.message);
+    renderCommercialFallbackCharts();
+    revealOnScroll(container);
     return;
   }
   if (!isMounted) return;
@@ -76,16 +80,18 @@ function buildHtml() {
       byDongAll[d.name] = (byDongAll[d.name] || 0) + (d.count ?? 0);
     });
   });
-  const topDong = Object.entries(byDongAll).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+  const visibleDongCount = Object.keys(byDongAll).length || COMMERCIAL_DONGS.length;
+  const { asOf, source } = getSectionMeta("commercial");
+  const sourceText = state.data ? sourceModeText(state.data.sourceMode) : "데이터 확인 중";
 
   return `
     <div class="cml-page">
-      <div class="page-banner" style="--banner-from:#5c3a0a;--banner-to:#b56b17">
+      <div class="page-banner cml-command-head" style="--banner-from:#7a4300;--banner-to:#f06455">
         <div class="page-banner-icon">${icon("bar-chart", { size: 26 })}</div>
         <div class="page-banner-copy">
-          <p class="page-banner-eyebrow">상권분석</p>
-          <h2 class="page-banner-title">금천구 상권 현황</h2>
-          <p class="page-banner-desc">업종별 점포 분포와 월별 추이를 행정동 단위로 비교합니다.</p>
+          <p class="page-banner-eyebrow">COMMERCIAL & ECONOMY</p>
+          <h2 class="page-banner-title">업종과 점포의 현재 분포</h2>
+          <p class="page-banner-desc">창업 추천이나 지역 평가가 아니라 업종 분포, 점포 수, 변화 추이를 중립적으로 제공합니다.</p>
         </div>
         <div class="page-banner-stats">
           <div class="page-banner-stat">
@@ -97,12 +103,18 @@ function buildHtml() {
             <span class="page-banner-stat-label">업종 분류</span>
           </div>
           <div class="page-banner-stat">
-            <span class="page-banner-stat-val">${escapeHtml(topDong.replace("동", ""))}</span>
-            <span class="page-banner-stat-label">최다 점포 동</span>
+            <span class="page-banner-stat-val">${visibleDongCount}</span>
+            <span class="page-banner-stat-label">표시 행정동</span>
           </div>
         </div>
         <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
+
+      <section class="cml-executive-strip" aria-label="상권 데이터 요약">
+        <article><span>표시 원칙</span><strong>분포와 변화</strong><p>추천·평가·우수/취약 표현을 사용하지 않습니다.</p></article>
+        <article><span>공간 범위</span><strong>GEUMCHEON</strong><p>기본 분석은 금천구 내부만 표시합니다.</p></article>
+        <article><span>데이터 상태</span><strong>${escapeHtml(sourceText)}</strong><p>${escapeHtml(asOf)} · ${escapeHtml(source)}</p></article>
+      </section>
 
       <div class="cml-scope-bar" role="group" aria-label="상권 공간 범위 선택">
         <span class="cml-filter-label">공간 범위</span>
@@ -180,12 +192,7 @@ function renderKpi() {
     return;
   }
 
-  const densityColors = { "높음": "var(--amber)", "매우 높음": "var(--red)", "보통": "var(--green)", "낮음": "var(--blue)" };
-  const densityColor = densityColors[item.density] || "var(--muted)";
-
-  // 최다 점포 행정동 계산
   const byDong   = item?.byDong ?? [];
-  const topDong  = byDong.length ? byDong.reduce((a, b) => (a.count >= b.count ? a : b)) : null;
 
   el.innerHTML = `
     <article class="cml-kpi-card">
@@ -200,13 +207,13 @@ function renderKpi() {
     </article>
     <article class="cml-kpi-card">
       <div class="cml-kpi-icon" style="background:var(--blue-wash);color:var(--blue)">${icon("trending-up", { size: 16 })}</div>
-      <p>경쟁 밀도</p>
-      <strong style="color:${densityColor}">${escapeHtml(item.density)}</strong>
+      <p>월별 관측값</p>
+      <strong>${Number(item.trend?.length || 0).toLocaleString()}<span>개</span></strong>
     </article>
     <article class="cml-kpi-card">
       <div class="cml-kpi-icon" style="background:var(--teal-wash);color:var(--teal)">${icon("map", { size: 16 })}</div>
-      <p>최다 점포 동</p>
-      <strong style="font-size:var(--text-xl)">${topDong ? escapeHtml(topDong.name) : "—"}</strong>
+      <p>표시 행정동</p>
+      <strong style="font-size:var(--text-xl)">${byDong.length ? byDong.length.toLocaleString("ko-KR") + "곳" : "—"}</strong>
     </article>
   `;
 }
@@ -365,6 +372,52 @@ function buildCrossTable() {
       </table>
     </div>
   `;
+}
+
+function renderCommercialFallbackCharts() {
+  const item = currentCommercialIndustryData();
+  const byDong = item?.byDong || [];
+  const commercial = state.data?.commercial || {};
+  const barEl = document.getElementById("cml-chart-bar");
+  const donutEl = document.getElementById("cml-chart-donut");
+  const lineEl = document.getElementById("cml-chart-line");
+  const crossEl = document.getElementById("cml-chart-cross");
+  if (barEl) {
+    const max = Math.max(1, ...byDong.map((row) => Number(row.count || 0)));
+    barEl.innerHTML = `<div class="cml-fallback cml-fallback-bars">
+      ${byDong.map((row) => `<div class="cml-fallback-row">
+        <span>${escapeHtml(row.name || "행정동")}</span>
+        <i style="--w:${Math.max(5, Number(row.count || 0) / max * 100)}%"></i>
+        <strong>${Number(row.count || 0).toLocaleString("ko-KR")}개</strong>
+      </div>`).join("")}
+    </div>`;
+  }
+  if (donutEl) {
+    const totals = INDUSTRIES.map((name) => ({ name, value: Number(commercial[name]?.total || 0) }));
+    const sum = totals.reduce((acc, row) => acc + row.value, 0) || 1;
+    donutEl.innerHTML = `<div class="cml-fallback cml-fallback-share">
+      ${totals.map((row, index) => `<div class="cml-share-row">
+        <span>${escapeHtml(row.name)}</span>
+        <i style="--w:${row.value / sum * 100}%;--c:${CHART_PALETTE[index % CHART_PALETTE.length]}"></i>
+        <strong>${Math.round(row.value / sum * 1000) / 10}%</strong>
+      </div>`).join("")}
+    </div>`;
+  }
+  if (lineEl) {
+    const trend = item?.trend || [];
+    const max = Math.max(1, ...trend.map((row) => Number(row.count || 0)));
+    lineEl.innerHTML = `<div class="cml-fallback cml-fallback-trend">
+      ${trend.map((row) => `<div class="cml-trend-col"><i style="--h:${Math.max(8, Number(row.count || 0) / max * 100)}%"></i><span>${escapeHtml(row.month || "")}</span></div>`).join("")}
+    </div>`;
+  }
+  if (crossEl) {
+    const matrix = buildCommercialMatrix(state.data?.commercial || {}, COMMERCIAL_DONGS, INDUSTRIES);
+    const max = Math.max(1, ...matrix.rows.flatMap((row) => INDUSTRIES.map((ind) => Number(row[ind] || 0))));
+    crossEl.innerHTML = `<div class="cml-fallback cml-fallback-heat">
+      <div></div>${INDUSTRIES.map((ind) => `<b>${escapeHtml(ind)}</b>`).join("")}
+      ${matrix.rows.map((row) => `<strong>${escapeHtml(row.dong)}</strong>${INDUSTRIES.map((ind) => `<i style="--a:${Number(row[ind] || 0) / max}">${Number(row[ind] || 0).toLocaleString("ko-KR")}</i>`).join("")}`).join("")}
+    </div>`;
+  }
 }
 
 function commercialCsvHref() {

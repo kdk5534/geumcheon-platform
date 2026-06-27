@@ -1,5 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchWithTimeout, loadBackendData, loadFacilitiesInBbox, loadStoreScopeCount } from "../../js/core/api.js";
+import { fetchWithTimeout, isDevelopmentSampleEnabled, loadBackendData, loadFacilitiesInBbox, loadStoreScopeCount } from "../../js/core/api.js";
+
+describe("sample data policy", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("does not enable sample data without an explicit development host", () => {
+    expect(isDevelopmentSampleEnabled()).toBe(false);
+  });
+
+  it("respects an explicit production override", () => {
+    vi.stubGlobal("window", { __ENV__: { ENABLE_SAMPLE_DATA: "false" }, location: { hostname: "localhost" } });
+    expect(isDevelopmentSampleEnabled()).toBe(false);
+  });
+});
 
 describe("fetchWithTimeout", () => {
   afterEach(() => vi.unstubAllGlobals());

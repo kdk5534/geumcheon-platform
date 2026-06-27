@@ -570,6 +570,10 @@
   margin-bottom: 4px;
 }
 
+.map-provider-error { position:absolute; z-index:500; left:16px; right:16px; bottom:16px; display:grid; gap:3px; padding:12px 14px; border:1px solid rgba(239,107,91,.3); border-radius:8px; background:color-mix(in srgb,var(--surface-base) 94%,transparent); box-shadow:var(--shadow-md); color:var(--text-secondary); }
+.map-provider-error strong { font-size:11px; color:var(--text-primary); }
+.map-provider-error span { font-size:9px; }
+
 /* ─────────────────────────────────────────
    Choropleth 범례
 ───────────────────────────────────────── */
@@ -639,6 +643,15 @@
     flex-direction: column;
     min-height: 0;
     height: auto;
+  }
+
+  .map-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-coordinate-basis {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .map-status-card {

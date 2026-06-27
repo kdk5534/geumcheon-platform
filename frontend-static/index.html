@@ -8,15 +8,8 @@
     <link rel="icon" type="image/png" href="./assets/brand/ci-symbol.png">
 
     <!-- Pretendard: 한글 최적화 웹폰트 (FOUT 최소화) -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 
     <!-- Shoelace 2.20.1: 웹 컴포넌트 UI 라이브러리 (CDN autoloader, 빌드 불필요) -->
-    <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css">
-    <script type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"></script>
 
     <!-- 기존 스타일(전역 리셋 + 색상 토큰) -->
     <link rel="stylesheet" href="./styles.css">
@@ -24,6 +17,10 @@
     <!-- 새 디자인 시스템: styles.css 위에 덧씌운다 -->
     <link rel="stylesheet" href="./css/tokens.css">
     <link rel="stylesheet" href="./css/components.css">
+
+    <!-- 멀티페이지 대시보드 전용 전역 탐색·레이아웃 -->
+    <link rel="stylesheet" href="./css/navigation.css">
+    <link rel="stylesheet" href="./css/urban-shell.css">
 
     <!-- Shoelace 테마 브리지: green 팔레트·Pretendard를 --sl-* 변수에 매핑 -->
     <link rel="stylesheet" href="./css/shoelace-theme.css">
@@ -87,8 +84,8 @@
       <a class="brand" href="#/home" aria-label="금천 데이터플랫폼 홈으로 이동">
         <img src="./assets/brand/bi-signature-h.png" alt="좋은도시 금천" class="brand-logo">
         <span class="brand-name">
-          <strong>데이터플랫폼</strong>
-          <small>Geumcheon Data Platform</small>
+          <strong data-i18n="brand.name">금천 데이터플랫폼</strong>
+          <small>GEUMCHEON DATA PORTAL</small>
         </span>
       </a>
 
@@ -101,13 +98,25 @@
       </button>
 
       <nav class="nav" id="main-nav" aria-label="주요 메뉴">
-        <a href="#/home"     data-route="home">오늘의 금천</a>
-        <a href="#/nearby"   data-route="nearby">내 주변</a>
-        <a href="#/dong"     data-route="dong">우리 동</a>
-        <a href="#/topics"   data-route="topics">분야별</a>
-        <a href="#/datasets" data-route="catalog">데이터 찾기</a>
+        <a href="#/home" data-route="home" data-i18n="nav.overview">종합 현황</a>
+        <a href="#/population" data-route="population" data-i18n="nav.population">인구·생활</a>
+        <a href="#/commercial" data-route="commercial" data-i18n="nav.commercial">상권·경제</a>
+        <a href="#/welfare" data-route="welfare" data-i18n="nav.welfare">복지·건강</a>
+        <a href="#/safety" data-route="safety" data-i18n="nav.safety">안전·환경</a>
+        <a href="#/datasets" data-route="catalog" data-i18n="nav.catalog">데이터 카탈로그</a>
       </nav>
     </header>
+
+    <div class="section-nav-shell" id="section-nav-shell">
+      <div class="section-nav-inner">
+        <div class="section-context" aria-live="polite">
+          <span data-i18n="shell.currentSection">현재 영역</span>
+          <strong id="section-context-title">종합 현황</strong>
+        </div>
+        <nav class="section-nav" id="section-nav" aria-label="현재 영역 세부 메뉴"></nav>
+        <a class="section-data-link" href="#/datasets" aria-label="데이터 카탈로그에서 검색" data-i18n="common.search">데이터 검색</a>
+      </div>
+    </div>
 
     <!-- 라우터가 각 페이지 HTML을 여기에 마운트한다 -->
     <main id="view" class="shell" tabindex="-1" role="main"></main>
@@ -123,7 +132,7 @@
           <p class="site-footer-label">운영 안내</p>
           <p>대표전화: 02-2627-1000</p>
           <p>운영시간: 평일 09:00–18:00</p>
-          <p>본 사이트의 통계·수치는 공공데이터 및 시범 운영 Mock 데이터입니다.</p>
+          <p>각 수치의 기준일과 출처는 화면의 데이터 상태에서 확인할 수 있습니다.</p>
         </div>
         <div class="site-footer-col site-footer-links-col">
           <p class="site-footer-label">관련 링크</p>

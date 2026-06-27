@@ -6,6 +6,7 @@ import { icon } from "../core/icons.js";
 import { injectPageCss } from "../core/assets.js";
 import { renderDataStamp } from "../core/meta.js";
 import { BACKEND_API_BASE } from "../core/state.js";
+import { isBackendApiEnabled } from "../core/api.js";
 
 const CATEGORIES = ["전체", "교통물류", "환경기상", "사회복지", "공공행정", "보건의료", "문화관광", "산업고용", "재난안전"];
 const TYPE_LABELS = { sheet: "시트", chart: "차트", map: "지도", file: "파일", api: "API" };
@@ -37,17 +38,23 @@ export async function mount(container) {
   isMounted = true;
   loadFailed = false;
   await injectPageCss("css-page-catalog", "./css/pages/catalog.css");
+  await injectPageCss("css-professional-dashboard", "./css/professional-dashboard.css");
   if (!isMounted) return;
   container.innerHTML = buildSkeleton();
 
-  [allDatasets, operationalStatuses] = await Promise.all([
-    loadDatasets(pageController.signal),
-    loadOperationalStatuses(pageController.signal),
-  ]);
+  allDatasets = await loadDatasets(pageController.signal);
+  operationalStatuses = [];
   if (!isMounted) return;
 
   render(container);
   bindEvents(container);
+
+  loadOperationalStatuses(pageController.signal).then((statuses) => {
+    if (!isMounted || pageController?.signal.aborted) return;
+    operationalStatuses = statuses;
+    render(container);
+    bindEvents(container);
+  });
 }
 
 export function unmount() {
@@ -72,13 +79,21 @@ async function loadDatasets(signal) {
 }
 
 async function loadOperationalStatuses(signal) {
+  if (!isBackendApiEnabled()) return [];
+  const timeoutController = new AbortController();
+  const timeoutId = window.setTimeout(() => timeoutController.abort(), 1200);
+  const abortWithParent = () => timeoutController.abort();
   try {
-    const response = await fetch(`${BACKEND_API_BASE}/api/public/datasets/status`, { signal });
+    signal?.addEventListener("abort", abortWithParent, { once: true });
+    const response = await fetch(`${BACKEND_API_BASE}/api/public/datasets/status`, { signal: timeoutController.signal });
     if (!response.ok) return [];
     const payload = await response.json();
     return payload?.success && Array.isArray(payload.data) ? payload.data : [];
   } catch {
     return [];
+  } finally {
+    window.clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", abortWithParent);
   }
 }
 
@@ -174,11 +189,11 @@ function buildCatalogStatus(total, apiCount) {
 function buildSkeleton() {
   return `
     <div class="cat-page">
-      <div class="page-banner" style="--banner-from:#1a1c3a;--banner-to:#2c3e7a">
+      <div class="page-banner cat-command-head" style="--banner-from:#1739a6;--banner-to:#2f5bff">
         <div class="page-banner-icon">${icon("database", { size: 26 })}</div>
         <div class="page-banner-copy">
-          <p class="page-banner-eyebrow">데이터 카탈로그</p>
-          <h2 class="page-banner-title">금천구 공공데이터</h2>
+          <p class="page-banner-eyebrow">DATA CATALOG</p>
+          <h2 class="page-banner-title">근거 데이터를 찾습니다</h2>
           <p class="page-banner-desc">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
         </div>
         <a class="page-banner-back" href="#/home">◀ 홈으로</a>
@@ -203,12 +218,12 @@ function render(container) {
 
   container.innerHTML = `
     <div class="cat-page">
-      <div class="page-banner" style="--banner-from:#1a1c3a;--banner-to:#2c3e7a">
+      <div class="page-banner cat-command-head" style="--banner-from:#1739a6;--banner-to:#2f5bff">
         <div class="page-banner-icon">${icon("database", { size: 26 })}</div>
         <div class="page-banner-copy">
-          <p class="page-banner-eyebrow">데이터 카탈로그</p>
-          <h2 class="page-banner-title">금천구 공공데이터</h2>
-          <p class="page-banner-desc">금천구청·서울시·국가기관의 공공데이터를 검색·열람할 수 있습니다.</p>
+          <p class="page-banner-eyebrow">DATA CATALOG</p>
+          <h2 class="page-banner-title">근거 데이터를 찾습니다</h2>
+          <p class="page-banner-desc">주제, 형식, 최신성, 다운로드 가능 여부를 기준으로 공개 데이터의 출처와 이용 방법을 확인합니다.</p>
         </div>
         <div class="page-banner-stats">
           <div class="page-banner-stat">
@@ -448,8 +463,38 @@ async function openDetail(id, container) {
   dialog.setAttribute("label", escapeHtml(d.title));
 
   // 웹 컴포넌트 업그레이드 대기
-  await customElements.whenDefined("sl-dialog");
-  dialog.show();
+  await openCatalogDialog(dialog);
+}
+
+async function openCatalogDialog(dialog) {
+  if (typeof dialog.show === "function") {
+    dialog.show();
+    return;
+  }
+
+  const defined = await Promise.race([
+    customElements.whenDefined("sl-dialog").then(() => true),
+    new Promise((resolve) => window.setTimeout(() => resolve(false), 350)),
+  ]);
+  if (defined && typeof dialog.show === "function") {
+    dialog.show();
+    return;
+  }
+
+  dialog.setAttribute("open", "");
+  dialog.classList.add("cat-dialog-fallback", "is-open");
+  document.body.classList.add("has-modal-open");
+}
+
+function closeCatalogDialog(dialog) {
+  if (!dialog) return;
+  if (typeof dialog.hide === "function") {
+    dialog.hide();
+  } else {
+    dialog.removeAttribute("open");
+    dialog.classList.remove("is-open");
+  }
+  document.body.classList.remove("has-modal-open");
 }
 
 // ─── 이벤트 바인딩 ────────────────────────────────────────────
@@ -466,6 +511,13 @@ function bindEvents(container) {
   if (sort) {
     sort.addEventListener("change", () => renderCards(container));
   }
+
+  container.querySelector(".cat-dialog-close")?.addEventListener("click", () =>
+    closeCatalogDialog(container.ownerDocument.getElementById("cat-dialog"))
+  );
+  container.ownerDocument.getElementById("cat-dialog")?.addEventListener("click", (event) => {
+    if (event.target?.id === "cat-dialog") closeCatalogDialog(event.target);
+  });
 
   // 카테고리 필터
   container.addEventListener("click", (e) => {

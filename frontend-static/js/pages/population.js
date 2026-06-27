@@ -2,10 +2,10 @@
 
 import { state } from "../core/state.js";
 import { escapeHtml, revealOnScroll } from "../core/dom.js";
-import { renderDataStamp } from "../core/meta.js";
+import { getSectionMeta, renderDataStamp, sourceModeText } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
-import { injectPageCss } from "../core/assets.js";
+import { injectPageCss, isExternalAssetsEnabled } from "../core/assets.js";
 
 const AGE_BANDS = ["0~9세", "10~19세", "20~29세", "30~39세", "40~49세", "50~59세", "60~69세", "70세 이상"];
 
@@ -21,15 +21,19 @@ let rootContainer = null;
 export async function mount(container) {
   isMounted = true;
   rootContainer = container;
-  injectPageCss("css-page-population", "./css/pages/population.css");
+  await injectPageCss("css-page-population", "./css/pages/population.css");
+  await injectPageCss("css-professional-dashboard", "./css/professional-dashboard.css");
   container.innerHTML = buildHtml();
   renderKpi();
   bindEvents(container);
+  renderPopulationFallbackCharts();
 
   try {
     await loadECharts();
   } catch (e) {
-    console.error("ECharts 로드 실패:", e);
+    if (isExternalAssetsEnabled()) console.warn("ECharts fallback:", e?.message);
+    renderPopulationFallbackCharts();
+    revealOnScroll(container);
     return;
   }
   if (!isMounted) return;
@@ -100,22 +104,25 @@ function buildHtml() {
   let elderlyCount = 0, youthCount = 0, totalAgeCount = 0;
   population.forEach((p) => {
     (p.byAge || []).forEach((b) => {
-      const n = Number(b.count || 0);
-      if (ELDERLY_BANDS.includes(b.band)) elderlyCount += n;
-      if (YOUTH_BANDS.includes(b.band))   youthCount   += n;
+      const n = Number(b.male || 0) + Number(b.female || 0);
+      if (ELDERLY_BANDS.includes(b.ageBand)) elderlyCount += n;
+      if (YOUTH_BANDS.includes(b.ageBand))   youthCount   += n;
       totalAgeCount += n;
     });
   });
   const elderlyRatio = totalAgeCount ? Math.round(elderlyCount / totalAgeCount * 100 * 10) / 10 : 0;
+  const youthRatio = totalAgeCount ? Math.round(youthCount / totalAgeCount * 100 * 10) / 10 : 0;
+  const { asOf, source } = getSectionMeta("population");
+  const sourceText = state.data ? sourceModeText(state.data.sourceMode) : "데이터 확인 중";
 
   return `
     <div class="pop-page">
-      <div class="page-banner" style="--banner-from:#0d2a45;--banner-to:#0d93cf">
+      <div class="page-banner pop-command-head" style="--banner-from:#1739a6;--banner-to:#2f5bff">
         <div class="page-banner-icon">${icon("users", { size: 26 })}</div>
         <div class="page-banner-copy">
-          <p class="page-banner-eyebrow">인구 분석</p>
-          <h2 class="page-banner-title">금천구 인구 현황</h2>
-          <p class="page-banner-desc">행정동별 인구 피라미드와 연령대·성별 분포를 시각화합니다.</p>
+          <p class="page-banner-eyebrow">POPULATION & LIFE</p>
+          <h2 class="page-banner-title">누가 어디에 사는가</h2>
+          <p class="page-banner-desc">행정동별 인구, 성별·연령 구성, 기간 기준을 원값 중심으로 확인합니다.</p>
         </div>
         <div class="page-banner-stats">
           <div class="page-banner-stat">
@@ -124,15 +131,21 @@ function buildHtml() {
           </div>
           <div class="page-banner-stat">
             <span class="page-banner-stat-val">${population.length || "—"}</span>
-            <span class="page-banner-stat-label">법정동</span>
+            <span class="page-banner-stat-label">표시 지역</span>
           </div>
           <div class="page-banner-stat">
             <span class="page-banner-stat-val">${elderlyRatio ? elderlyRatio + "%" : "—"}</span>
-            <span class="page-banner-stat-label">고령화율</span>
+            <span class="page-banner-stat-label">고령 인구 비율</span>
           </div>
         </div>
         <a class="page-banner-back" href="#/home">◀ 홈으로</a>
       </div>
+
+      <section class="pop-executive-strip" aria-label="인구 데이터 요약">
+        <article><span>집계 기준</span><strong>행정동 원값</strong><p>순위나 평가가 아닌 원천 수치를 표시합니다.</p></article>
+        <article><span>유소년 인구 비율</span><strong>${youthRatio ? youthRatio + "%" : "—"}</strong><p>0~19세 합계 / 전체 연령 합계</p></article>
+        <article><span>데이터 상태</span><strong>${escapeHtml(sourceText)}</strong><p>${escapeHtml(asOf)} · ${escapeHtml(source)}</p></article>
+      </section>
 
       <div class="pop-filter-bar" role="group" aria-label="법정동 선택">
         <span class="pop-filter-label">법정동</span>
@@ -262,6 +275,63 @@ function initCharts() {
   chartPyramid = createChart(pyramidEl, buildPyramidOption());
   chartBar     = createChart(barEl,     buildBarOption());
   if (ageEl) chartAge = createChart(ageEl, buildAgeCompareOption());
+}
+
+function renderPopulationFallbackCharts() {
+  const population = getPopulation();
+  const selected = population.find((p) => p.areaName === (state.populationDistrict || population[0]?.areaName)) || population[0];
+  const byAge = selected?.byAge || [];
+  const pyramidEl = document.getElementById("pop-chart-pyramid");
+  const barEl = document.getElementById("pop-chart-bar");
+  const ageEl = document.getElementById("pop-chart-age");
+  if (pyramidEl) {
+    pyramidEl.innerHTML = `
+      <div class="chart-fallback chart-fallback--pyramid">
+        ${AGE_BANDS.map((band) => {
+          const row = byAge.find((item) => item.ageBand === band) || {};
+          const male = Number(row.male || 0);
+          const female = Number(row.female || 0);
+          const max = Math.max(1, ...byAge.map((item) => Math.max(Number(item.male || 0), Number(item.female || 0))));
+          return `<div class="fallback-pyramid-row">
+            <span>${escapeHtml(band)}</span>
+            <i class="is-male" style="--w:${Math.max(4, male / max * 100)}%"></i>
+            <strong>${male.toLocaleString("ko-KR")}</strong>
+            <strong>${female.toLocaleString("ko-KR")}</strong>
+            <i class="is-female" style="--w:${Math.max(4, female / max * 100)}%"></i>
+          </div>`;
+        }).join("")}
+      </div>
+    `;
+  }
+  if (barEl) {
+    const max = Math.max(1, ...population.map((item) => Number(item.total || 0)));
+    barEl.innerHTML = `<div class="chart-fallback chart-fallback--bars">
+      ${population.map((item) => `<div class="fallback-bar-row">
+        <span>${escapeHtml(item.areaName || "행정동")}</span>
+        <i style="--w:${Math.max(5, Number(item.total || 0) / max * 100)}%"></i>
+        <strong>${Number(item.total || 0).toLocaleString("ko-KR")}명</strong>
+      </div>`).join("")}
+    </div>`;
+  }
+  if (ageEl) {
+    ageEl.innerHTML = `<div class="chart-fallback chart-fallback--age">
+      ${population.map((item) => {
+        const total = (item.byAge || []).reduce((sum, row) => sum + Number(row.male || 0) + Number(row.female || 0), 0) || 1;
+        const youth = (item.byAge || []).filter((row) => ["0~9세", "10~19세"].includes(row.ageBand)).reduce((sum, row) => sum + Number(row.male || 0) + Number(row.female || 0), 0);
+        const senior = (item.byAge || []).filter((row) => ["60~69세", "70세 이상"].includes(row.ageBand)).reduce((sum, row) => sum + Number(row.male || 0) + Number(row.female || 0), 0);
+        const middle = Math.max(0, total - youth - senior);
+        return `<div class="fallback-stack-row">
+          <span>${escapeHtml(item.areaName || "행정동")}</span>
+          <div>
+            <i class="is-youth" style="--w:${youth / total * 100}%"></i>
+            <i class="is-middle" style="--w:${middle / total * 100}%"></i>
+            <i class="is-senior" style="--w:${senior / total * 100}%"></i>
+          </div>
+          <strong>${Math.round(senior / total * 1000) / 10}%</strong>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
 }
 
 // ─── 차트 옵션 빌더 ───────────────────────────────────────────

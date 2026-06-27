@@ -1,6 +1,6 @@
 // ECharts 동적 로드 + 차트 생성·소멸 헬퍼
 
-import { loadScriptOnce } from "./assets.js";
+import { isExternalAssetsEnabled, loadScriptOnce } from "./assets.js";
 
 const ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js";
 
@@ -53,6 +53,9 @@ export const BASE_OPTION = {
  * (map.js loadLeaflet() 패턴과 동일)
  */
 export function loadECharts() {
+  if (!isExternalAssetsEnabled()) {
+    return Promise.reject(new Error("External chart assets disabled for local preview"));
+  }
   return loadScriptOnce({
     id: "echarts-js",
     src: ECHARTS_CDN,

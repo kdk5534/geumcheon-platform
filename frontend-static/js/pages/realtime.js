@@ -165,7 +165,7 @@ export async function mount(container) {
           <span class="rt-live-badge">최근 수집</span>
           <span class="rt-updated" id="rt-updated">로딩 중...</span>
         </div>
-        <div id="rt-map" class="rt-map-container" aria-label="최근 도시현황 지도"></div>
+        <div id="rt-map" class="rt-map-container" role="region" aria-label="최근 도시현황 지도"></div>
         <div class="rt-map-legend">
           <span class="rt-legend-dot" style="background:#e84040"></span>위급&nbsp;&nbsp;
           <span class="rt-legend-dot" style="background:#de7b12"></span>주의&nbsp;&nbsp;
@@ -198,7 +198,7 @@ export async function mount(container) {
 
     await initMap(data);
   } catch (err) {
-    console.error('[realtime] 데이터 로드 오류:', err);
+    console.warn('[realtime] 일부 시각화를 불러오지 못해 기본 현황을 유지합니다:', err?.message);
   }
 }
 

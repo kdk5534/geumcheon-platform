@@ -4,8 +4,11 @@ import { state } from "./core/state.js";
 import { loadLocalData, loadBackendData, loadApiSources, loadApiLogsRaw } from "./core/api.js";
 import { init as initRouter, navigate as routerNavigate } from "./core/router.js";
 import { icon } from "./core/icons.js";
+import { initShellUi, updateDataHealth } from "./core/shell-ui.js";
+import { initI18n, applyTranslations } from "./core/i18n.js";
 import * as homePage from "./pages/home.js";
 import * as realtimePage from "./pages/realtime.js";
+import * as safetyPage from "./pages/safety.js";
 import * as indicatorsPage from "./pages/indicators.js";
 import * as catalogPage from "./pages/catalog.js";
 import * as mapPage from "./pages/map.js";
@@ -14,7 +17,10 @@ import * as geoPage from "./pages/geo.js";
 import * as dongPage from "./pages/dong.js";
 import * as topicsPage from "./pages/topics.js";
 import * as populationPage from "./pages/population.js";
+import * as welfarePage from "./pages/welfare.js";
 import * as aboutPage from "./pages/about.js";
+
+document.title = "금천 데이터플랫폼";
 
 function lazyPage(loader) {
   let module = null;
@@ -37,6 +43,10 @@ const apiStatusPage = lazyPage(() => import("./pages/api-status.js"));
 const apiLogsPage = lazyPage(() => import("./pages/api-logs.js"));
 const adminPage = lazyPage(() => import("./pages/admin.js"));
 
+await initI18n();
+initShellUi();
+applyTranslations();
+
 // ─── 테마 초기화 + 다크모드 토글 ───────────────────────────────
 
 (function initTheme() {
@@ -58,7 +68,8 @@ const adminPage = lazyPage(() => import("./pages/admin.js"));
   }
 
   // 저장된 테마로 즉시 적용 (FOUC 방지)
-  const saved = localStorage.getItem(THEME_KEY) || "light";
+  const requestedTheme = new URL(location.href).searchParams.get("theme");
+  const saved = ["light", "dark"].includes(requestedTheme) ? requestedTheme : (localStorage.getItem(THEME_KEY) || "light");
   applyTheme(saved);
 
   // 토글 핸들러 — 전환 후 현재 페이지를 remount하여 차트·지도를 새 토큰으로 재생성한다
@@ -68,6 +79,10 @@ const adminPage = lazyPage(() => import("./pages/admin.js"));
     const next = current === "dark" ? "light" : "dark";
     applyTheme(next);
     localStorage.setItem(THEME_KEY, next);
+    const url = new URL(location.href);
+    if (next === "light") url.searchParams.delete("theme");
+    else url.searchParams.set("theme", next);
+    history.replaceState(null, "", url);
     routerNavigate();
   });
 }());
@@ -76,11 +91,12 @@ const adminPage = lazyPage(() => import("./pages/admin.js"));
 
 (function initNavIcons() {
   const NAV_ICONS = {
-    home:    "home",
-    nearby:  "map",
-    dong:    "users",
-    topics:  "bar-chart",
-    catalog: "database"
+    home:       "home",
+    population: "users",
+    commercial: "bar-chart",
+    welfare:    "activity",
+    safety:     "shield",
+    catalog:    "database"
   };
   document.querySelectorAll(".nav a[data-route]").forEach((link) => {
     const routeKey = link.dataset.route;
@@ -138,6 +154,7 @@ const viewContainer = document.getElementById("view");
 initRouter(viewContainer, {
   home:        homePage,
   realtime:    realtimePage,
+  safety:      safetyPage,
   indicators:  indicatorsPage,
   catalog:     catalogPage,
   map:         mapPage,
@@ -146,6 +163,7 @@ initRouter(viewContainer, {
   topics:      topicsPage,
   geo:         geoPage,
   population:  populationPage,
+  welfare:     welfarePage,
   about:       aboutPage,
   api:         apiStatusPage,
   "api-logs":  apiLogsPage,
@@ -164,6 +182,7 @@ bootData()
     if (document.documentElement.dataset.appDataState !== "error") {
       document.documentElement.dataset.appDataState = "ready";
     }
+    updateDataHealth();
   });
 
 /**

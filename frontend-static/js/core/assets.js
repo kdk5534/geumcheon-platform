@@ -1,6 +1,19 @@
 // 외부 리소스(페이지 CSS·Leaflet JS·MarkerCluster) 멱등 동적 로더 유틸
 
-import { VWORLD_KEY } from "./state.js";
+import { BACKEND_API_BASE } from "./state.js";
+
+export function isExternalAssetsEnabled() {
+  const configured = globalThis.window?.__ENV__?.ENABLE_EXTERNAL_ASSETS;
+  if (configured != null && configured !== "") {
+    return String(configured).toLowerCase() === "true";
+  }
+  const runtimeBackendBase = globalThis.window?.__ENV__?.BACKEND_API_BASE || BACKEND_API_BASE;
+  if (runtimeBackendBase) {
+    return true;
+  }
+  const hostname = globalThis.window?.location?.hostname || "";
+  return hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1";
+}
 
 /**
  * 페이지별 CSS를 한 번만 주입한다. 이미 존재하면 무시한다.
@@ -10,6 +23,9 @@ import { VWORLD_KEY } from "./state.js";
 export function injectPageCss(id, href) {
   const existing = document.getElementById(id);
   if (existing) {
+    if (id === "css-professional-dashboard") {
+      document.head.appendChild(existing);
+    }
     if (existing.sheet || existing.dataset.loadState === "loaded") return Promise.resolve(true);
     return new Promise((resolve) => {
       existing.addEventListener("load", () => resolve(true), { once: true });
@@ -82,6 +98,26 @@ export function loadScriptOnce({ id, src, isReady, errorMessage, timeoutMs = 8_0
   });
 }
 
+export async function loadScriptWithFallback({ id, sources, isReady, errorMessage, timeoutMs = 8_000 }) {
+  if (isReady()) return;
+  let lastError = null;
+  for (let index = 0; index < sources.length; index += 1) {
+    try {
+      await loadScriptOnce({
+        id: `${id}-${index}`,
+        src: sources[index],
+        isReady,
+        errorMessage,
+        timeoutMs,
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error(errorMessage);
+}
+
 /**
  * Leaflet 1.9.4 CSS·JS를 멱등으로 로드한다.
  * window.L이 이미 있으면 즉시 resolve. 스크립트 태그가 이미
@@ -89,10 +125,17 @@ export function loadScriptOnce({ id, src, isReady, errorMessage, timeoutMs = 8_0
  * @returns {Promise<void>}
  */
 export function loadLeaflet() {
-  injectPageCss("leaflet-css", "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
-  return loadScriptOnce({
+  if (!isExternalAssetsEnabled()) {
+    return Promise.reject(new Error("External map assets disabled for local preview"));
+  }
+  injectPageCss("leaflet-css-unpkg", "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
+  injectPageCss("leaflet-css-jsdelivr", "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css");
+  return loadScriptWithFallback({
     id: "leaflet-js",
-    src: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+    sources: [
+      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+      "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
+    ],
     isReady: () => Boolean(window.L),
     errorMessage: "Leaflet 스크립트 로드 실패",
   });
@@ -104,46 +147,53 @@ export function loadLeaflet() {
  * @returns {Promise<void>}
  */
 export function loadMarkerCluster() {
-  injectPageCss("markercluster-css",         "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css");
-  injectPageCss("markercluster-default-css",  "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css");
-  return loadScriptOnce({
+  if (!isExternalAssetsEnabled()) {
+    return Promise.reject(new Error("External map assets disabled for local preview"));
+  }
+  injectPageCss("markercluster-css-unpkg", "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css");
+  injectPageCss("markercluster-default-css-unpkg", "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css");
+  injectPageCss("markercluster-css-jsdelivr", "https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css");
+  injectPageCss("markercluster-default-css-jsdelivr", "https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css");
+  return loadScriptWithFallback({
     id: "markercluster-js",
-    src: "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js",
+    sources: [
+      "https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js",
+      "https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js",
+    ],
     isReady: () => Boolean(window.L?.MarkerClusterGroup),
     errorMessage: "MarkerCluster 로드 실패",
   });
 }
 
 /**
- * VWorld 또는 OSM 기반 Leaflet 타일 레이어를 반환한다.
- * VWORLD_KEY가 설정되어 있으면 VWorld 한국 지도 타일을 사용하고,
- * 없으면 OpenStreetMap으로 폴백한다.
+ * 서버 프록시를 통해 VWorld 타일 레이어를 반환한다.
+ * API 키는 브라우저에 노출하지 않으며 다른 지도 공급자로 자동 전환하지 않는다.
  *
  * @param {object} L         - window.L (Leaflet)
  * @param {"base"|"satellite"|"hybrid"} [type="base"] - 레이어 종류
  * @returns {object} Leaflet TileLayer
  */
 export function createBaseTileLayer(L, type = "base") {
-  if (VWORLD_KEY) {
-    const layerMap = {
-      base:      { layer: "Base",      ext: "png",  maxZoom: 18 },
-      satellite: { layer: "Satellite", ext: "jpeg", maxZoom: 18 },
-      hybrid:    { layer: "Hybrid",    ext: "png",  maxZoom: 18 },
-    };
-    const cfg = layerMap[type] || layerMap.base;
-    return L.tileLayer(
-      `https://api.vworld.kr/req/wmts/1.0.0/${VWORLD_KEY}/${cfg.layer}/{z}/{y}/{x}.${cfg.ext}`,
-      {
-        attribution: '&copy; <a href="https://www.vworld.kr" target="_blank">VWorld</a> · 국토교통부',
-        maxZoom: cfg.maxZoom,
-        tms: false,
-      }
-    );
-  }
-
-  // OSM 폴백
-  return L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
-    maxZoom: 19,
+  const style = ["base", "satellite", "hybrid"].includes(type) ? type : "base";
+  return L.tileLayer(`${BACKEND_API_BASE}/api/public/map/tiles/${style}/{z}/{y}/{x}`, {
+    attribution: '&copy; <a href="https://www.vworld.kr" target="_blank" rel="noopener">VWorld</a> · 국토교통부',
+    minZoom: 6,
+    maxZoom: 18,
+    tms: false,
+    crossOrigin: true,
+    errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=",
   });
+}
+
+export function bindTileFailureFallback(tileLayer, onUnavailable, threshold = 3) {
+  let failures = 0;
+  let notified = false;
+  tileLayer.on("tileerror", () => {
+    failures += 1;
+    if (!notified && failures >= threshold) {
+      notified = true;
+      onUnavailable?.();
+    }
+  });
+  return tileLayer;
 }

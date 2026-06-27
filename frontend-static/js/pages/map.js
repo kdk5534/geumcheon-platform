@@ -6,7 +6,8 @@ import { escapeHtml } from "../core/dom.js";
 import { icon } from "../core/icons.js";
 import { loadFacilitiesInBbox } from "../core/api.js";
 import { renderDataStamp } from "../core/meta.js";
-import { injectPageCss, loadLeaflet, loadMarkerCluster, createBaseTileLayer } from "../core/assets.js";
+import { bindTileFailureFallback, injectPageCss, loadLeaflet, loadMarkerCluster, createBaseTileLayer } from "../core/assets.js";
+import { addGeumcheonBoundaryLayer } from "../core/map-boundary.js";
 
 const GEUMCHEON_CENTER = [37.4565, 126.8954];
 const CATEGORIES = ["전체", "병원", "약국", "복지", "어린이집", "대피시설", "주차장", "따릉이", "CCTV", "와이파이", "쉼터", "보호구역", "충전소"];
@@ -303,10 +304,11 @@ function initMap() {
 
   // 타일 레이어 + 컨트롤 (VWorld 키 있을 때만 위성 토글 노출)
   const baseLayers = {
-    "일반지도": createBaseTileLayer(L, "base"),
-    "위성지도": createBaseTileLayer(L, "satellite"),
+    "일반지도": bindTileFailureFallback(createBaseTileLayer(L, "base"), showMapProviderError),
+    "위성지도": bindTileFailureFallback(createBaseTileLayer(L, "satellite"), showMapProviderError),
   };
   baseLayers["일반지도"].addTo(mapInstance);
+  addGeumcheonBoundaryLayer(L, mapInstance, { color: "#3159d8" });
   L.control.layers(baseLayers, {}, { position: "topright", collapsed: false }).addTo(mapInstance);
 
   const clusterOpts = {
@@ -406,6 +408,16 @@ function getFilteredFacilities() {
 }
 
 // ─── 마커 생성 ────────────────────────────────────────────────
+
+function showMapProviderError() {
+  const mapEl = document.getElementById("map-pane");
+  if (!mapEl || mapEl.querySelector(".map-provider-error")) return;
+  const notice = document.createElement("div");
+  notice.className = "map-provider-error";
+  notice.setAttribute("role", "status");
+  notice.innerHTML = "<strong>VWorld 지도를 불러오지 못했습니다.</strong><span>오른쪽 시설 목록에서 같은 정보를 계속 확인할 수 있습니다.</span>";
+  mapEl.appendChild(notice);
+}
 
 function buildMarkers() {
   if (!window.L || !mapInstance) return;

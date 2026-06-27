@@ -19,7 +19,7 @@ test("미인증 관리자 직접 진입은 인증 화면만 노출한다", async
   await expect(page.locator("#adminAccessGate")).toBeVisible();
   await expect(page.locator("#datasetEditor")).toBeHidden();
   await expect(page.locator("#commitUpload")).toBeHidden();
-  expect(adminRequests).toEqual([]);
+  expect(adminRequests).toEqual([expect.stringContaining("/api/admin/auth/me")]);
 });
 
 test("미인증 운영 로그 경로도 관리자 인증 경계로 보낸다", async ({ page }) => {
@@ -30,14 +30,21 @@ test("미인증 운영 로그 경로도 관리자 인증 경계로 보낸다", a
   await expect(page.locator(".api-log-list")).toHaveCount(0);
 });
 
-test("관리자 API 인증 성공 후에만 운영 도구를 표시한다", async ({ page }) => {
+test("관리자 세션 로그인 성공 후에만 운영 도구를 표시한다", async ({ page }) => {
   const authorizationHeaders = [];
   await page.route("**/api/admin/**", async (route) => {
     authorizationHeaders.push(route.request().headers().authorization || "");
+    const url = route.request().url();
+    const isMe = url.includes("/auth/me");
+    const data = url.includes("/auth/login")
+      ? { loginId: "operator", roles: ["OPERATOR"] }
+      : url.includes("/auth/csrf")
+        ? { headerName: "X-XSRF-TOKEN", token: "test-csrf" }
+        : [];
     await route.fulfill({
-      status: 200,
+      status: isMe ? 401 : 200,
       contentType: "application/json; charset=utf-8",
-      body: JSON.stringify({ success: true, data: [] }),
+      body: JSON.stringify({ success: !isMe, data: isMe ? null : data }),
     });
   });
   await page.goto("/#/admin");
@@ -50,5 +57,5 @@ test("관리자 API 인증 성공 후에만 운영 도구를 표시한다", asyn
   await expect(page.locator("#adminAccessGate")).toHaveCount(0);
   await expect(page.locator("#datasetEditor")).toBeVisible();
   expect(authorizationHeaders.length).toBeGreaterThanOrEqual(1);
-  expect(authorizationHeaders.every((header) => header.startsWith("Basic "))).toBe(true);
+  expect(authorizationHeaders.every((header) => header === "")).toBe(true);
 });

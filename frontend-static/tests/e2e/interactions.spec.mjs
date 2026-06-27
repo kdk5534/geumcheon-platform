@@ -104,7 +104,7 @@ test("모바일 메뉴는 열고 링크를 선택하면 닫힌다", async ({ pag
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
 
-  await page.locator("#main-nav").getByRole("link", { name: "우리 동" }).click();
+  await page.locator("#main-nav").getByRole("link", { name: "지역 비교" }).click();
   await expect(page).toHaveURL(/#\/dong$/);
   await expect(page.locator("#nav-toggle")).toHaveAttribute("aria-expanded", "false");
 });

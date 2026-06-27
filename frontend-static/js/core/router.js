@@ -2,6 +2,62 @@ import { state } from "./state.js";
 
 const routes = {};
 
+const SECTION_CONFIG = {
+  home: {
+    title: "종합 현황",
+    documentTitle: "종합 현황",
+    items: [
+      { label: "대시보드", href: "#/home", pages: ["home"] },
+      { label: "최근 도시현황", href: "#/realtime", pages: ["realtime"] },
+      { label: "핵심 지표", href: "#/indicators", pages: ["indicators"] },
+    ],
+  },
+  population: {
+    title: "인구·생활",
+    documentTitle: "인구·생활 분석",
+    items: [
+      { label: "인구 구조", href: "#/population", pages: ["population"] },
+      { label: "생활시설 지도", href: "#/nearby", pages: ["map"] },
+      { label: "분야별 생활 데이터", href: "#/topics", pages: ["topics"] },
+    ],
+  },
+  commercial: {
+    title: "상권·경제",
+    documentTitle: "상권·경제 분석",
+    items: [
+      { label: "상권 현황", href: "#/commercial", pages: ["commercial"] },
+      { label: "지역별 비교", href: "#/dong", pages: ["dong"] },
+      { label: "관련 데이터셋", href: "#/datasets", pages: ["catalog"] },
+    ],
+  },
+  safety: {
+    title: "안전·환경",
+    documentTitle: "안전·환경 현황",
+    items: [
+      { label: "통합 상황 지도", href: "#/safety", pages: ["safety"] },
+      { label: "안전시설 목록", href: "#/nearby?category=CCTV", pages: ["map"] },
+      { label: "관련 데이터", href: "#/datasets?topic=safety", pages: ["catalog"] },
+    ],
+  },
+  welfare: {
+    title: "복지·건강",
+    documentTitle: "복지·건강 정보",
+    items: [
+      { label: "필요한 도움", href: "#/welfare", pages: ["welfare"] },
+      { label: "복지시설 찾기", href: "#/nearby?category=복지", pages: ["map"] },
+      { label: "관련 데이터", href: "#/datasets?topic=welfare", pages: ["catalog"] },
+    ],
+  },
+  catalog: {
+    title: "데이터 카탈로그",
+    documentTitle: "데이터 카탈로그",
+    items: [
+      { label: "데이터셋 검색", href: "#/datasets", pages: ["catalog"] },
+      { label: "데이터 이용안내", href: "#/about", pages: ["about"] },
+    ],
+  },
+};
+
 let currentPage = null;
 let viewContainer = null;
 let mountSequence = 0;
@@ -20,6 +76,7 @@ export function init(container, pageMap, defaultRoute = "home") {
 export function navigate(defaultRoute = "home") {
   const route = resolveRoute(defaultRoute);
   applyRouteState(route);
+  syncPageChrome(route);
   mountPage(route.page, defaultRoute);
   syncNavActive(route.primaryNav);
 }
@@ -47,6 +104,9 @@ function mountPage(routeKey, defaultRoute) {
 
   currentPage = page;
   viewContainer.setAttribute("aria-busy", "true");
+  viewContainer.classList.remove("is-view-entering");
+  void viewContainer.offsetWidth;
+  viewContainer.classList.add("is-view-entering");
 
   try {
     const result = page.mount(viewContainer);
@@ -55,6 +115,7 @@ function mountPage(routeKey, defaultRoute) {
         if (sequence !== mountSequence || currentPage !== page) return;
         viewContainer.removeAttribute("aria-busy");
         enhancePageBack();
+        window.setTimeout(() => viewContainer?.classList.remove("is-view-entering"), 260);
       })
       .catch((error) => {
         if (sequence !== mountSequence || currentPage !== page) return;
@@ -94,6 +155,21 @@ function syncNavActive(navKey) {
   });
 }
 
+function syncPageChrome(route) {
+  const config = SECTION_CONFIG[route.primaryNav] || SECTION_CONFIG.home;
+  const title = document.getElementById("section-context-title");
+  const nav = document.getElementById("section-nav");
+
+  if (title) title.textContent = config.title;
+  document.title = `${config.documentTitle} | 금천 데이터플랫폼`;
+
+  if (!nav) return;
+  nav.innerHTML = config.items.map((item) => {
+    const active = item.pages.includes(route.page);
+    return `<a href="${item.href}"${active ? ' class="is-active" aria-current="page"' : ""}>${item.label}</a>`;
+  }).join("");
+}
+
 function resolveRoute(defaultRoute) {
   const raw = location.hash.replace(/^#\/?/, "") || defaultRoute;
   const [pathPart, searchPart = ""] = raw.split("?");
@@ -105,40 +181,59 @@ function resolveRoute(defaultRoute) {
   }
 
   if (path === "nearby" || path === "map") {
-    return { page: "map", primaryNav: "nearby", params };
+    return { page: "map", primaryNav: navForMap(params), params };
   }
 
   if (path === "dong") {
     if (params.get("section") === "population") {
-      return { page: "population", primaryNav: "dong", params };
+      return { page: "population", primaryNav: "population", params };
     }
     if (params.get("section") === "accessibility" || params.get("metric")) {
-      return { page: "geo", primaryNav: "dong", params };
+      return { page: "geo", primaryNav: "population", params };
     }
-    return { page: "dong", primaryNav: "dong", params };
+    return { page: "dong", primaryNav: "commercial", params };
   }
 
   if (path === "population") {
-    return { page: "population", primaryNav: "dong", params };
+    return { page: "population", primaryNav: "population", params };
+  }
+
+  if (path === "welfare") {
+    return { page: "welfare", primaryNav: "welfare", params };
   }
 
   if (path === "geo") {
-    return { page: "geo", primaryNav: "dong", params };
+    return { page: "geo", primaryNav: "population", params };
   }
 
   if (path === "topics") {
     const topic = params.get("topic");
+    if (topic === "welfare") {
+      return { page: "welfare", primaryNav: "welfare", params };
+    }
     if (topic === "safety") {
-      return { page: "realtime", primaryNav: "topics", params };
+      return { page: "safety", primaryNav: "safety", params };
     }
     if (topic === "economy") {
-      return { page: "commercial", primaryNav: "topics", params };
+      return { page: "commercial", primaryNav: "commercial", params };
     }
-    return { page: "topics", primaryNav: "topics", params };
+    return { page: "topics", primaryNav: "population", params };
   }
 
-  if (path === "realtime" || path === "indicators" || path === "commercial") {
-    return { page: path, primaryNav: "topics", params };
+  if (path === "realtime") {
+    return { page: path, primaryNav: "home", params };
+  }
+
+  if (path === "safety") {
+    return { page: path, primaryNav: "safety", params };
+  }
+
+  if (path === "indicators") {
+    return { page: path, primaryNav: "home", params };
+  }
+
+  if (path === "commercial") {
+    return { page: path, primaryNav: "commercial", params };
   }
 
   if (path === "datasets" || path === "catalog") {
@@ -156,6 +251,28 @@ function resolveRoute(defaultRoute) {
   }
 
   return { page: defaultRoute, primaryNav: "home", params };
+}
+
+function navForMap(params) {
+  const explicit = params.get("nav") || params.get("section");
+  if (["population", "welfare", "safety", "commercial"].includes(explicit)) {
+    return explicit;
+  }
+
+  const category = (params.get("category") || "").trim().toLocaleLowerCase("ko-KR");
+  if (!category) {
+    return "population";
+  }
+
+  if (["복지", "병원", "약국", "의료", "돌봄", "어르신", "장애", "쉼터"].some((keyword) => category.includes(keyword))) {
+    return "welfare";
+  }
+
+  if (["cctv", "안전", "보호구역", "스쿨존", "대피", "대기", "환경"].some((keyword) => category.includes(keyword))) {
+    return "safety";
+  }
+
+  return "population";
 }
 
 function applyRouteState(route) {

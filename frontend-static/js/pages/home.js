@@ -6,14 +6,15 @@ import { escapeHtml, revealOnScroll } from "../core/dom.js";
 import { getSectionMeta, renderDataStamp, sourceModeText } from "../core/meta.js";
 import { loadECharts, createChart, disposeChart, makeGradient, CHART_PALETTE, CHART_COLORS, BASE_OPTION } from "../core/charts.js";
 import { icon } from "../core/icons.js";
-import { injectPageCss, loadLeaflet, createBaseTileLayer } from "../core/assets.js";
+import { bindTileFailureFallback, injectPageCss, loadLeaflet, createBaseTileLayer } from "../core/assets.js";
 import {
   calcCommercialTotal,
   buildCommercialFallback,
-  buildDashHtml,
   buildPopulationFallback,
 } from "./home-templates.js";
+import { buildDashHtml } from "./overview-template.js";
 import { loadHomePopularDatasets, loadHomeRealtimeSummary } from "./home-data.js";
+import { addGeumcheonBoundaryLayer } from "../core/map-boundary.js";
 
 // ─── 상수 ─────────────────────────────────────────────────────
 
@@ -52,9 +53,12 @@ export async function mount(container) {
   const { signal } = pageController;
   isMounted = true;
   await injectPageCss("css-page-home", "./css/pages/home.css");
+  await injectPageCss("css-page-home-v2", "./css/pages/home-v2.css");
+  await injectPageCss("css-professional-dashboard", "./css/professional-dashboard.css");
   if (!isMounted) return;
   container.innerHTML = buildDashHtml();
   bindSearch(container);
+  bindOverviewInteractions(container);
   renderKpiTiles();
   renderEnvWidgets();
   renderHeroStats();
@@ -68,15 +72,7 @@ export async function mount(container) {
     if (!isMounted) return;
     initHomeMap();
   } catch (e) {
-    const pane = document.getElementById("home-map-pane");
-    if (pane && isMounted) {
-      pane.innerHTML = `<div class="home-map-error">
-        <span class="home-map-error-icon">🗺️</span>
-        <span class="home-map-error-title">금천구 생활지도</span>
-        <span class="home-map-error-desc">지도를 불러오는 중입니다.<br>인터넷 연결을 확인하거나 잠시 후 새로고침하세요.</span>
-        <a href="#/nearby" style="margin-top:8px;font-size:12px;color:#7dd3fa;text-decoration:underline">생활지도 바로가기 →</a>
-      </div>`;
-    }
+    if (isMounted) setOverviewMapMode("list", true);
   }
 
   // ECharts (비동기)
@@ -152,21 +148,15 @@ export function renderKpiTiles() {
   const pop             = state.data?.population?.reduce((s, p) => s + Number(p.total || 0), 0) || 0;
   const facilities      = state.data?.facilities?.length || 0;
   const commercialTotal = calcCommercialTotal();
-  const districts       = state.data?.districts || [];
-  const avgScore   = districts.length
-    ? Math.round(
-        districts.reduce((s, d) => {
-          const sc  = d.scores || {};
-          const vals = Object.values(sc).filter((v) => v > 0);
-          return s + (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
-        }, 0) / districts.length * 10
-      ) / 10
-    : 0;
+  const airMetric = (state.data?.metrics || []).find((item) =>
+    String(item.label || "").includes("미세먼지") || String(item.label || "").includes("대기")
+  );
+  const totalSources = Array.isArray(state.apiSources) ? state.apiSources.length : 0;
   const tiles = [
-    { label: "금천구 총인구", value: pop ? pop.toLocaleString() + "명" : "—", section: "population", change: "행정동별 구성 비교", accent: "#0c7fb8", bg: "#ddf0fc", iconName: "users" },
-    { label: "등록 생활시설", value: facilities ? facilities + "건" : "—", section: "life", change: "현재 공간 범위 시설 행", accent: "#0d93cf", bg: "#d9f0fb", iconName: "pin" },
-    { label: "상권 점포", value: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "—", section: "commercial", change: "업종·행정동별 비교", accent: "#3f7180", bg: "#e8f1f3", iconName: "bar-chart" },
-    { label: "평균 접근성 지수", value: avgScore ? avgScore + "점" : "—", section: "geo", change: "생활·교통·안전 평균", accent: "#245b9e", bg: "#e6edf8", iconName: "activity" },
+    { label: "주민등록 인구", value: pop ? pop.toLocaleString() + "명" : "—", section: "population", change: "행정동별 원값", accent: "#3159d8", bg: "#eef2ff", iconName: "users", bars: [72, 58, 46, 64] },
+    { label: "상가업소", value: commercialTotal ? Number(commercialTotal).toLocaleString() + "개" : "—", section: "commercial", change: "GEUMCHEON 범위", accent: "#ef6b5b", bg: "#fff0ed", iconName: "bar-chart", bars: [38, 78, 56, 68] },
+    { label: "등록 생활시설", value: facilities ? facilities.toLocaleString() + "행" : "—", section: "life", change: "원천 행 기준", accent: "#19a88a", bg: "#e9f8f4", iconName: "pin", bars: [42, 60, 74, 52] },
+    { label: "대기질", value: airMetric?.value || "—", section: "overview", change: totalSources ? `연결 소스 ${totalSources}종` : "관측 시각 기준", accent: "#d49324", bg: "#fff6df", iconName: "activity", bars: [66, 44, 70, 50] },
   ];
 
   grid.innerHTML = tiles.map((t) => {
@@ -174,11 +164,15 @@ export function renderKpiTiles() {
     const status = homeKpiStatus(meta.status);
     return `
     <article class="home-kpi-tile" style="--kpi-accent:${t.accent};--kpi-bg:${t.bg}">
-      <div class="home-kpi-icon" aria-hidden="true">${icon(t.iconName, { size: 14 })}</div>
+      <div class="home-kpi-topline">
+        <div class="home-kpi-icon" aria-hidden="true">${icon(t.iconName, { size: 14 })}</div>
+        <span class="home-kpi-status">${escapeHtml(status)}</span>
+      </div>
       <div class="home-kpi-body">
-        <span class="home-kpi-label">${escapeHtml(t.label)} · ${escapeHtml(status)}</span>
+        <span class="home-kpi-label"><span class="home-kpi-label-main">${escapeHtml(t.label)}</span><span class="home-kpi-label-state">${escapeHtml(status)}</span></span>
         <span class="home-kpi-value">${escapeHtml(t.value)}</span>
         <span class="home-kpi-change">${escapeHtml(t.change)}</span>
+        <span class="home-kpi-spark" aria-hidden="true">${t.bars.map((width) => `<i style="height:${width}%"></i>`).join("")}</span>
         <span class="home-kpi-source">${escapeHtml(meta.asOf)} · ${escapeHtml(meta.source)}</span>
       </div>
     </article>`;
@@ -220,7 +214,15 @@ function initHomeMap() {
     maxBoundsViscosity: 0.72,
   }).setView(GEUMCHEON_CENTER, 14);
 
-  createBaseTileLayer(L).addTo(homeMap);
+  bindTileFailureFallback(createBaseTileLayer(L), () => setOverviewMapMode("list", true)).addTo(homeMap);
+  addGeumcheonBoundaryLayer(L, homeMap, {
+    onSelect: (name) => {
+      const select = document.getElementById("overview-dong-select");
+      if (!select || ![...select.options].some((option) => option.value === name)) return;
+      select.value = name;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+  });
 
   // 시설 마커 레이어
   ["병원", "약국", "주차장", "안전"].forEach((cat) => {
@@ -597,9 +599,11 @@ function getHomeStateMetaDetails() {
 
   return {
     tone: "info",
-    label: "샘플 데이터",
-    title: "홈 대시보드가 로컬 샘플 데이터로 동작 중입니다.",
-    note: "UI 구조와 탐색 흐름 검증에는 충분하지만 수치는 운영 데이터와 다를 수 있습니다.",
+    label: location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "개발 환경" : "공개 보류",
+    title: location.hostname === "localhost" || location.hostname === "127.0.0.1"
+      ? "개발 환경의 검증용 데이터로 화면을 확인하고 있습니다."
+      : "운영 데이터 연결을 확인하기 전에는 수치를 공개하지 않습니다.",
+    note: "실제 공개 화면은 정상 또는 마지막 정상 스냅샷만 표시합니다.",
   };
 }
 
@@ -621,14 +625,25 @@ export function renderHomeDataState() {
 }
 
 function renderHeroStats() {
-  const wrap = document.getElementById("home-hero-stats");
-  if (!wrap) return;
-
   const sources    = Array.isArray(state.apiSources) ? state.apiSources : [];
   const total      = sources.length || 6;
   const ready      = sources.filter((s) => s.status === "ready").length;
   const pop        = state.data?.population?.[0]?.total;
-  const facilities = state.data?.facilities?.length;
+  const totalPop   = state.data?.population?.reduce((sum, item) => sum + Number(item.total || 0), 0) || 0;
+  const facilities = Array.isArray(state.data?.facilities) && state.data.facilities.length > 0
+    ? state.data.facilities.length
+    : null;
+  const hasOperationalData = totalPop > 0 || facilities != null || ready > 0;
+
+  const overviewPop = document.getElementById("overview-pop-total");
+  const overviewFacility = document.getElementById("overview-facility-total");
+  const overviewSource = document.getElementById("overview-source-total");
+  if (overviewPop) overviewPop.textContent = totalPop ? (totalPop / 10000).toFixed(1) : "—";
+  if (overviewFacility) overviewFacility.textContent = facilities ?? "—";
+  if (overviewSource) overviewSource.textContent = total;
+
+  const wrap = document.getElementById("home-hero-stats");
+  if (!wrap) return;
 
   wrap.innerHTML = `
     <div class="home-stat-card">
@@ -648,10 +663,29 @@ function renderHeroStats() {
       <strong${pop ? ` data-counter="${pop}" data-suffix="명"` : ""}>${pop ? pop.toLocaleString() + "명" : "—"}</strong>
     </div>
   `;
+  wrap.innerHTML = `
+    <div class="home-stat-card">
+      <span>데이터 소스</span>
+      <strong data-counter="${total}" data-suffix="종">${total}종</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>수집 정상</span>
+      <strong class="${ready > 0 ? "ok" : "pending"}"${ready > 0 ? ` data-counter="${ready}" data-suffix="종"` : ""}>${ready > 0 ? `${ready}종` : (hasOperationalData ? "대기" : "연결 대기")}</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>등록 시설</span>
+      <strong${facilities != null ? ` data-counter="${facilities}" data-suffix="건"` : ""}>${facilities != null ? `${facilities}건` : "—"}</strong>
+    </div>
+    <div class="home-stat-card">
+      <span>가산동 인구</span>
+      <strong${pop ? ` data-counter="${pop}" data-suffix="명"` : ""}>${pop ? `${Number(pop).toLocaleString("ko-KR")}명` : "—"}</strong>
+    </div>
+  `;
   animateHeroCounters(wrap);
 }
 
 function animateHeroCounters(wrap) {
+  if (wrap?.id === "home-hero-stats") return;
   wrap.querySelectorAll("[data-counter]").forEach((el) => {
     const target = parseInt(el.dataset.counter, 10);
     if (!target || target === 0) return;
@@ -832,6 +866,104 @@ function renderInsightGeo() {
 }
 
 // ─── 검색 ─────────────────────────────────────────────────────
+
+function bindOverviewInteractions(container) {
+  const topicMeta = {
+    population: { label: "인구", map: "인구 공간 현황", analysis: "인구 구성", href: "#/population" },
+    commercial: { label: "상권", map: "상가업소 공간 현황", analysis: "업종 구성", href: "#/commercial" },
+    welfare: { label: "복지", map: "복지시설 공간 현황", analysis: "필요한 도움", href: "#/welfare" },
+    safety: { label: "안전", map: "안전·환경 공간 현황", analysis: "시설과 환경", href: "#/safety" },
+  };
+  const select = container.querySelector("#overview-dong-select");
+  const dongs = [...new Set((state.data?.population || []).map((item) => item.areaName).filter(Boolean))];
+  if (select && dongs.length) {
+    select.insertAdjacentHTML("beforeend", dongs.map((name) =>
+      `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`
+    ).join(""));
+  }
+
+  const initialParams = new URLSearchParams(location.hash.split("?")[1] || "");
+  let topic = topicMeta[initialParams.get("topic")] ? initialParams.get("topic") : "population";
+  let dong = initialParams.get("district") || "";
+  const syncUrl = () => {
+    if (!decodeURIComponent(location.hash || "").startsWith("#/home")) return;
+    const params = new URLSearchParams();
+    if (topic !== "population") params.set("topic", topic);
+    if (dong) params.set("district", dong);
+    const query = params.toString();
+    history.replaceState(null, "", `${location.pathname}${location.search}#/home${query ? `?${query}` : ""}`);
+  };
+  const syncSelection = () => {
+    const meta = topicMeta[topic];
+    const root = container.querySelector(".urban-overview");
+    const label = container.querySelector("#overview-selection-label");
+    const mapTitle = container.querySelector("#overview-map-title");
+    const analysisTitle = container.querySelector("#overview-analysis-title");
+    const detail = container.querySelector(".overview-detail-link");
+    if (root) root.dataset.topic = topic;
+    if (label) label.textContent = `${dong || "금천구 전체"} · ${meta.label}`;
+    if (mapTitle) mapTitle.textContent = meta.map;
+    if (analysisTitle) analysisTitle.textContent = meta.analysis;
+    if (detail) {
+      detail.href = meta.href;
+      detail.firstChild.textContent = `${meta.label} 상세 분석 `;
+    }
+    container.querySelector("#home-right-pop")?.classList.toggle("is-hidden", topic === "commercial");
+    container.querySelector("#home-right-donut")?.classList.toggle("is-hidden", topic !== "commercial");
+    syncUrl();
+  };
+
+  container.querySelectorAll("[data-overview-topic]").forEach((item) =>
+    item.classList.toggle("is-active", item.dataset.overviewTopic === topic)
+  );
+  if (select && dongs.includes(dong)) select.value = dong;
+  else dong = "";
+
+  container.querySelectorAll("[data-overview-topic]").forEach((button) => {
+    button.addEventListener("click", () => {
+      topic = button.dataset.overviewTopic;
+      container.querySelectorAll("[data-overview-topic]").forEach((item) => item.classList.toggle("is-active", item === button));
+      syncSelection();
+    });
+  });
+  select?.addEventListener("change", () => { dong = select.value; syncSelection(); });
+  container.querySelectorAll("[data-dong]").forEach((button) => {
+    button.addEventListener("click", () => {
+      dong = button.dataset.dong || "";
+      if (select) select.value = dong;
+      syncSelection();
+    });
+  });
+  container.querySelector("#overview-clear-filter")?.addEventListener("click", () => {
+    dong = "";
+    if (select) select.value = "";
+    syncSelection();
+  });
+  container.querySelectorAll("[data-map-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setOverviewMapMode(button.dataset.mapMode);
+    });
+  });
+  syncSelection();
+}
+
+function setOverviewMapMode(mode, unavailable = false) {
+  const container = document.querySelector(".urban-overview");
+  if (!container) return;
+  const listMode = mode === "list";
+  container.querySelectorAll("[data-map-mode]").forEach((item) =>
+    item.classList.toggle("is-active", item.dataset.mapMode === (listMode ? "list" : "map"))
+  );
+  const pane = container.querySelector("#home-map-pane");
+  const fallback = container.querySelector("#home-map-fallback");
+  if (pane) pane.hidden = listMode;
+  if (fallback) {
+    fallback.hidden = !listMode;
+    fallback.classList.toggle("is-provider-error", unavailable);
+    fallback.setAttribute("aria-label", unavailable ? "VWorld 지도를 불러오지 못해 표시한 시설 목록" : "시설 목록");
+  }
+  if (!listMode) requestAnimationFrame(() => homeMap?.invalidateSize());
+}
 
 function bindSearch(container) {
   const form  = container.querySelector(".home-search-form");

@@ -9,8 +9,6 @@ export function normalizeApiBase(value) {
 export const BACKEND_API_BASE = normalizeApiBase(runtimeEnv.BACKEND_API_BASE);
 export const API_TIMEOUT_MS = 1500;
 
-// serve-static.mjs가 .env에서 읽어 /env-config.js로 주입한다. 빈 문자열이면 OSM 폴백.
-export const VWORLD_KEY = runtimeEnv.VWORLD_API_KEY || "";
 export const ADMIN_API_TIMEOUT_MS = 5000;
 export const UPLOAD_LOG_KEY = "geumcheon-upload-logs";
 export const API_LOG_KEY = "geumcheon-api-logs";

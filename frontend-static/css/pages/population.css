@@ -1,10 +1,66 @@
 /* 인구 분석 페이지 전용 스타일 */
 
 .pop-page {
-  --page-accent: var(--teal);
+  --pop-blue: #2f5bff;
+  --pop-blue-deep: #1739a6;
+  --pop-blue-wash: #edf2ff;
+  --pop-mint: #00a88f;
+  --pop-coral: #f06455;
   max-width: var(--container);
   margin: 0 auto;
-  padding: var(--space-8);
+  padding: 12px 0 var(--space-8);
+}
+
+.pop-command-head {
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.pop-command-head::before {
+  content: "";
+  position: absolute;
+  inset: -18px -20px auto -20px;
+  z-index: -1;
+  height: 122px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(47,91,255,.13), rgba(0,168,143,.08) 52%, rgba(240,100,85,.08)), repeating-linear-gradient(90deg, transparent 0 38px, rgba(47,91,255,.045) 38px 39px);
+}
+
+.pop-command-head .page-banner-title {
+  color: var(--text-primary);
+  font-size: clamp(34px, 3.6vw, 54px);
+  font-weight: 900;
+  line-height: .98;
+  letter-spacing: -.05em;
+}
+
+.pop-command-head .page-banner-desc { max-width: 720px; color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+.pop-command-head .page-banner-eyebrow { color: var(--pop-blue); }
+.pop-command-head .page-banner-back { border-color: color-mix(in srgb, var(--pop-blue) 34%, var(--border-default)); background: color-mix(in srgb, var(--pop-blue-wash) 52%, var(--surface-base)); color: var(--pop-blue); }
+
+.pop-executive-strip {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.3fr;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.pop-executive-strip article { position: relative; display: grid; gap: 6px; min-height: 106px; padding: 18px 20px 16px; border-right: 1px solid var(--border-subtle); }
+.pop-executive-strip article:last-child { border-right: 0; }
+.pop-executive-strip article::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--pop-blue); }
+.pop-executive-strip article:nth-child(2)::before { background: var(--pop-mint); }
+.pop-executive-strip article:nth-child(3)::before { background: var(--pop-coral); }
+.pop-executive-strip span { color: var(--text-tertiary); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.pop-executive-strip strong { color: var(--text-primary); font-size: 24px; font-weight: 900; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.pop-executive-strip p { margin: 0; color: var(--text-tertiary); font-size: 10px; line-height: 1.45; }
 }
 
 /* ─── 필터 바 ─── */
@@ -12,7 +68,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-8);
+  min-height: 58px;
+  margin-bottom: var(--space-5);
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
   flex-wrap: wrap;
 }
 
@@ -31,10 +93,11 @@
 
 .pop-filter-btn {
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--line);
+  min-height: 34px;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-full);
-  background: var(--wash);
-  color: var(--muted);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
@@ -46,15 +109,15 @@
 }
 
 .pop-filter-btn:hover {
-  background: var(--green-wash);
-  color: var(--ink);
-  border-color: rgba(20, 107, 74, 0.4);
+  background: var(--pop-blue-wash);
+  color: var(--pop-blue);
+  border-color: color-mix(in srgb, var(--pop-blue) 35%, var(--border-default));
 }
 
 .pop-filter-btn.is-active {
-  background: var(--green);
+  background: var(--pop-blue);
   color: #fff;
-  border-color: var(--green);
+  border-color: var(--pop-blue);
   font-weight: 700;
 }
 
@@ -67,17 +130,23 @@
 .pop-kpi-row {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: 0;
   margin-bottom: var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .pop-kpi-card {
   padding: var(--space-4) var(--space-5);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
   border-top: 3px solid var(--line-strong);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  border-radius: 0;
+  box-shadow: none;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -87,10 +156,12 @@
 .pop-kpi-card:nth-child(4) { border-top-color: var(--amber); }
 .pop-kpi-card:nth-child(5) { border-top-color: var(--red); }
 .pop-kpi-card:nth-child(6) { border-top-color: var(--violet); }
+.pop-kpi-card:last-child { border-right: 0; }
 
 .pop-kpi-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: none;
+  transform: none;
+  background: color-mix(in srgb, var(--pop-blue-wash) 32%, transparent);
 }
 
 .pop-kpi-icon {
@@ -134,9 +205,9 @@
 }
 
 .pop-chart-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
   transition: box-shadow var(--transition-fast);
@@ -184,15 +255,98 @@
   height: 300px;
 }
 
+.chart-fallback {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-height: 100%;
+  padding: 8px 2px;
+}
+
+.fallback-bar-row,
+.fallback-pyramid-row,
+.fallback-stack-row {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.fallback-bar-row {
+  grid-template-columns: 80px minmax(0, 1fr) 88px;
+}
+
+.fallback-bar-row i {
+  display: block;
+  width: var(--w);
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pop-blue), var(--pop-mint));
+}
+
+.fallback-bar-row strong,
+.fallback-pyramid-row strong,
+.fallback-stack-row strong {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 850;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fallback-pyramid-row {
+  grid-template-columns: 62px minmax(0, 1fr) 58px 58px minmax(0, 1fr);
+}
+
+.fallback-pyramid-row i {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.fallback-pyramid-row .is-male {
+  justify-self: end;
+  width: var(--w);
+  background: var(--pop-blue);
+}
+
+.fallback-pyramid-row .is-female {
+  width: var(--w);
+  background: var(--pop-mint);
+}
+
+.fallback-stack-row {
+  grid-template-columns: 86px minmax(0, 1fr) 64px;
+}
+
+.fallback-stack-row > div {
+  display: flex;
+  height: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+
+.fallback-stack-row i {
+  display: block;
+  width: var(--w);
+}
+
+.fallback-stack-row .is-youth { background: var(--pop-blue); }
+.fallback-stack-row .is-middle { background: var(--pop-mint); }
+.fallback-stack-row .is-senior { background: var(--pop-coral); }
+
 .pop-chart-card--wide {
   width: 100%;
 }
 
 /* ─── 인구 통계 테이블 ─── */
 .pop-table-wrap {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -252,6 +406,9 @@
 
 /* ─── 반응형 ─── */
 @media (max-width: 900px) {
+  .pop-executive-strip { grid-template-columns: 1fr; }
+  .pop-executive-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid var(--border-subtle); }
+  .pop-executive-strip article:last-child { border-bottom: 0; }
   .pop-charts-grid {
     grid-template-columns: 1fr;
   }
@@ -259,6 +416,7 @@
   .pop-kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .pop-kpi-card:nth-child(3n) { border-right: 0; }
 }
 
 @media (max-width: 600px) {

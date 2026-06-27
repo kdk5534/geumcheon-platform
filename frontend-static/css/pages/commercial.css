@@ -5,11 +5,13 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
+  min-height: 58px;
+  margin-bottom: 12px;
   padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .cml-scope-btn {
@@ -43,11 +45,67 @@
    페이지 래퍼
 ───────────────────────────────────────── */
 .cml-page {
-  --page-accent: var(--amber);
+  --cml-coral: #f06455;
+  --cml-coral-wash: #fff0ed;
+  --cml-amber: #d88a1f;
+  --cml-amber-wash: #fff6df;
+  --cml-blue: #2f5bff;
+  --cml-mint: #00a88f;
   max-width: var(--container);
   margin: 0 auto;
-  padding: var(--space-8);
+  padding: 12px 0 var(--space-8);
 }
+
+.cml-command-head {
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.cml-command-head::before {
+  content: "";
+  position: absolute;
+  inset: -18px -20px auto -20px;
+  z-index: -1;
+  height: 122px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(240,100,85,.13), rgba(216,138,31,.10) 52%, rgba(47,91,255,.07)), repeating-linear-gradient(90deg, transparent 0 38px, rgba(240,100,85,.05) 38px 39px);
+}
+
+.cml-command-head .page-banner-title {
+  color: var(--text-primary);
+  font-size: clamp(34px, 3.6vw, 54px);
+  font-weight: 900;
+  line-height: .98;
+  letter-spacing: -.05em;
+}
+
+.cml-command-head .page-banner-desc { max-width: 760px; color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+.cml-command-head .page-banner-eyebrow { color: var(--cml-coral); }
+.cml-command-head .page-banner-back { border-color: color-mix(in srgb, var(--cml-coral) 34%, var(--border-default)); background: color-mix(in srgb, var(--cml-coral-wash) 52%, var(--surface-base)); color: var(--cml-coral); }
+
+.cml-executive-strip {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1.3fr;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.cml-executive-strip article { position: relative; display: grid; gap: 6px; min-height: 106px; padding: 18px 20px 16px; border-right: 1px solid var(--border-subtle); }
+.cml-executive-strip article:last-child { border-right: 0; }
+.cml-executive-strip article::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--cml-coral); }
+.cml-executive-strip article:nth-child(2)::before { background: var(--cml-amber); }
+.cml-executive-strip article:nth-child(3)::before { background: var(--cml-blue); }
+.cml-executive-strip span { color: var(--text-tertiary); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.cml-executive-strip strong { color: var(--text-primary); font-size: 24px; font-weight: 900; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.cml-executive-strip p { margin: 0; color: var(--text-tertiary); font-size: 10px; line-height: 1.45; }
 
 /* ─────────────────────────────────────────
    업종 필터 바
@@ -56,7 +114,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-8);
+  min-height: 58px;
+  margin-bottom: var(--space-5);
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
   flex-wrap: wrap;
 }
 
@@ -69,10 +133,11 @@
 
 .cml-filter-btn {
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--line);
+  min-height: 34px;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-full);
-  background: var(--wash);
-  color: var(--muted);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
@@ -84,15 +149,15 @@
 }
 
 .cml-filter-btn:hover {
-  background: var(--green-wash);
-  color: var(--ink);
-  border-color: rgba(20, 107, 74, 0.4);
+  background: var(--cml-coral-wash);
+  color: var(--cml-coral);
+  border-color: color-mix(in srgb, var(--cml-coral) 35%, var(--border-default));
 }
 
 .cml-filter-btn.is-active {
-  background: var(--green);
+  background: var(--cml-coral);
   color: #fff;
-  border-color: var(--green);
+  border-color: var(--cml-coral);
   font-weight: 700;
 }
 
@@ -118,18 +183,25 @@
 .cml-kpi-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: 0;
   margin-bottom: var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .cml-kpi-card {
   padding: var(--space-6);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
   border-top: 3px solid var(--line-strong);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  border-radius: 0;
+  box-shadow: none;
 }
+.cml-kpi-card:last-child { border-right: 0; }
 
 .cml-kpi-card:nth-child(1) { border-top-color: var(--amber); }
 .cml-kpi-card:nth-child(2) { border-top-color: var(--green); }
@@ -176,6 +248,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-5);
+  min-width: 0;
 }
 
 .cml-chart-card--wide {
@@ -186,19 +259,131 @@
 .cml-echart {
   height: 240px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cml-echart--tall {
   height: 280px;
 }
 
+.cml-fallback {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  padding: 8px 0;
+}
+
+.cml-fallback-bars,
+.cml-fallback-share {
+  gap: 11px;
+}
+
+.cml-fallback-row,
+.cml-share-row {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 76px;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.cml-fallback-row i,
+.cml-share-row i {
+  display: block;
+  width: var(--w);
+  height: 11px;
+  border-radius: 999px;
+  background: var(--cml-coral);
+}
+
+.cml-share-row i {
+  background: var(--c);
+}
+
+.cml-fallback-row strong,
+.cml-share-row strong {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 850;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cml-fallback-trend {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 230px;
+  padding: 10px 4px 0;
+}
+
+.cml-trend-col {
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
+.cml-trend-col i {
+  width: 100%;
+  max-width: 28px;
+  height: var(--h);
+  min-height: 8px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--cml-coral), var(--cml-amber));
+}
+
+.cml-fallback-heat {
+  grid-template-columns: 92px repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  align-content: start;
+}
+
+.cml-fallback-heat b,
+.cml-fallback-heat strong,
+.cml-fallback-heat i {
+  min-height: 34px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.cml-fallback-heat b {
+  color: var(--text-tertiary);
+  background: var(--surface-raised);
+  text-align: center;
+}
+
+.cml-fallback-heat strong {
+  color: var(--text-primary);
+  background: var(--surface-raised);
+}
+
+.cml-fallback-heat i {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--cml-coral) calc(var(--a) * 32%), var(--surface-base));
+  border: 1px solid color-mix(in srgb, var(--cml-coral) calc(var(--a) * 38%), var(--border-subtle));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ─────────────────────────────────────────
    차트 카드
 ───────────────────────────────────────── */
 .cml-chart-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
   box-shadow: var(--shadow-sm);
   padding: var(--space-6);
   transition: box-shadow var(--transition-fast);
@@ -224,8 +409,8 @@
 
 .cml-industry-badge {
   padding: var(--space-1) var(--space-3);
-  background: var(--green-wash);
-  color: var(--green);
+  background: var(--cml-coral-wash);
+  color: var(--cml-coral);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
   font-weight: 800;
@@ -342,6 +527,9 @@
    반응형
 ───────────────────────────────────────── */
 @media (max-width: 900px) {
+  .cml-executive-strip { grid-template-columns: 1fr; }
+  .cml-executive-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid var(--border-subtle); }
+  .cml-executive-strip article:last-child { border-bottom: 0; }
   .cml-charts-grid {
     grid-template-columns: 1fr;
   }
@@ -364,6 +552,16 @@
 @media (max-width: 480px) {
   .cml-kpi-row {
     grid-template-columns: 1fr;
+  }
+
+  .cml-chart-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .cml-chart-card {
+    padding: var(--space-4);
   }
 }
 .cml-chart-summary {

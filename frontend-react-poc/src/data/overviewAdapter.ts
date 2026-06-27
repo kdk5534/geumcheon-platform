@@ -69,7 +69,8 @@ function facilityCategory(item: RawFacility) {
       SHELTER: "무더위쉼터",
       SCHOOL_ZONE: "스쿨존",
       CIVIL_DEFENSE_SHELTER: "민방위대피소",
-      // Phase 1 신규 — G밸리 산업
+      // Phase 1 신규 — G밸리 산업·상권
+      TRADITIONAL_MARKET: "전통시장",
       KNOWLEDGE_INDUSTRY_CENTER: "지식산업센터",
     } as Record<string, string>
   )[raw] || raw;

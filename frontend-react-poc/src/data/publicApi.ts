@@ -101,7 +101,8 @@ async function loadAllFacilities(signal?: AbortSignal) {
     "SHELTER",
     "SCHOOL_ZONE",
     "CIVIL_DEFENSE_SHELTER",
-    // Phase 1 신규 — G밸리 산업
+    // Phase 1 신규 — G밸리 산업·상권
+    "TRADITIONAL_MARKET",
     "KNOWLEDGE_INDUSTRY_CENTER",
   ];
   const results = await Promise.allSettled(

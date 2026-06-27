@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MapMode, OverviewModel, OverviewTopic } from "../overviewTypes";
 import type { FacilitySummary } from "../overviewTypes";
 import { VworldMap } from "./VworldMap";
@@ -36,9 +36,6 @@ const topicFacilityAliases: Record<OverviewTopic, string[]> = {
 
 export function OverviewMapPanel({ model, topic, district, mapMode, selectedBreakdown, onMapModeChange }: Props) {
   const [selectedFacility, setSelectedFacility] = useState<FacilitySummary | null>(null);
-  const handleMapUnavailable = useCallback(() => {
-    onMapModeChange("list");
-  }, [onMapModeChange]);
   const topicFilteredFacilities = model.facilities.filter((facility) => {
     const haystack = `${facility.name} ${facility.category} ${facility.address}`.toLocaleLowerCase("ko-KR");
     return topicFacilityAliases[topic].some((alias) => haystack.includes(alias.toLocaleLowerCase("ko-KR")));
@@ -93,7 +90,6 @@ export function OverviewMapPanel({ model, topic, district, mapMode, selectedBrea
       {mapMode === "map" ? (
         <VworldMap
           facilities={displayedFacilities}
-          onUnavailable={handleMapUnavailable}
           onSelectFacility={setSelectedFacility}
           selectedFacilityId={selectedFacility?.id}
         />

@@ -6,7 +6,7 @@ import type { FacilitySummary } from "../overviewTypes";
 
 interface Props {
   facilities: FacilitySummary[];
-  onUnavailable: () => void;
+  onUnavailable?: () => void;
   onSelectFacility?: (facility: FacilitySummary) => void;
   selectedFacilityId?: string;
 }
@@ -32,7 +32,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     if (!mapRef.current || !BACKEND_API_BASE) {
       setStatus("no-backend");
       setStatusMessage("React 환경에서 BACKEND_API_BASE가 설정되지 않았습니다.");
-      onUnavailable();
+      onUnavailable?.();
       return undefined;
     }
 
@@ -45,7 +45,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
         if (!payload.configured) {
           setStatus("not-configured");
           setStatusMessage("백엔드에 VWORLD_API_KEY가 설정되지 않았습니다.");
-          onUnavailable();
+          onUnavailable?.();
         } else {
           setStatus("ready");
         }
@@ -54,7 +54,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
         if (disposed) return;
         setStatus("tile-error");
         setStatusMessage("지도 상태 API에 접근하지 못했습니다. 백엔드 재시작 또는 CORS 설정을 확인해 주세요.");
-        onUnavailable();
+        onUnavailable?.();
       });
 
     const map = L.map(mapRef.current, {
@@ -76,7 +76,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
       if (tileFailures >= 3) {
         setStatus("tile-error");
         setStatusMessage("VWorld 타일을 불러오지 못했습니다. 백엔드 CORS 또는 VWorld 응답을 확인해 주세요.");
-        onUnavailable();
+        onUnavailable?.();
       }
     });
     tileLayer.addTo(map);
@@ -84,10 +84,11 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     const markerLayer = L.layerGroup().addTo(map);
     markerLayerRef.current = markerLayer;
     void addBoundaryLayer(map);
-    window.setTimeout(() => map.invalidateSize(), 120);
+    const sizingTimer = window.setTimeout(() => map.invalidateSize(), 120);
 
     return () => {
       disposed = true;
+      window.clearTimeout(sizingTimer);
       map.remove();
       instanceRef.current = null;
       markerLayerRef.current = null;

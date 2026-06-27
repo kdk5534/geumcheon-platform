@@ -6,10 +6,11 @@ import {
   LegendComponent,
   TooltipComponent,
 } from "echarts/components";
+import { LegacyGridContainLabel } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
 import type { OverviewModel, OverviewTopic } from "../overviewTypes";
 
-echarts.use([BarChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
+echarts.use([BarChart, PieChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer, LegacyGridContainLabel]);
 
 interface Props {
   model: OverviewModel;

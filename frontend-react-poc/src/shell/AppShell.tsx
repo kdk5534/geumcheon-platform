@@ -31,23 +31,12 @@ function todayLabel() {
 }
 
 function getInitialTheme(): Theme {
-  const requested = new URL(window.location.href).searchParams.get("theme");
-  if (requested === "dark" || requested === "light") return requested;
   return localStorage.getItem("gdp-theme") === "dark" ? "dark" : "light";
 }
 
 function getInitialLanguage(): Language {
-  const requested = new URL(window.location.href).searchParams.get("lang");
-  if (supportedLanguages.includes(requested as Language)) return requested as Language;
   const saved = localStorage.getItem("gdp-language");
   return supportedLanguages.includes(saved as Language) ? (saved as Language) : "ko";
-}
-
-function syncUrlParam(key: string, value: string, defaultValue: string) {
-  const url = new URL(window.location.href);
-  if (value === defaultValue) url.searchParams.delete(key);
-  else url.searchParams.set(key, value);
-  window.history.replaceState({}, "", url);
 }
 
 export function AppShell() {
@@ -61,13 +50,11 @@ export function AppShell() {
 
   useEffect(() => {
     localStorage.setItem("gdp-theme", theme);
-    syncUrlParam("theme", theme, "light");
   }, [theme]);
 
   useEffect(() => {
     localStorage.setItem("gdp-language", language);
     document.documentElement.lang = language;
-    syncUrlParam("lang", language, "ko");
   }, [language]);
 
   useEffect(() => {

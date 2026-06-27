@@ -61,8 +61,22 @@ class DatasetRegistryTest {
         assertThat(registry.getRequired("pharmacies").sourceUrl()).contains("OA-16327");
         assertThat(registry.getRequired("childcare-centers").sourceUrl()).contains("OA-20318");
         // Phase 1 신규
+        assertThat(registry.getRequired("parks").sourceUrl()).contains("15012890");
         assertThat(registry.getRequired("traditional-markets").sourceUrl()).contains("15012894");
         assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15117154");
+    }
+
+    @Test
+    void parkIsLifestyleStandardDataWithCoords() {
+        var def = registry.getRequired("parks");
+        assertThat(def.datasetName()).isEqualTo("도시공원");
+        assertThat(def.domain()).isEqualTo("생활");
+        assertThat(def.authKeyRequired()).isTrue();
+        assertThat(def.envVarName()).isEqualTo("DATA_GO_KR_API_KEY");
+        assertThat(def.spatialType()).isEqualTo("POINT");
+        assertThat(def.publicVisible()).isTrue();
+        assertThat(def.apiStatus()).contains("표준데이터 API");
+        assertThat(def.requiredFields()).contains("latitude", "longitude");
     }
 
     @Test

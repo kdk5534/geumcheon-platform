@@ -1,0 +1,124 @@
+.safety-page { display: grid; gap: 26px; color: var(--text-primary); }
+.safety-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 12px 0 24px; border-bottom: 1px solid var(--border-default); }
+.safety-head p, .safety-layer-rail > div > span, .safety-panel-head span, .safety-unavailable span { margin: 0 0 7px; color: #3159d8; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+.safety-head h1 { margin: 0; font-size: clamp(28px, 3vw, 42px); letter-spacing: -.045em; }.safety-head div > span { display: block; margin-top: 10px; color: var(--text-secondary); font-size: 13px; }
+.safety-head-actions { display: flex; gap: 7px; }.safety-head-actions button,.safety-head-actions a { padding: 10px 13px; border: 1px solid var(--border-default); border-radius: 7px; background: var(--surface-base); color: var(--text-secondary); font: inherit; font-size: 9px; font-weight: 800; }
+.safety-layer-rail { display: grid; grid-template-columns: 210px 1fr; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; background: var(--surface-base); }.safety-layer-rail > div:first-child { display: flex; flex-direction: column; justify-content: center; padding: 18px 20px; border-right: 1px solid var(--border-subtle); }.safety-layer-rail h2 { margin: 0; font-size: 14px; }
+.safety-layer-buttons { display: grid; grid-template-columns: repeat(4,1fr); }.safety-layer-buttons button { display: grid; grid-template-columns: 8px 1fr; grid-template-rows: auto auto; align-content: center; gap: 3px 9px; min-height: 80px; padding: 13px 16px; border: 0; border-right: 1px solid var(--border-subtle); background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; }.safety-layer-buttons i { grid-row: 1/3; width: 5px; height: 26px; align-self: center; border-radius: 2px; background: var(--layer-color); }.safety-layer-buttons strong { font-size: 11px; }.safety-layer-buttons span { color: var(--text-tertiary); font-size: 8px; }.safety-layer-buttons button.is-active { background: rgba(49,89,216,.08); }.safety-layer-buttons button:disabled { opacity: .45; cursor: not-allowed; }
+.safety-workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(330px,.65fr); min-height: 620px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; background: var(--surface-base); }.safety-map-panel { min-width:0; border-right: 1px solid var(--border-subtle); }.safety-panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 78px; padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); }.safety-panel-head h2 { margin: 0; font-size: 17px; }
+.safety-map-switch { display:flex; padding:3px; border:1px solid var(--border-subtle); border-radius:7px; background:var(--surface-raised); }.safety-map-switch button { padding:7px 10px; border:0; border-radius:5px; background:transparent; color:var(--text-secondary); font:inherit; font-size:9px; cursor:pointer; }.safety-map-switch button.is-active { background:var(--surface-base); color:#3159d8; box-shadow:var(--shadow-sm); }
+.safety-map { height: 494px; background:var(--surface-sunken); }.safety-map-fallback { height:494px; overflow:auto; }.safety-map-foot { display:flex; gap:18px; min-height:46px; align-items:center; padding:0 18px; border-top:1px solid var(--border-subtle); color:var(--text-tertiary); font-size:8px; }.safety-map-foot span:last-child { margin-left:auto; }
+.safety-map-fallback.is-provider-error::before { display:block; padding:11px 16px; border-bottom:1px solid var(--border-subtle); background:rgba(239,107,91,.1); color:var(--text-secondary); content:"VWorld 지도를 불러오지 못해 목록으로 전환했습니다."; font-size:10px; font-weight:700; }
+.safety-list-row { display:flex; gap:11px; padding:13px 18px; border-bottom:1px solid var(--border-subtle); }.safety-list-row i { width:6px; height:28px; border-radius:2px; background:var(--layer-color); }.safety-list-row div { display:grid; gap:4px; }.safety-list-row strong { font-size:10px; }.safety-list-row span { color:var(--text-tertiary); font-size:8px; }
+.safety-analysis { min-width:0; }.safety-air-value,.safety-facility-count { padding:28px 22px 22px; border-bottom:1px solid var(--border-subtle); }.safety-air-value > span,.safety-facility-count > span { color:var(--text-tertiary); font-size:9px; }.safety-air-value > strong,.safety-facility-count > strong { display:block; margin:9px 0; font-size:38px; letter-spacing:-.05em; }.safety-facility-count small { margin-left:4px; font-size:11px; }.safety-air-value p,.safety-facility-count p { margin:0; color:var(--text-secondary); font-size:9px; line-height:1.6; }
+.safety-meta { margin:0; padding:10px 22px; }.safety-meta div { display:grid; grid-template-columns:70px 1fr; padding:10px 0; border-bottom:1px solid var(--border-subtle); font-size:9px; }.safety-meta dt { color:var(--text-tertiary); }.safety-meta dd { margin:0; }
+.safety-mini-list { display:grid; padding:8px 18px; }.safety-mini-list a { display:grid; grid-template-columns:1fr 16px; gap:3px 8px; padding:11px 4px; border-bottom:1px solid var(--border-subtle); color:var(--text-primary); }.safety-mini-list strong { font-size:9px; }.safety-mini-list span { color:var(--text-tertiary); font-size:8px; }.safety-mini-list svg { grid-column:2; grid-row:1/3; }.safety-empty-inline { padding:20px; color:var(--text-tertiary); font-size:9px; }
+.safety-policy { margin:20px; padding:16px; border-left:3px solid #19a88a; background:rgba(25,168,138,.08); }.safety-policy strong { font-size:10px; }.safety-policy p { margin:7px 0 10px; color:var(--text-secondary); font-size:9px; line-height:1.6; }.safety-policy a { color:#3159d8; font-size:8px; font-weight:800; }
+.safety-unavailable { display:grid; grid-template-columns:260px 1fr; gap:28px; padding:20px 22px; border:1px dashed var(--border-default); border-radius:10px; }.safety-unavailable h2 { margin:0; font-size:14px; }.safety-unavailable p { margin:0; color:var(--text-secondary); font-size:10px; line-height:1.7; }
+.safety-empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 14px;
+  min-height: 430px;
+  padding: 40px;
+  background:
+    linear-gradient(90deg, rgba(49,91,216,.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(49,91,216,.06) 1px, transparent 1px),
+    radial-gradient(circle at 50% 45%, rgba(49,91,216,.08), transparent 180px);
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.safety-empty::before {
+  content: "";
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(49,91,216,.22);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(49,91,216,.24) 0 5px, transparent 6px),
+    linear-gradient(135deg, rgba(49,91,216,.12), rgba(25,168,138,.12));
+  box-shadow: 0 14px 34px rgba(49,91,216,.12);
+}
+.safety-empty strong { color:var(--text-primary); font-size:18px; letter-spacing:-.025em; }
+.safety-empty span { max-width:360px; color:var(--text-tertiary); font-size:12px; line-height:1.65; }
+@media(max-width:900px){.safety-layer-rail{grid-template-columns:1fr}.safety-layer-rail>div:first-child{border-right:0;border-bottom:1px solid var(--border-subtle)}.safety-workspace{grid-template-columns:1fr}.safety-map-panel{border-right:0;border-bottom:1px solid var(--border-subtle)}.safety-unavailable{grid-template-columns:1fr}}
+@media(max-width:650px){.safety-head{align-items:flex-start;flex-direction:column}.safety-layer-buttons{grid-template-columns:1fr 1fr}.safety-map{height:390px}.safety-map-fallback{height:390px}.safety-map-foot{align-items:flex-start;flex-direction:column;gap:5px;padding:10px 14px}.safety-map-foot span:last-child{margin-left:0}}
+
+.safety-map-fallback .safety-empty {
+  grid-template-columns: 170px minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  justify-items: stretch;
+  gap: 26px;
+  padding: 44px 52px;
+  background:
+    linear-gradient(90deg, rgba(49,91,216,.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(49,91,216,.06) 1px, transparent 1px),
+    radial-gradient(circle at 18% 50%, rgba(49,91,216,.13), transparent 190px),
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(241,247,252,.86));
+  text-align: left;
+}
+.safety-map-fallback .safety-empty::before {
+  width: 142px;
+  height: 142px;
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(49,91,216,.36) 0 6px, transparent 7px),
+    radial-gradient(circle at 28% 72%, rgba(25,168,138,.25) 0 5px, transparent 6px),
+    radial-gradient(circle at 72% 28%, rgba(239,107,91,.22) 0 5px, transparent 6px),
+    conic-gradient(from 210deg, rgba(49,91,216,.16), rgba(25,168,138,.08), rgba(49,91,216,.16));
+  box-shadow: 0 22px 54px rgba(49,91,216,.16);
+}
+.safety-map-fallback .safety-empty::after {
+  content: "마지막 정상값 유지 · 좌표 확인 후 지도 표시 · 목록 대체 제공";
+  display: block;
+  grid-column: 2;
+  width: fit-content;
+  margin-top: -18px;
+  padding: 9px 12px;
+  border: 1px solid rgba(49,91,216,.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+  color: #3159d8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.safety-map-fallback .safety-empty strong {
+  max-width: 520px;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -.04em;
+}
+.safety-map-fallback .safety-empty span {
+  max-width: 520px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+[data-theme="dark"] .safety-map-fallback .safety-empty {
+  background:
+    linear-gradient(90deg, rgba(88,129,255,.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(88,129,255,.07) 1px, transparent 1px),
+    radial-gradient(circle at 18% 50%, rgba(88,129,255,.20), transparent 210px),
+    linear-gradient(135deg, rgba(13,27,42,.98), rgba(18,39,61,.94));
+}
+
+[data-theme="dark"] .safety-map-fallback .safety-empty::before {
+  border-color: rgba(120,154,255,.26);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(88,129,255,.52) 0 6px, transparent 7px),
+    radial-gradient(circle at 28% 72%, rgba(25,168,138,.38) 0 5px, transparent 6px),
+    radial-gradient(circle at 72% 28%, rgba(239,107,91,.34) 0 5px, transparent 6px),
+    conic-gradient(from 210deg, rgba(88,129,255,.22), rgba(25,168,138,.14), rgba(88,129,255,.22));
+  box-shadow: 0 22px 54px rgba(0,0,0,.30);
+}
+
+[data-theme="dark"] .safety-map-fallback .safety-empty::after {
+  border-color: rgba(88,129,255,.24);
+  background: rgba(13,27,42,.78);
+  color: #9cb7ff;
+}

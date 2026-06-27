@@ -62,6 +62,7 @@ public final class DatasetPolicyRegistry {
         add(policies, policy("pharmacies", "sourceOriginalId|name+address", 1, 10_000, Duration.ofDays(7), Duration.ofDays(180), true, LOW));
         add(policies, policy("childcare-centers", "sourceOriginalId|name+address", 1, 10_000, Duration.ofDays(30), Duration.ofDays(365), true, LOW));
         // Phase 1 — 생활편의·문화 신규
+        add(policies, policy("libraries", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("parks", "name+address", 1, 1000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         // Phase 1 — 산업·상권(G밸리 특화) 신규
         add(policies, policy("traditional-markets", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));

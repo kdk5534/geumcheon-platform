@@ -57,6 +57,8 @@ public class PublicDataCollectorService {
     private static final String HOSPITAL_KEY     = "hospitals";
     private static final String PHARMACY_KEY     = "pharmacies";
     private static final String CHILDCARE_KEY    = "childcare-centers";
+    // Phase 1 — 안전·환경 신규
+    private static final String FIRE_HYDRANT_KEY = "fire-hydrants";
     // Phase 1 — 생활편의·문화 신규
     private static final String MUSEUM_KEY  = "museums";
     private static final String LIBRARY_KEY = "libraries";
@@ -311,6 +313,8 @@ public class PublicDataCollectorService {
                 , collectorSpec(HOSPITAL_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
+                // Phase 1 신규 — 안전·환경
+                , collectorSpec(FIRE_HYDRANT_KEY, hasValue(dataGoKrApiKey))
                 // Phase 1 신규 — 생활편의·문화
                 , collectorSpec(MUSEUM_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(LIBRARY_KEY, hasValue(dataGoKrApiKey))
@@ -474,6 +478,8 @@ public class PublicDataCollectorService {
             results.add(runSafely(HOSPITAL_KEY, triggeredBy, () -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy)));
             results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
             results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
+            // Phase 1 신규 — 안전·환경
+            results.add(runSafely(FIRE_HYDRANT_KEY, triggeredBy, () -> syncFireHydrants(triggeredBy)));
             // Phase 1 신규 — 생활편의·문화
             results.add(runSafely(MUSEUM_KEY, triggeredBy, () -> syncMuseums(triggeredBy)));
             results.add(runSafely(LIBRARY_KEY, triggeredBy, () -> syncLibraries(triggeredBy)));
@@ -529,6 +535,8 @@ public class PublicDataCollectorService {
                 case HOSPITAL_KEY     -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy);
                 case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
                 case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
+                // Phase 1 신규 — 안전·환경
+                case FIRE_HYDRANT_KEY -> syncFireHydrants(triggeredBy);
                 // Phase 1 신규 — 생활편의·문화
                 case MUSEUM_KEY  -> syncMuseums(triggeredBy);
                 case LIBRARY_KEY -> syncLibraries(triggeredBy);
@@ -998,6 +1006,33 @@ public class PublicDataCollectorService {
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    // ─── 소방용수시설 (data.go.kr 표준데이터 API, 좌표 포함) ──────────────
+
+    public CollectionRunResult syncFireHydrants(String triggeredBy) {
+        return runSyncPipeline(
+                FIRE_HYDRANT_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                this::buildFireHydrantRequestUrl,
+                this::fetchFireHydrantRows,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "FIRE_HYDRANT", rows),
+                saved -> "소방용수시설 " + saved + "건 저장 완료.",
+                triggeredBy);
+    }
+
+    private String buildFireHydrantRequestUrl() {
+        return "https://api.data.go.kr/openapi/tn_pubr_public_ffus_wtrcns_api"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageNo=1&numOfRows=1000&type=json";
+    }
+
+    private List<Map<String, String>> fetchFireHydrantRows(String requestUrl, String datasetName) throws Exception {
+        // signguNm 필드: "금천구" 직접 포함 — rdnmadr 보조 확인
+        return fetchRowsWithRetry(requestUrl, datasetName).stream()
+                .filter(row -> containsGeumcheon(firstNonBlankIgnoreCase(
+                        row, "signguNm", "rdnmadr", "lnmadr"
+                )))
+                .toList();
     }
 
     // ─── 박물관·미술관 (data.go.kr 표준데이터 API, 좌표 포함) ──────────────

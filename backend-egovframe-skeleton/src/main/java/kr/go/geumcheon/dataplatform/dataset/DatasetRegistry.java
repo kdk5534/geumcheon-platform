@@ -377,6 +377,23 @@ public class DatasetRegistry {
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-20318",
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
+        // Phase 1 — 안전·환경 신규
+        items.put("fire-hydrants", new DatasetDefinition(
+                "fire-hydrants", "소방용수시설", "안전", "공공데이터포털 전국소방용수시설표준데이터",
+                "연 1회", "data.go.kr 표준데이터 API (좌표 포함)", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "시설번호"),
+                        new DatasetFieldDefinition("address", "소재지도로명주소"),
+                        new DatasetFieldDefinition("facilityType", "시설구분코드"),
+                        new DatasetFieldDefinition("descLc", "설치위치"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://api.data.go.kr/openapi/tn_pubr_public_ffus_wtrcns_api",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         // Phase 1 — 생활편의·문화 신규
         items.put("museums", new DatasetDefinition(
                 "museums", "박물관·미술관", "문화", "공공데이터포털 전국박물관미술관정보표준데이터",

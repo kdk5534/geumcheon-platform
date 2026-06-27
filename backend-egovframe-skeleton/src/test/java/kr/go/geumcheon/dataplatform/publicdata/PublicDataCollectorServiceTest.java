@@ -704,6 +704,56 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void fireHydrantStandardApiFiltersToGeumcheonBySignguNmAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("FIRE_HYDRANT"), anyList())).thenReturn(1);
+        // signguNm 필드로 금천구 필터 — "금천구" 1건 + "광산구" 1건
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "fcltyNo": "금천-가산-001",
+                    "ctprvnNm": "서울특별시",
+                    "signguNm": "금천구",
+                    "rdnmadr": "서울특별시 금천구 가산디지털1로 10",
+                    "lnmadr": "",
+                    "latitude": "37.4789",
+                    "longitude": "126.8820",
+                    "descLc": "가산동 교차로"
+                  },
+                  {
+                    "fcltyNo": "광산-빛그-001",
+                    "ctprvnNm": "광주광역시",
+                    "signguNm": "광산구",
+                    "rdnmadr": "광주광역시 광산구 양곡길 85",
+                    "lnmadr": "",
+                    "latitude": "35.2000",
+                    "longitude": "126.6862"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncFireHydrants("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("FIRE_HYDRANT"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("fcltyNo")).isEqualTo("금천-가산-001");
+        assertThat(row.get("signguNm")).isEqualTo("금천구");
+        assertThat(row.get("latitude")).isEqualTo("37.4789");
+        assertThat(row.get("longitude")).isEqualTo("126.8820");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void museumStandardApiFiltersToGeumcheonByInsttNmAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

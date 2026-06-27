@@ -19,6 +19,9 @@ public class PublicWifiRelayScheduler {
 
     @Scheduled(cron = "${geumcheon.wifi-relay.cron:0 10 * * * *}")
     public void syncPublicWifi() {
+        if (!collectorService.isCollectorEnabled()) {
+            return;
+        }
         CollectionRunResult result = collectorService.syncDataset("public-wifi", "scheduled-relay");
         log.info(
                 "Public WiFi relay sync finished: status={}, fetched={}, saved={}",

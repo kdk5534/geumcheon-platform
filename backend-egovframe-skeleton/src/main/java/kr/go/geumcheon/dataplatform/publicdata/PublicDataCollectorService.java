@@ -88,7 +88,7 @@ public class PublicDataCollectorService {
     private final PublicDataRepository repository;
     private final DatasetRegistry datasetRegistry;
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
+    private volatile HttpClient httpClient;
     private final String dataGoKrApiKey;
     private final String seoulOpenApiKey;
     private final String wifiRelayBaseUrl;
@@ -143,9 +143,7 @@ public class PublicDataCollectorService {
                 wifiRelayToken,
                 livingFacilityRelayBaseUrl,
                 livingFacilityRelayToken,
-                HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(Math.max(timeoutSeconds, 5)))
-                        .build()
+                null
         );
     }
 
@@ -266,6 +264,21 @@ public class PublicDataCollectorService {
         return collectorEnabled;
     }
 
+    private HttpClient httpClient() {
+        HttpClient current = httpClient;
+        if (current != null) {
+            return current;
+        }
+        synchronized (this) {
+            if (httpClient == null) {
+                httpClient = HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(Math.max(timeoutSeconds, 5)))
+                        .build();
+            }
+            return httpClient;
+        }
+    }
+
     public List<PublicDataRepository.CollectorSpec> specs() {
         return List.of(
                 collectorSpec(STATS_STORE_KEY,  hasValue(dataGoKrApiKey)),
@@ -333,26 +346,30 @@ public class PublicDataCollectorService {
         // Plain HTTP is never allowed in the main platform. Public Wi-Fi uses the
         // loopback relay; all direct external source URLs remain HTTPS-only.
         boolean localTransportOverride = false;
-        if (!policy.collectionEnabled() && !localTransportOverride) {
-            UUID datasetId = repository.upsertDataset(spec);
-            return finishSkipped(
-                    spec,
-                    startedAt,
-                    "-",
-                    "Collection disabled by approved transport security policy.",
-                    triggeredBy,
-                    datasetId
-            );
-        }
-        String requestUrl = buildRequestUrl.get();
-        String loggedRequestUrl = maskRequestUrlForLog(requestUrl);
-        UUIDResult result = new UUIDResult(repository.upsertDataset(spec));
-
-        if (requiredApiKey == null || requiredApiKey.isBlank()) {
-            return finishSkipped(spec, startedAt, loggedRequestUrl, apiKeyMissingMsg, triggeredBy, result.datasetId());
-        }
+        // loggedRequestUrl·result 초기값을 선언해 catch 블록에서 null 없이 참조할 수 있게 한다.
+        String loggedRequestUrl = "-";
+        UUIDResult result = new UUIDResult(null);
 
         try {
+            if (!policy.collectionEnabled() && !localTransportOverride) {
+                UUID datasetId = repository.upsertDataset(spec);
+                return finishSkipped(
+                        spec,
+                        startedAt,
+                        "-",
+                        "Collection disabled by approved transport security policy.",
+                        triggeredBy,
+                        datasetId
+                );
+            }
+            String requestUrl = buildRequestUrl.get();
+            loggedRequestUrl = maskRequestUrlForLog(requestUrl);
+            result = new UUIDResult(repository.upsertDataset(spec));
+
+            if (requiredApiKey == null || requiredApiKey.isBlank()) {
+                return finishSkipped(spec, startedAt, loggedRequestUrl, apiKeyMissingMsg, triggeredBy, result.datasetId());
+            }
+
             List<Map<String, String>> rows = fetchRows.fetch(requestUrl, spec.datasetName());
             if (rows.isEmpty()) {
                 Instant finishedAt = Instant.now();
@@ -421,21 +438,21 @@ public class PublicDataCollectorService {
 
         try {
             List<CollectionRunResult> results = new ArrayList<>();
-            results.add(syncStores(triggeredBy));
-            results.add(syncAirQuality(triggeredBy));
-            results.add(syncBikeStations(triggeredBy));
-            results.add(syncCctvStations(triggeredBy));
-            results.add(syncParkingLots(triggeredBy));
-            results.add(syncPopulation(triggeredBy));
-            results.add(syncPublicWifi(triggeredBy));
-            results.add(syncHeatShelters(triggeredBy));
-            results.add(syncSchoolZones(triggeredBy));
-            results.add(syncEvChargers(triggeredBy));
-            results.add(syncLivingFacility(WELFARE_KEY, "WELFARE", triggeredBy));
-            results.add(syncLivingFacility(CIVIL_SHELTER_KEY, "CIVIL_DEFENSE_SHELTER", triggeredBy));
-            results.add(syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy));
-            results.add(syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy));
-            results.add(syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy));
+            results.add(runSafely(STATS_STORE_KEY, triggeredBy, () -> syncStores(triggeredBy)));
+            results.add(runSafely(AIR_QUALITY_KEY, triggeredBy, () -> syncAirQuality(triggeredBy)));
+            results.add(runSafely(BIKE_KEY, triggeredBy, () -> syncBikeStations(triggeredBy)));
+            results.add(runSafely(CCTV_KEY, triggeredBy, () -> syncCctvStations(triggeredBy)));
+            results.add(runSafely(PARKING_KEY, triggeredBy, () -> syncParkingLots(triggeredBy)));
+            results.add(runSafely(POPULATION_KEY, triggeredBy, () -> syncPopulation(triggeredBy)));
+            results.add(runSafely(WIFI_KEY, triggeredBy, () -> syncPublicWifi(triggeredBy)));
+            results.add(runSafely(HEAT_SHELTER_KEY, triggeredBy, () -> syncHeatShelters(triggeredBy)));
+            results.add(runSafely(SCHOOL_ZONE_KEY, triggeredBy, () -> syncSchoolZones(triggeredBy)));
+            results.add(runSafely(EV_CHARGER_KEY, triggeredBy, () -> syncEvChargers(triggeredBy)));
+            results.add(runSafely(WELFARE_KEY, triggeredBy, () -> syncLivingFacility(WELFARE_KEY, "WELFARE", triggeredBy)));
+            results.add(runSafely(CIVIL_SHELTER_KEY, triggeredBy, () -> syncLivingFacility(CIVIL_SHELTER_KEY, "CIVIL_DEFENSE_SHELTER", triggeredBy)));
+            results.add(runSafely(HOSPITAL_KEY, triggeredBy, () -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy)));
+            results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
+            results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -526,7 +543,7 @@ public class PublicDataCollectorService {
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .GET()
                 .build();
-        HttpResponse<String> pageResponse = httpClient.send(
+        HttpResponse<String> pageResponse = httpClient().send(
                 pageRequest,
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
         );
@@ -544,7 +561,7 @@ public class PublicDataCollectorService {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(form))
                 .build();
-        HttpResponse<byte[]> fileResponse = httpClient.send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
+        HttpResponse<byte[]> fileResponse = httpClient().send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
         requireSuccessStatus(fileResponse.statusCode(), "bike-stations XLSX download");
         return parseGeumcheonBikeWorkbook(fileResponse.body());
     }
@@ -783,7 +800,7 @@ public class PublicDataCollectorService {
                         .header("X-Relay-Token", relayToken)
                         .GET()
                         .build();
-                HttpResponse<String> response = httpClient.send(
+                HttpResponse<String> response = httpClient().send(
                         request,
                         HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
                 );
@@ -966,7 +983,7 @@ public class PublicDataCollectorService {
     private List<Map<String, String>> fetchEvRowsFromOfficialFile() throws Exception {
         HttpRequest pageRequest = HttpRequest.newBuilder(URI.create(EV_DATASET_PAGE_URL))
                 .timeout(Duration.ofSeconds(timeoutSeconds)).GET().build();
-        HttpResponse<String> pageResponse = httpClient.send(
+        HttpResponse<String> pageResponse = httpClient().send(
                 pageRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
         );
         requireSuccessStatus(pageResponse.statusCode(), "ev-chargers dataset page");
@@ -978,7 +995,7 @@ public class PublicDataCollectorService {
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(form)).build();
-        HttpResponse<byte[]> fileResponse = httpClient.send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
+        HttpResponse<byte[]> fileResponse = httpClient().send(fileRequest, HttpResponse.BodyHandlers.ofByteArray());
         requireSuccessStatus(fileResponse.statusCode(), "ev-chargers XLSX download");
         return parseGeumcheonEvWorkbook(fileResponse.body(), matcher.group(2));
     }
@@ -1267,6 +1284,24 @@ public class PublicDataCollectorService {
         return collectorRunning.compareAndSet(false, true);
     }
 
+    /** syncAll 내 개별 수집 호출을 격리한다. 한 데이터셋 예외가 다음 수집을 막지 않는다. */
+    private CollectionRunResult runSafely(String datasetKey, String triggeredBy, java.util.function.Supplier<CollectionRunResult> action) {
+        try {
+            return action.get();
+        } catch (Exception error) {
+            Instant now = Instant.now();
+            String message = error.getMessage() == null || error.getMessage().isBlank()
+                    ? error.getClass().getSimpleName()
+                    : error.getMessage();
+            log.error("Unexpected failure during syncAll for {}: {}", datasetKey, message, error);
+            return new CollectionRunResult(
+                    datasetKey, "failed", 0, 0,
+                    "Public data collection failed unexpectedly.",
+                    "-", now, now, Duration.ZERO
+            );
+        }
+    }
+
     private List<Map<String, String>> fetchStoreRowsWithRetry(String datasetName) throws Exception {
         List<Map<String, String>> allRows = new ArrayList<>();
         Integer totalCount = null;
@@ -1491,7 +1526,7 @@ public class PublicDataCollectorService {
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .GET()
                 .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        HttpResponse<String> response = httpClient().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IllegalStateException("API request failed with HTTP " + response.statusCode());
         }

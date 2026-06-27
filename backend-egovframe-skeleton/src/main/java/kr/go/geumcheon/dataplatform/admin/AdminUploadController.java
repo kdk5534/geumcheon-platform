@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -40,12 +43,16 @@ public class AdminUploadController {
     private final UploadValidator uploadValidator;
     private final UploadDraftManager uploadDraftManager;
     private final DatasetRegistry datasetRegistry;
+    private final StagedUploadStore stagedUploadStore;
+    private final GovernanceStore governanceStore;
 
     @Autowired
     public AdminUploadController(
             AdminUploadStore uploadStore,
             ExcelUploadParser excelUploadParser,
             DatasetRegistry datasetRegistry,
+            StagedUploadStore stagedUploadStore,
+            GovernanceStore governanceStore,
             @Value("${geumcheon.upload.preview-ttl-minutes:15}") long previewTtlMinutes,
             @Value("${geumcheon.upload.max-preview-drafts:5}") int maxPreviewDrafts
     ) {
@@ -55,7 +62,9 @@ public class AdminUploadController {
                 datasetRegistry,
                 new CsvParser(),
                 new UploadValidator(),
-                new UploadDraftManager(Duration.ofMinutes(Math.max(1L, previewTtlMinutes)), Math.max(1, maxPreviewDrafts))
+                new UploadDraftManager(Duration.ofMinutes(Math.max(1L, previewTtlMinutes)), Math.max(1, maxPreviewDrafts)),
+                stagedUploadStore,
+                governanceStore
         );
     }
 
@@ -67,12 +76,27 @@ public class AdminUploadController {
             UploadValidator uploadValidator,
             UploadDraftManager uploadDraftManager
     ) {
+        this(uploadStore, excelUploadParser, datasetRegistry, csvParser, uploadValidator, uploadDraftManager, null, null);
+    }
+
+    AdminUploadController(
+            AdminUploadStore uploadStore,
+            ExcelUploadParser excelUploadParser,
+            DatasetRegistry datasetRegistry,
+            CsvParser csvParser,
+            UploadValidator uploadValidator,
+            UploadDraftManager uploadDraftManager,
+            StagedUploadStore stagedUploadStore,
+            GovernanceStore governanceStore
+    ) {
         this.uploadStore = uploadStore;
         this.excelUploadParser = excelUploadParser;
         this.datasetRegistry = datasetRegistry;
         this.csvParser = csvParser;
         this.uploadValidator = uploadValidator;
         this.uploadDraftManager = uploadDraftManager;
+        this.stagedUploadStore = stagedUploadStore;
+        this.governanceStore = governanceStore;
     }
 
     @GetMapping("/datasets")
@@ -209,6 +233,68 @@ public class AdminUploadController {
         return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 
+    @PostMapping("/uploads/stage")
+    public ResponseEntity<ApiResponse<StagedUploadSummary>> stageUpload(
+            @RequestBody UploadCommitRequest request,
+            Authentication authentication
+    ) {
+        if (stagedUploadStore == null || governanceStore == null) {
+            return fail(HttpStatus.SERVICE_UNAVAILABLE, "승인 대기 저장소가 준비되지 않았습니다.");
+        }
+        if (authentication == null || authentication.getName() == null) {
+            return fail(HttpStatus.UNAUTHORIZED, "관리자 로그인이 필요합니다.");
+        }
+        requireAnyRole(authentication, "ROLE_ADMIN", "ROLE_OPERATOR");
+        if (request == null || request.datasetKey() == null || request.datasetKey().isBlank()) {
+            return fail(HttpStatus.BAD_REQUEST, "datasetKey is required.");
+        }
+        DatasetDefinition dataset = findDataset(request.datasetKey());
+        if (dataset == null || !dataset.supportsUploadCommit()) {
+            return fail(HttpStatus.BAD_REQUEST, "승인 요청을 지원하지 않는 데이터셋입니다.");
+        }
+        List<String> mappingErrors = uploadValidator.validateCommitMapping(dataset, request);
+        if (!mappingErrors.isEmpty()) {
+            return fail(HttpStatus.BAD_REQUEST, "Upload mapping validation failed: " + String.join(" / ", mappingErrors));
+        }
+        CsvUploadDraft draft = request.uploadId() == null ? null : uploadDraftManager.find(request.uploadId());
+        if (draft == null || uploadDraftManager.isExpired(draft)) {
+            return fail(HttpStatus.NOT_FOUND, "업로드 미리보기가 만료되었습니다. 파일을 다시 선택해 주세요.");
+        }
+        if (!request.datasetKey().equals(draft.datasetKey())) {
+            return fail(HttpStatus.BAD_REQUEST, "Upload preview dataset does not match the selected dataset.");
+        }
+        List<String> keyErrors = uploadValidator.validateMappingKeys(draft.headers(), request.columnMappings());
+        List<String> countErrors = uploadValidator.validateCommitCounts(draft, request);
+        if (!keyErrors.isEmpty() || !countErrors.isEmpty()) {
+            List<String> errors = new ArrayList<>(keyErrors);
+            errors.addAll(countErrors);
+            return fail(HttpStatus.BAD_REQUEST, "Upload preview validation failed: " + String.join(" / ", errors));
+        }
+
+        StagedUploadSummary staged = null;
+        try {
+            staged = stagedUploadStore.stage(authentication.getName(), request, draft);
+            ChangeRequestSummary change = governanceStore.create(authentication.getName(),
+                    new GovernanceStore.CreateChangeRequest(
+                            "DATA_UPLOAD", "STAGED_UPLOAD", staged.stagedUploadId(),
+                            dataset.datasetName() + " 파일 공개 반영",
+                            "검증된 원본 파일을 검토자가 승인한 뒤 공개 데이터에 반영합니다.",
+                            Map.of("stagedUploadId", staged.stagedUploadId(), "datasetKey", request.datasetKey()),
+                            Map.of("sourceRows", draft.rowCount(), "columns", draft.columnCount(),
+                                    "fileSize", draft.contentLength())));
+            change = governanceStore.submit(change.requestId(), authentication.getName());
+            StagedUploadSummary linked = stagedUploadStore.linkChangeRequest(staged.stagedUploadId(), change.requestId());
+            uploadDraftManager.discard(request.uploadId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(linked));
+        } catch (RuntimeException error) {
+            if (staged != null && staged.changeRequestId() == null) {
+                stagedUploadStore.discard(staged.stagedUploadId());
+            }
+            log.warn("Upload staging failed for datasetKey {}", request.datasetKey(), error);
+            return fail(HttpStatus.BAD_REQUEST, error.getMessage() == null ? "승인 요청을 만들지 못했습니다." : error.getMessage());
+        }
+    }
+
     @GetMapping("/collection-logs")
     public ApiResponse<List<UploadLogSummary>> collectionLogs(@RequestParam(value = "limit", required = false) Integer limit) {
         return ApiResponse.ok(uploadStore.recentLogs(normalizeLogLimit(limit)));
@@ -306,6 +392,14 @@ public class AdminUploadController {
 
     private <T> ResponseEntity<ApiResponse<T>> fail(HttpStatus status, String message) {
         return ResponseEntity.status(status).body(ApiResponse.fail(message));
+    }
+
+    private void requireAnyRole(Authentication authentication, String... roles) {
+        boolean allowed = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> java.util.Arrays.asList(roles).contains(authority.getAuthority()));
+        if (!allowed) {
+            throw new AccessDeniedException("이 작업에 필요한 관리자 역할이 없습니다.");
+        }
     }
 
     private record ParsedUploadContent(

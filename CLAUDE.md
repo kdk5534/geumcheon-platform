@@ -22,7 +22,11 @@ node serve-static.mjs        # http://localhost:3000
 
 스크립트가 Maven/Java를 자동 탐색한다. 빌드 전 서버가 실행 중이면 반드시 먼저 종료해야 한다(JAR 잠금).
 
+DB 모드를 쓸 때는 스키마를 먼저 적용한다. `.\scripts\apply-db.ps1`이 `database/`의 `schema.sql`과 날짜별 `migration-*.sql`을 적용한다(`-Mode fresh` 전체 재생성 / `-Mode migrate` 증분). 새 마이그레이션은 `database/migration-<YYYYMMDD>-<설명>.sql` 규칙으로 추가한다.
+
 ## 테스트
+
+**백엔드** (JUnit 5 + AssertJ, 31개 테스트 클래스)
 
 ```powershell
 # 전체 테스트 (Maven 경로가 PATH에 있을 때)
@@ -36,7 +40,19 @@ $mvn = (Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter mvn.cmd | Se
 & $mvn -f backend-egovframe-skeleton/pom.xml test -Dtest=PublicDataCollectorServiceTest
 ```
 
-프론트엔드는 빌드 없이 브라우저 새로고침으로 반영된다.
+**프론트엔드** (Node `>=22 <23`. 문법 체크 → Vitest 단위 → Playwright E2E 순서)
+
+```powershell
+cd frontend-static
+npm test                       # check:syntax + test:unit + test:e2e 전체
+npm run test:unit              # Vitest 단위 테스트만 (vitest.config.mjs)
+npm run test:unit -- api       # 특정 단위 테스트 파일만
+npm run test:e2e               # Playwright E2E (playwright.config.mjs)
+npm run test:e2e:headed        # 브라우저 표시하며 E2E 실행
+npm run check:syntax           # JS 문법만 빠르게 검증
+```
+
+E2E에는 시각 회귀(`visual.spec.mjs`, `-snapshots` 디렉터리)와 접근성(`accessibility.spec.mjs`, axe-core)이 포함된다. 페이지 로직 변경 시 단위 테스트만으로 끝내지 말고 E2E도 돌린다. 프론트엔드 런타임은 빌드 없이 브라우저 새로고침으로 반영된다.
 
 ## 환경 변수
 
@@ -119,6 +135,14 @@ $env:COLLECTOR_ENABLED = "true"
 ### 관리자 API 인증
 
 `/api/admin/**` 엔드포인트는 HTTP Basic 인증을 요구한다. Mock 모드 기본 자격증명: `admin` / `admin1234`. DB 모드에서는 `AdminCredentialGuard`가 환경 변수에서 자격증명을 읽는다.
+
+### 백엔드 도메인 패키지
+
+`kr.go.geumcheon.dataplatform` 하위. 위에서 다룬 `publicdata`·`admin`·`dataset` 외에 `map`(`BoundaryController`·`VworldTileService` — 경계/타일), `search`(`UnifiedSearchController` — 통합 검색), `facility`(시설 요약), `config`(`SecurityConfig`·인증), `api`(`ApiResponse` 등 공통 응답)이 있다. 데이터 접근 계층은 인터페이스 + `Mock*`/`Jdbc*` 이중 구현 패턴을 일관되게 따른다(영속화는 MyBatis 사용).
+
+### 릴레이 서브시스템
+
+`wifi-relay/`·`living-facility-relay/`는 백엔드와 별도로 실행되는 외부 데이터 중계 프로세스다. 백엔드의 `PublicWifiRelayScheduler`가 WiFi 릴레이를 폴링한다. `scripts/run-wifi-relay.ps1`·`run-living-facility-relay.ps1`로 실행하고, 라이프사이클은 `scripts/*-relay-lifecycle.psm1` 모듈이 관리한다. DB 모드 백엔드(`run-backend-db.ps1`)는 이 릴레이들과 함께 구동된다.
 
 ---
 

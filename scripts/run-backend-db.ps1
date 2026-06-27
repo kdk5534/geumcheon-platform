@@ -152,7 +152,7 @@ function Resolve-MavenCmd {
 function Invoke-MavenPackage {
     param([string]$MavenCmd)
 
-    & $MavenCmd -DskipTests package
+    & $MavenCmd -DskipTests clean package
     if ($LASTEXITCODE -ne 0) {
         throw "Maven package failed with exit code $LASTEXITCODE."
     }

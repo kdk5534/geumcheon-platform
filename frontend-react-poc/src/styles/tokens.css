@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  font-family:
+    "Pretendard",
+    "Noto Sans KR",
+    "Apple SD Gothic Neo",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+.gdp-app {
+  --gdp-bg: #f4f7fb;
+  --gdp-panel: #ffffff;
+  --gdp-panel-alt: #f7f9fc;
+  --gdp-line: #dbe4ee;
+  --gdp-line-strong: #b8c8d8;
+  --gdp-ink: #10243a;
+  --gdp-muted: #607487;
+  --gdp-soft: #8497a8;
+  --gdp-cobalt: #3159d8;
+  --gdp-mint: #00a88f;
+  --gdp-coral: #ef6b5b;
+  --gdp-amber: #d49324;
+  --gdp-radius: 16px;
+  --gdp-radius-sm: 10px;
+  --gdp-shadow: 0 1px 2px rgba(16, 36, 58, .035), 0 14px 34px rgba(16, 36, 58, .055);
+  --gdp-shadow-tight: 0 1px 2px rgba(16, 36, 58, .04), 0 6px 18px rgba(16, 36, 58, .045);
+}
+
+.gdp-app[data-theme="dark"] {
+  --gdp-bg: #081522;
+  --gdp-panel: #0e1c2c;
+  --gdp-panel-alt: #13243a;
+  --gdp-line: #223a54;
+  --gdp-line-strong: #385b79;
+  --gdp-ink: #e8f1fb;
+  --gdp-muted: #a9b9c9;
+  --gdp-soft: #7f95aa;
+  --gdp-shadow: 0 1px 0 rgba(255, 255, 255, .035), 0 22px 58px rgba(0, 0, 0, .30);
+  --gdp-shadow-tight: 0 1px 0 rgba(255, 255, 255, .035), 0 12px 28px rgba(0, 0, 0, .24);
+}

@@ -1,0 +1,56 @@
+{
+  "population": [
+    { "areaName": "가산동", "total": 24800 },
+    { "areaName": "독산1동", "total": 31100 },
+    { "areaName": "독산2동", "total": 18700 },
+    { "areaName": "독산3동", "total": 22150 },
+    { "areaName": "독산4동", "total": 19650 },
+    { "areaName": "시흥1동", "total": 29200 },
+    { "areaName": "시흥2동", "total": 20340 }
+  ],
+  "facilities": [
+    {
+      "id": "sample-1",
+      "name": "금천구청",
+      "category": "공공",
+      "address": "서울특별시 금천구 시흥대로73길 70",
+      "latitude": 37.4569,
+      "longitude": 126.8955
+    },
+    {
+      "id": "sample-2",
+      "name": "가산도서관",
+      "category": "문화",
+      "address": "서울특별시 금천구 가산로5길 43",
+      "latitude": 37.4714,
+      "longitude": 126.8927
+    },
+    {
+      "id": "sample-3",
+      "name": "독산보건분소",
+      "category": "의료",
+      "address": "서울특별시 금천구 독산로",
+      "latitude": 37.4662,
+      "longitude": 126.9025
+    },
+    {
+      "id": "sample-4",
+      "name": "시흥행정복지센터",
+      "category": "행정",
+      "address": "서울특별시 금천구 시흥대로",
+      "latitude": 37.4507,
+      "longitude": 126.9084
+    }
+  ],
+  "stores": [
+    { "name": "가산 음식점 표본", "category": "음식", "address": "서울특별시 금천구 가산동" },
+    { "name": "독산 소매점 표본", "category": "소매", "address": "서울특별시 금천구 독산동" },
+    { "name": "시흥 서비스업 표본", "category": "서비스", "address": "서울특별시 금천구 시흥동" },
+    { "name": "금천 의료업 표본", "category": "의료", "address": "서울특별시 금천구" }
+  ],
+  "airQuality": [
+    { "status": "보통", "stationName": "금천구", "measuredAt": "항목별 기준일" }
+  ],
+  "apiSources": [],
+  "meta": {}
+}

@@ -1,0 +1,4967 @@
+body {
+  margin: 0;
+  background: #f4f7fb;
+}
+
+.gdp-app,
+.gdp-app * {
+  box-sizing: border-box;
+}
+
+.gdp-app {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% -8%, rgba(49, 89, 216, .12), transparent 28rem),
+    radial-gradient(circle at 92% 0%, rgba(0, 168, 143, .08), transparent 28rem),
+    var(--gdp-bg);
+  color: var(--gdp-ink);
+}
+
+.gdp-app a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gdp-app button,
+.gdp-app select {
+  font: inherit;
+}
+
+.gdp-app a:focus-visible,
+.gdp-app button:focus-visible,
+.gdp-app input:focus-visible,
+.gdp-app select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gdp-cobalt) 72%, #fff);
+  outline-offset: 3px;
+}
+
+.gdp-skip-link {
+  position: fixed;
+  left: 16px;
+  top: 10px;
+  z-index: 1200;
+  transform: translateY(-160%);
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--gdp-cobalt);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform .18s ease;
+}
+
+.gdp-skip-link:focus {
+  transform: translateY(0);
+}
+
+.gdp-util-bar,
+.gdp-pulse-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 clamp(18px, 4vw, 48px);
+}
+
+.gdp-util-bar {
+  min-height: 28px;
+  background: #0d3148;
+  color: rgba(255, 255, 255, .78);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.gdp-util-bar nav,
+.gdp-site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.gdp-util-bar a:hover,
+.gdp-site-footer a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.gdp-pulse-bar {
+  min-height: 34px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel) 94%, var(--gdp-cobalt));
+  box-shadow: 0 8px 22px rgba(7, 22, 38, .04);
+}
+
+.gdp-pulse-bar > strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
+  background: var(--gdp-cobalt);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.gdp-pulse-bar > div {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  min-width: 0;
+}
+
+.gdp-pulse-bar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gdp-muted);
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.gdp-pulse-bar b {
+  color: var(--gdp-ink);
+  font-size: 13px;
+  letter-spacing: -.02em;
+}
+
+.gdp-pulse-bar i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gdp-cobalt);
+  box-shadow: 0 0 0 4px rgba(49, 89, 216, .1);
+}
+
+.gdp-pulse-bar i.is-mint {
+  background: var(--gdp-mint);
+  box-shadow: 0 0 0 4px rgba(0, 168, 143, .12);
+}
+
+.gdp-pulse-bar i.is-coral {
+  background: var(--gdp-coral);
+  box-shadow: 0 0 0 4px rgba(239, 107, 91, .12);
+}
+
+.gdp-pulse-bar i.is-amber {
+  background: var(--gdp-amber);
+  box-shadow: 0 0 0 4px rgba(212, 147, 36, .12);
+}
+
+.gdp-pulse-bar button {
+  border: 0;
+  background: transparent;
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.gdp-shell {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(260px, 340px);
+  gap: 18px;
+  align-items: center;
+  min-height: 58px;
+  padding: 0 clamp(18px, 4vw, 48px);
+  border-bottom: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel) 94%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 28px rgba(7, 22, 38, .045);
+}
+
+.gdp-app[data-theme="dark"] .gdp-shell {
+  background: rgba(14, 28, 44, .92);
+}
+
+.gdp-shell-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 78%, transparent);
+}
+
+.gdp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 208px;
+}
+
+.gdp-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--gdp-cobalt), var(--gdp-mint));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-brand strong,
+.gdp-brand small {
+  display: block;
+}
+
+.gdp-brand strong {
+  font-size: 15px;
+  letter-spacing: -.02em;
+}
+
+.gdp-brand small {
+  margin-top: 2px;
+  color: var(--gdp-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.gdp-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 4px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 70%, transparent);
+  scrollbar-width: none;
+}
+
+.gdp-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.gdp-nav a,
+.gdp-nav-disabled {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.gdp-nav a.active {
+  background: var(--gdp-cobalt);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(49, 89, 216, .22);
+}
+
+.gdp-nav-disabled {
+  opacity: .48;
+}
+
+.gdp-search-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--gdp-panel) 86%, var(--gdp-cobalt));
+  color: var(--gdp-muted);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gdp-theme-toggle {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gdp-ink);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: none;
+}
+
+.gdp-language-select {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gdp-ink);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: none;
+}
+
+.gdp-shell-health {
+  margin: 0;
+  border-bottom: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-mint));
+}
+
+.gdp-shell-health > button {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 clamp(18px, 4vw, 48px);
+  border: 0;
+  background: transparent;
+  color: var(--gdp-muted);
+  text-align: left;
+}
+
+.gdp-shell-health > button span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gdp-amber);
+  box-shadow: 0 0 0 5px rgba(212, 147, 36, .12);
+}
+
+.gdp-shell-health.is-ready > button span {
+  background: var(--gdp-mint);
+  box-shadow: 0 0 0 5px rgba(0, 168, 143, .12);
+}
+
+.gdp-shell-health.is-error > button span {
+  background: var(--gdp-coral);
+  box-shadow: 0 0 0 5px rgba(239, 107, 91, .12);
+}
+
+.gdp-shell-health > button strong {
+  color: var(--gdp-ink);
+  font-size: 12px;
+}
+
+.gdp-shell-health > button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdp-shell-health > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--gdp-line);
+  background: var(--gdp-panel);
+}
+
+.gdp-shell-health p,
+.gdp-shell-health a {
+  display: grid;
+  gap: 5px;
+  min-height: 72px;
+  margin: 0;
+  padding: 15px clamp(14px, 2vw, 22px);
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-shell-health a {
+  align-content: center;
+  color: var(--gdp-cobalt);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-shell-health p span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-shell-health p strong {
+  font-size: 13px;
+}
+
+.gdp-section-nav-shell {
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 clamp(18px, 4vw, 48px);
+  border-bottom: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel) 94%, var(--gdp-mint));
+}
+
+.gdp-section-context {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.gdp-section-context span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-section-context strong {
+  color: var(--gdp-ink);
+  font-size: 15px;
+  letter-spacing: -.02em;
+}
+
+.gdp-section-nav-shell nav {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.gdp-section-nav-shell nav a,
+.gdp-section-data-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.gdp-section-nav-shell nav a.is-active {
+  background: rgba(0, 168, 143, .14);
+  color: var(--gdp-mint);
+  box-shadow: inset 0 0 0 1px rgba(0, 168, 143, .16);
+}
+
+.gdp-section-data-link {
+  border: 1px solid var(--gdp-line);
+  background: var(--gdp-panel);
+  color: var(--gdp-cobalt);
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-command {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: start center;
+  padding: min(10vh, 84px) 18px 18px;
+}
+
+.gdp-command-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(7, 22, 38, .44);
+  backdrop-filter: blur(8px);
+}
+
+.gdp-command-panel {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: 20px;
+  background: var(--gdp-panel);
+  color: var(--gdp-ink);
+  box-shadow: 0 28px 90px rgba(7, 22, 38, .28);
+}
+
+.gdp-command-head {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .07), transparent 70%),
+    var(--gdp-panel);
+}
+
+.gdp-command-head span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-command-head strong {
+  color: var(--gdp-ink);
+  font-size: 18px;
+  letter-spacing: -.04em;
+}
+
+.gdp-command-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-command-input input {
+  min-height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--gdp-ink);
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.gdp-command-input kbd,
+.gdp-command-panel footer span {
+  padding: 4px 7px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 7px;
+  background: var(--gdp-panel);
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.gdp-command-source {
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.gdp-command-source.is-ready {
+  color: var(--gdp-mint);
+}
+
+.gdp-command-source.is-error {
+  color: var(--gdp-coral);
+}
+
+.gdp-command-results {
+  max-height: min(52vh, 460px);
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--gdp-panel);
+}
+
+.gdp-command-group {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.gdp-command-group + .gdp-command-group {
+  border-top: 1px solid var(--gdp-line);
+}
+
+.gdp-command-group h2 {
+  margin: 0;
+  padding: 5px 4px 2px;
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-command-results button {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 4px 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-command-results button span {
+  grid-row: 1 / 3;
+  align-self: center;
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .09);
+  color: var(--gdp-cobalt);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-command-results button strong,
+.gdp-command-results button small {
+  display: block;
+}
+
+.gdp-command-results button strong {
+  font-size: 15px;
+  letter-spacing: -.03em;
+}
+
+.gdp-command-results button small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+}
+
+.gdp-command-results button.is-active {
+  border-color: rgba(49, 89, 216, .28);
+  background:
+    linear-gradient(90deg, rgba(49, 89, 216, .1), transparent 68%),
+    var(--gdp-panel-alt);
+  box-shadow: inset 3px 0 0 var(--gdp-cobalt);
+}
+
+.gdp-command-empty {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 30px 18px;
+  color: var(--gdp-muted);
+  text-align: left;
+}
+
+.gdp-command-empty span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-command-empty strong {
+  color: var(--gdp-ink);
+  font-size: 18px;
+  letter-spacing: -.04em;
+}
+
+.gdp-command-empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gdp-command-empty div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gdp-command-empty button {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid rgba(49, 89, 216, .22);
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-command-panel footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--gdp-line);
+}
+
+.gdp-search-button kbd {
+  padding: 4px 7px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 6px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-soft);
+  font-size: 10px;
+}
+
+.gdp-main {
+  width: min(1480px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 18px 0 64px;
+}
+
+.gdp-route-fallback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(1480px, calc(100% - 36px));
+  min-height: 120px;
+  margin: 24px auto;
+  padding: 18px;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  color: var(--gdp-muted);
+  font-size: 13px;
+  font-weight: 850;
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-route-fallback span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--gdp-mint);
+  box-shadow: 0 0 0 5px rgba(0, 168, 143, .12);
+}
+
+.gdp-site-footer {
+  display: grid;
+  grid-template-columns: minmax(240px, .8fr) minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 28px clamp(18px, 4vw, 54px);
+  border-top: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel) 88%, var(--gdp-cobalt));
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.gdp-site-footer strong,
+.gdp-site-footer span {
+  display: block;
+}
+
+.gdp-site-footer strong {
+  color: var(--gdp-ink);
+  font-size: 14px;
+}
+
+.gdp-site-footer p {
+  margin: 0;
+}
+
+.gdp-site-footer nav {
+  justify-content: flex-end;
+}
+
+.gdp-site-footer a {
+  color: var(--gdp-cobalt);
+  font-weight: 900;
+}
+
+.gdp-placeholder {
+  display: grid;
+  gap: 20px;
+}
+
+.gdp-placeholder-head,
+.gdp-placeholder-status,
+.gdp-placeholder-grid article {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-placeholder-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: end;
+  min-height: 230px;
+  padding: clamp(24px, 4vw, 38px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(49, 89, 216, .12), transparent 260px),
+    linear-gradient(135deg, rgba(0, 168, 143, .08), transparent 46%),
+    var(--gdp-panel);
+}
+
+.gdp-placeholder-head span {
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+
+.gdp-placeholder-head h1 {
+  max-width: 780px;
+  margin: 10px 0 12px;
+  font-size: clamp(34px, 5vw, 62px);
+  line-height: .98;
+  letter-spacing: -.07em;
+}
+
+.gdp-placeholder-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.gdp-placeholder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.gdp-placeholder-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel);
+  color: var(--gdp-cobalt);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-placeholder-actions a:first-child {
+  border-color: transparent;
+  background: var(--gdp-cobalt);
+  color: #fff;
+}
+
+.gdp-placeholder-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.gdp-placeholder-status div {
+  min-height: 96px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-placeholder-status div:last-child {
+  border-right: 0;
+}
+
+.gdp-placeholder-status span,
+.gdp-placeholder-grid article > span {
+  display: block;
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-placeholder-status strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--gdp-ink);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.gdp-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.gdp-placeholder-grid article {
+  position: relative;
+  min-height: 220px;
+  padding: 22px;
+  overflow: hidden;
+}
+
+.gdp-placeholder-grid article > span {
+  width: 34px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gdp-cobalt);
+}
+
+.gdp-placeholder-grid article.is-mint > span {
+  background: var(--gdp-mint);
+}
+
+.gdp-placeholder-grid article.is-coral > span {
+  background: var(--gdp-coral);
+}
+
+.gdp-placeholder-grid article.is-amber > span {
+  background: var(--gdp-amber);
+}
+
+.gdp-placeholder-grid article h2 {
+  margin: 26px 0 10px;
+  font-size: 22px;
+  letter-spacing: -.04em;
+}
+
+.gdp-placeholder-grid article p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.gdp-catalog-page {
+  display: grid;
+  gap: 14px;
+}
+
+.gdp-catalog-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  min-height: 160px;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background:
+    radial-gradient(circle at 94% 12%, rgba(49, 89, 216, .13), transparent 230px),
+    linear-gradient(135deg, rgba(0, 168, 143, .05), transparent 54%),
+    var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-catalog-head span,
+.gdp-catalog-status span,
+.gdp-catalog-toolbar label,
+.gdp-catalog-shortcuts header span,
+.gdp-catalog-card-head span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-catalog-head h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 3.2vw, 46px);
+  line-height: 1.02;
+  letter-spacing: -.065em;
+}
+
+.gdp-catalog-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.gdp-catalog-head-stats {
+  display: grid;
+  place-items: center;
+  min-width: 142px;
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid rgba(49, 89, 216, .22);
+  border-radius: 20px;
+  background: rgba(49, 89, 216, .08);
+}
+
+.gdp-catalog-head-stats strong {
+  color: var(--gdp-cobalt);
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -.06em;
+}
+
+.gdp-catalog-head-stats span {
+  color: var(--gdp-cobalt);
+  letter-spacing: 0;
+}
+
+.gdp-catalog-status {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-catalog-status div {
+  min-height: 86px;
+  padding: 16px 18px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-catalog-status strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--gdp-ink);
+  font-size: 21px;
+  letter-spacing: -.04em;
+}
+
+.gdp-catalog-status p {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-amber));
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-catalog-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(160px, auto) minmax(140px, auto) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-catalog-toolbar label {
+  display: grid;
+  gap: 7px;
+}
+
+.gdp-catalog-toolbar input,
+.gdp-catalog-toolbar select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.gdp-catalog-check {
+  display: flex !important;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-muted);
+  white-space: nowrap;
+}
+
+.gdp-catalog-check input {
+  min-height: auto;
+}
+
+.gdp-catalog-shortcuts {
+  display: grid;
+  grid-template-columns: minmax(260px, .45fr) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-catalog-shortcuts header {
+  padding: 16px 18px;
+  border-right: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .06), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-catalog-shortcuts h2 {
+  margin: 6px 0 7px;
+  font-size: 19px;
+  letter-spacing: -.04em;
+}
+
+.gdp-catalog-shortcuts p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.gdp-catalog-shortcuts > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gdp-catalog-shortcuts button {
+  display: grid;
+  gap: 6px;
+  min-height: 124px;
+  padding: 16px;
+  border: 0;
+  border-right: 1px solid var(--gdp-line);
+  background: var(--gdp-panel);
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-catalog-shortcuts button:last-child {
+  border-right: 0;
+}
+
+.gdp-catalog-shortcuts button:hover {
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-cobalt));
+}
+
+.gdp-catalog-shortcuts button span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-catalog-shortcuts button strong {
+  color: var(--gdp-cobalt);
+  font-size: 16px;
+  letter-spacing: -.04em;
+}
+
+.gdp-catalog-shortcuts button small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 740;
+  line-height: 1.45;
+}
+
+.gdp-catalog-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-catalog-result-head div {
+  display: grid;
+  gap: 4px;
+}
+
+.gdp-catalog-result-head strong {
+  font-size: 16px;
+}
+
+.gdp-catalog-result-head span {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.gdp-catalog-result-head button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 999px;
+  background: var(--gdp-panel);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gdp-catalog-grid article {
+  display: grid;
+  gap: 12px;
+  min-height: 294px;
+  padding: 18px;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-catalog-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gdp-catalog-card-head span {
+  width: fit-content;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  letter-spacing: 0;
+}
+
+.gdp-catalog-card-head small {
+  color: var(--gdp-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-catalog-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-catalog-state strong {
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.gdp-catalog-state small {
+  overflow: hidden;
+  color: var(--gdp-muted);
+  font-size: 11px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdp-catalog-state.is-ready {
+  border-color: color-mix(in srgb, var(--gdp-mint) 28%, var(--gdp-line));
+  background: rgba(0, 168, 143, .08);
+}
+
+.gdp-catalog-state.is-ready strong {
+  color: var(--gdp-mint);
+}
+
+.gdp-catalog-state.is-attention {
+  border-color: color-mix(in srgb, var(--gdp-amber) 28%, var(--gdp-line));
+  background: rgba(212, 147, 36, .1);
+}
+
+.gdp-catalog-state.is-attention strong {
+  color: var(--gdp-amber);
+}
+
+.gdp-catalog-state.is-blocked {
+  border-color: color-mix(in srgb, var(--gdp-coral) 28%, var(--gdp-line));
+  background: rgba(239, 107, 91, .08);
+}
+
+.gdp-catalog-state.is-blocked strong {
+  color: var(--gdp-coral);
+}
+
+.gdp-catalog-state.is-pending strong,
+.gdp-catalog-state.is-static strong {
+  color: var(--gdp-cobalt);
+}
+
+.gdp-catalog-grid h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -.04em;
+}
+
+.gdp-catalog-grid p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.gdp-catalog-grid dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--gdp-line);
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-catalog-grid dl div {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.gdp-catalog-grid dt {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-catalog-grid dd {
+  margin: 0;
+  color: var(--gdp-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gdp-catalog-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-self: end;
+}
+
+.gdp-catalog-types span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 80%, var(--gdp-mint));
+  color: var(--gdp-mint);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-catalog-empty {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+  border: 1px dashed color-mix(in srgb, var(--gdp-cobalt) 34%, var(--gdp-line));
+  border-radius: var(--gdp-radius);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .06), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-catalog-empty span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-catalog-empty strong {
+  color: var(--gdp-ink);
+  font-size: 22px;
+  letter-spacing: -.045em;
+}
+
+.gdp-catalog-empty p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-catalog-empty button {
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(49, 89, 216, .24);
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.gdp-finder-page {
+  display: grid;
+  gap: 10px;
+}
+
+.gdp-finder-head,
+.gdp-finder-toolbar,
+.gdp-finder-status,
+.gdp-finder-mix,
+.gdp-finder-map,
+.gdp-finder-list {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-finder-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+  min-height: 126px;
+  padding: clamp(18px, 2.4vw, 26px);
+  background:
+    radial-gradient(circle at 86% 18%, rgba(0, 168, 143, .16), transparent 260px),
+    linear-gradient(135deg, rgba(49, 89, 216, .08), transparent 50%),
+    var(--gdp-panel);
+}
+
+.gdp-finder-head span,
+.gdp-finder-toolbar label,
+.gdp-finder-status span,
+.gdp-finder-mix header span,
+.gdp-finder-list header span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-finder-head h1 {
+  margin: 6px 0 8px;
+  font-size: clamp(30px, 3.5vw, 42px);
+  line-height: .98;
+  letter-spacing: -.07em;
+}
+
+.gdp-finder-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.gdp-finder-summary {
+  display: grid;
+  place-items: center;
+  min-width: 150px;
+  min-height: 82px;
+  padding: 14px;
+  border: 1px solid rgba(0, 168, 143, .26);
+  border-radius: 20px;
+  background: rgba(0, 168, 143, .1);
+}
+
+.gdp-finder-summary strong {
+  color: var(--gdp-mint);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -.06em;
+}
+
+.gdp-finder-summary span {
+  color: var(--gdp-mint);
+  letter-spacing: 0;
+}
+
+.gdp-finder-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(170px, auto) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 10px;
+}
+
+.gdp-finder-toolbar label {
+  display: grid;
+  gap: 7px;
+}
+
+.gdp-finder-toolbar input,
+.gdp-finder-toolbar select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.gdp-finder-segmented {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-finder-segmented button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-finder-segmented button.is-active {
+  background: var(--gdp-cobalt);
+  color: #fff;
+}
+
+.gdp-finder-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.gdp-finder-status div {
+  min-height: 58px;
+  padding: 11px 16px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-finder-status div:last-child {
+  border-right: 0;
+}
+
+.gdp-finder-status strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.gdp-finder-notice {
+  margin: -4px 0 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(212, 147, 36, .24);
+  border-radius: 14px;
+  background: rgba(212, 147, 36, .09);
+  color: var(--gdp-muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.gdp-finder-chipbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -4px;
+  padding: 12px 14px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-finder-chipbar span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-finder-chipbar button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(49, 89, 216, .22);
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-finder-mix {
+  display: grid;
+  grid-template-columns: minmax(180px, .28fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.gdp-finder-mix header {
+  display: grid;
+  gap: 6px;
+}
+
+.gdp-finder-mix header strong {
+  font-size: 16px;
+  letter-spacing: -.03em;
+}
+
+.gdp-finder-mix > div {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gdp-finder-mix button {
+  display: grid;
+  gap: 5px;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 168, 143, .2);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(0, 168, 143, .1), transparent 70%),
+    var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-finder-mix button:hover {
+  border-color: rgba(49, 89, 216, .36);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .12), transparent 70%),
+    var(--gdp-panel-alt);
+}
+
+.gdp-finder-mix button span {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-finder-mix button strong {
+  color: var(--gdp-mint);
+  font-size: 15px;
+  letter-spacing: -.04em;
+}
+
+.gdp-finder-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, .65fr);
+  gap: 18px;
+}
+
+.gdp-finder-map {
+  overflow: hidden;
+}
+
+.gdp-finder-empty-map {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  min-height: 560px;
+  padding: 28px;
+  background:
+    linear-gradient(90deg, rgba(49, 89, 216, .07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(49, 89, 216, .07) 1px, transparent 1px),
+    var(--gdp-panel-alt);
+  background-size: 42px 42px;
+  color: var(--gdp-muted);
+  text-align: center;
+}
+
+.gdp-finder-empty-map strong {
+  color: var(--gdp-ink);
+  font-size: 20px;
+}
+
+.gdp-finder-empty-map span {
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-finder-empty-map button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gdp-cobalt);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-finder-list {
+  max-height: 680px;
+  overflow: auto;
+}
+
+.gdp-finder-list header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: var(--gdp-panel);
+}
+
+.gdp-finder-list header strong {
+  font-size: 16px;
+}
+
+.gdp-finder-list button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--gdp-line);
+  background: transparent;
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-finder-list button:hover {
+  background: rgba(49, 89, 216, .06);
+}
+
+.gdp-finder-list button.is-selected {
+  background:
+    linear-gradient(90deg, rgba(49, 89, 216, .13), transparent 74%),
+    var(--gdp-panel);
+  box-shadow: inset 4px 0 0 var(--gdp-cobalt);
+}
+
+.gdp-finder-list button.is-selected strong {
+  color: var(--gdp-cobalt);
+}
+
+.gdp-finder-list button span {
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 168, 143, .1);
+  color: var(--gdp-mint);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-finder-list button strong {
+  font-size: 14px;
+}
+
+.gdp-finder-list button small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gdp-analysis-page {
+  display: grid;
+  gap: 14px;
+}
+
+.gdp-analysis-hero,
+.gdp-analysis-controls,
+.gdp-analysis-context article,
+.gdp-analysis-lens article,
+.gdp-analysis-metrics article,
+.gdp-analysis-evidence,
+.gdp-analysis-chart,
+.gdp-analysis-list,
+.gdp-analysis-principles {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-analysis-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .36fr);
+  gap: 18px;
+  align-items: center;
+  min-height: 150px;
+  padding: clamp(20px, 2.4vw, 28px);
+  background:
+    radial-gradient(circle at 94% 10%, rgba(49, 89, 216, .12), transparent 220px),
+    linear-gradient(135deg, rgba(0, 168, 143, .045), transparent 54%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-coral .gdp-analysis-hero {
+  background:
+    radial-gradient(circle at 94% 10%, rgba(239, 107, 91, .13), transparent 220px),
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 54%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-mint .gdp-analysis-hero {
+  background:
+    radial-gradient(circle at 94% 10%, rgba(0, 168, 143, .13), transparent 220px),
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 54%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-amber .gdp-analysis-hero {
+  background:
+    radial-gradient(circle at 94% 10%, rgba(212, 147, 36, .14), transparent 220px),
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 54%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-hero span,
+.gdp-analysis-controls label,
+.gdp-analysis-context span,
+.gdp-analysis-lens span,
+.gdp-analysis-metrics span,
+.gdp-analysis-chart header span,
+.gdp-analysis-list header span,
+.gdp-analysis-principles span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-analysis-hero h1 {
+  margin: 8px 0 8px;
+  font-size: clamp(30px, 3.2vw, 46px);
+  line-height: 1.02;
+  letter-spacing: -.065em;
+}
+
+.gdp-analysis-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.gdp-analysis-hero aside {
+  padding: 16px;
+  border: 1px solid rgba(49, 89, 216, .2);
+  border-radius: 14px;
+  background: rgba(49, 89, 216, .07);
+}
+
+.gdp-analysis-hero aside strong,
+.gdp-analysis-hero aside small {
+  display: block;
+}
+
+.gdp-analysis-hero aside strong {
+  margin: 8px 0 7px;
+  font-size: 17px;
+  line-height: 1.4;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-hero aside small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.gdp-analysis-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(260px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+}
+
+.gdp-analysis-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.gdp-analysis-controls input,
+.gdp-analysis-controls select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.gdp-analysis-controls a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--gdp-cobalt);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-analysis-context {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gdp-analysis-context article {
+  position: relative;
+  min-height: 98px;
+  overflow: hidden;
+  padding: 15px;
+}
+
+.gdp-analysis-context article::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 56px;
+  height: 56px;
+  border-end-start-radius: 999px;
+  background: color-mix(in srgb, var(--gdp-cobalt) 14%, transparent);
+}
+
+.gdp-analysis-page.is-coral .gdp-analysis-context article::after {
+  background: color-mix(in srgb, var(--gdp-coral) 16%, transparent);
+}
+
+.gdp-analysis-page.is-mint .gdp-analysis-context article::after {
+  background: color-mix(in srgb, var(--gdp-mint) 16%, transparent);
+}
+
+.gdp-analysis-page.is-amber .gdp-analysis-context article::after {
+  background: color-mix(in srgb, var(--gdp-amber) 18%, transparent);
+}
+
+.gdp-analysis-context strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 8px 0 6px;
+  color: var(--gdp-ink);
+  font-size: 19px;
+  letter-spacing: -.05em;
+}
+
+.gdp-analysis-context small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.gdp-analysis-lens {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gdp-analysis-lens article {
+  display: grid;
+  gap: 7px;
+  min-height: 102px;
+  padding: 15px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-panel-alt) 76%, var(--gdp-cobalt)), transparent 78%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-coral .gdp-analysis-lens article {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-panel-alt) 78%, var(--gdp-coral)), transparent 78%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-mint .gdp-analysis-lens article {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-panel-alt) 78%, var(--gdp-mint)), transparent 78%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-amber .gdp-analysis-lens article {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-panel-alt) 78%, var(--gdp-amber)), transparent 78%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-lens strong {
+  color: var(--gdp-ink);
+  font-size: 17px;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-lens small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.55;
+}
+
+.gdp-analysis-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gdp-analysis-metrics article {
+  min-height: 112px;
+  padding: 16px;
+}
+
+.gdp-analysis-metrics article strong {
+  display: block;
+  margin: 9px 0 7px;
+  font-size: 26px;
+  letter-spacing: -.06em;
+}
+
+.gdp-analysis-metrics article.is-cobalt strong { color: var(--gdp-cobalt); }
+.gdp-analysis-metrics article.is-mint strong { color: var(--gdp-mint); }
+.gdp-analysis-metrics article.is-coral strong { color: var(--gdp-coral); }
+.gdp-analysis-metrics article.is-amber strong { color: var(--gdp-amber); }
+
+.gdp-analysis-metrics article small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gdp-analysis-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(320px, .72fr);
+  gap: 14px;
+}
+
+.gdp-analysis-chart {
+  padding: 18px;
+}
+
+.gdp-analysis-chart h2,
+.gdp-analysis-list h2 {
+  margin: 5px 0 7px;
+  font-size: 20px;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-chart p {
+  margin: 0 0 14px;
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-analysis-page .gdp-linked-chart {
+  min-height: 300px;
+}
+
+.gdp-analysis-page .gdp-linked-chart-body {
+  gap: 14px;
+}
+
+.gdp-analysis-bars {
+  display: grid;
+  gap: 13px;
+}
+
+.gdp-analysis-bars div {
+  display: grid;
+  grid-template-columns: minmax(90px, .4fr) auto;
+  gap: 7px 12px;
+  align-items: center;
+}
+
+.gdp-analysis-bars span {
+  color: var(--gdp-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.gdp-analysis-bars strong {
+  justify-self: end;
+  color: var(--gdp-muted);
+  font-size: 12px;
+}
+
+.gdp-analysis-bars i {
+  grid-column: 1 / -1;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gdp-cobalt), var(--gdp-mint));
+}
+
+.gdp-analysis-list {
+  overflow: auto;
+  max-height: 560px;
+}
+
+.gdp-analysis-list header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-analysis-list a {
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-analysis-facility-stack {
+  display: grid;
+  gap: 0;
+}
+
+.gdp-analysis-mini-map {
+  padding: 14px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 72%, var(--gdp-cobalt));
+}
+
+.gdp-analysis-mini-map .gdp-vworld-shell,
+.gdp-analysis-mini-map .gdp-vworld-map,
+.gdp-analysis-mini-map .gdp-map-list {
+  min-height: 260px;
+  border-radius: 12px;
+}
+
+.gdp-analysis-mini-map .gdp-vworld-shell {
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+}
+
+.gdp-analysis-mini-map .gdp-map-legend {
+  inset-block-end: 10px;
+  inset-inline-start: 10px;
+  max-width: calc(100% - 20px);
+}
+
+.gdp-analysis-map-fallback {
+  display: grid;
+  gap: 7px;
+  margin: 14px;
+  padding: 14px;
+  border: 1px dashed color-mix(in srgb, var(--gdp-cobalt) 34%, var(--gdp-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-cobalt));
+}
+
+.gdp-analysis-map-fallback strong {
+  color: var(--gdp-ink);
+  font-size: 14px;
+  letter-spacing: -.03em;
+}
+
+.gdp-analysis-map-fallback span {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.gdp-analysis-facility-list {
+  display: grid;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.gdp-analysis-facility-list button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--gdp-line);
+  background: transparent;
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-analysis-facility-list button:hover,
+.gdp-analysis-facility-list button.is-selected {
+  background: color-mix(in srgb, var(--gdp-panel-alt) 78%, var(--gdp-cobalt));
+}
+
+.gdp-analysis-facility-list button.is-selected {
+  box-shadow: inset 3px 0 0 var(--gdp-cobalt);
+}
+
+.gdp-analysis-facility-list button span {
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 168, 143, .1);
+  color: var(--gdp-mint);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-analysis-facility-list button strong {
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: -.03em;
+}
+
+.gdp-analysis-facility-list button small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gdp-analysis-more-link {
+  justify-content: center;
+  margin: 12px 14px 14px;
+  border: 1px solid rgba(49, 89, 216, .2) !important;
+  border-radius: 12px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-weight: 900;
+}
+
+.gdp-commerce-panel {
+  display: grid;
+}
+
+.gdp-commerce-focus {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background:
+    radial-gradient(circle at 100% 0, rgba(239, 107, 91, .16), transparent 160px),
+    linear-gradient(135deg, rgba(49, 89, 216, .055), transparent 70%),
+    var(--gdp-panel);
+}
+
+.gdp-commerce-focus > span,
+.gdp-commerce-focus p {
+  grid-column: 1 / -1;
+}
+
+.gdp-commerce-focus > span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-commerce-focus > strong {
+  grid-column: 1 / -1;
+  color: var(--gdp-ink);
+  font-size: 24px;
+  letter-spacing: -.055em;
+}
+
+.gdp-commerce-focus div {
+  display: grid;
+  gap: 5px;
+  min-height: 70px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gdp-coral) 18%, var(--gdp-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-coral));
+}
+
+.gdp-commerce-focus small {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-commerce-focus b {
+  color: var(--gdp-coral);
+  font-size: 19px;
+  letter-spacing: -.04em;
+}
+
+.gdp-commerce-focus p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.gdp-analysis-mix-list {
+  display: grid;
+}
+
+.gdp-analysis-mix-list button {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--gdp-line);
+  background: transparent;
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-analysis-mix-list button:hover,
+.gdp-analysis-mix-list button.is-active {
+  background: rgba(239, 107, 91, .08);
+}
+
+.gdp-analysis-mix-list button span {
+  position: relative;
+  z-index: 1;
+  color: var(--gdp-ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-analysis-mix-list button strong {
+  position: relative;
+  z-index: 1;
+  justify-self: end;
+  color: var(--gdp-coral);
+  font-size: 14px;
+}
+
+.gdp-analysis-mix-list button small {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  color: var(--gdp-muted);
+  font-size: 12px;
+}
+
+.gdp-analysis-mix-list button i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  max-width: 100%;
+  background: linear-gradient(90deg, rgba(239, 107, 91, .14), transparent);
+  pointer-events: none;
+}
+
+.gdp-commerce-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-commerce-actions a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(239, 107, 91, .22);
+  border-radius: 12px;
+  background: rgba(239, 107, 91, .08);
+  color: var(--gdp-coral);
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.gdp-commerce-actions a:first-child {
+  background: var(--gdp-coral);
+  color: #fff;
+}
+
+.gdp-welfare-panel {
+  display: grid;
+}
+
+.gdp-welfare-needs {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background:
+    radial-gradient(circle at 100% 0, rgba(0, 168, 143, .16), transparent 170px),
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-welfare-needs header {
+  display: grid;
+  gap: 6px;
+}
+
+.gdp-welfare-needs header span,
+.gdp-welfare-current > span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-welfare-needs header strong,
+.gdp-welfare-current > strong {
+  color: var(--gdp-ink);
+  font-size: 20px;
+  letter-spacing: -.045em;
+}
+
+.gdp-welfare-needs header p,
+.gdp-welfare-current p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.gdp-welfare-needs > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gdp-welfare-needs button {
+  display: grid;
+  gap: 5px;
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gdp-mint) 18%, var(--gdp-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-mint));
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-welfare-needs button:hover,
+.gdp-welfare-needs button.is-active {
+  border-color: rgba(0, 168, 143, .46);
+  background: rgba(0, 168, 143, .12);
+  box-shadow: inset 3px 0 0 var(--gdp-mint);
+}
+
+.gdp-welfare-needs button span {
+  color: var(--gdp-ink);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.gdp-welfare-needs button small {
+  color: var(--gdp-muted);
+  font-size: 11px;
+  font-weight: 740;
+  line-height: 1.45;
+}
+
+.gdp-welfare-current {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-welfare-current > span,
+.gdp-welfare-current > strong,
+.gdp-welfare-current p {
+  grid-column: 1 / -1;
+}
+
+.gdp-welfare-current div {
+  display: grid;
+  gap: 5px;
+  min-height: 64px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--gdp-mint) 18%, var(--gdp-line));
+  border-radius: 12px;
+  background: var(--gdp-panel);
+}
+
+.gdp-welfare-current small {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-welfare-current b {
+  color: var(--gdp-mint);
+  font-size: 18px;
+  letter-spacing: -.04em;
+}
+
+.gdp-welfare-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-welfare-actions a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 168, 143, .24);
+  border-radius: 12px;
+  background: rgba(0, 168, 143, .08);
+  color: var(--gdp-mint);
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.gdp-welfare-actions a:first-child {
+  background: var(--gdp-mint);
+  color: #fff;
+}
+
+.gdp-safety-panel {
+  display: grid;
+}
+
+.gdp-safety-layers {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background:
+    radial-gradient(circle at 100% 0, rgba(212, 147, 36, .16), transparent 170px),
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-safety-layers header {
+  display: grid;
+  gap: 6px;
+}
+
+.gdp-safety-layers header span,
+.gdp-safety-current > span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-safety-layers header strong,
+.gdp-safety-current > strong {
+  color: var(--gdp-ink);
+  font-size: 20px;
+  letter-spacing: -.045em;
+}
+
+.gdp-safety-layers header p,
+.gdp-safety-current p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+.gdp-safety-layers > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gdp-safety-layers button {
+  display: grid;
+  gap: 5px;
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  text-align: left;
+}
+
+.gdp-safety-layers button:hover,
+.gdp-safety-layers button.is-active {
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+.gdp-safety-layers button.is-cobalt {
+  border-color: color-mix(in srgb, var(--gdp-cobalt) 20%, var(--gdp-line));
+  color: var(--gdp-cobalt);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-cobalt));
+}
+
+.gdp-safety-layers button.is-amber {
+  border-color: color-mix(in srgb, var(--gdp-amber) 22%, var(--gdp-line));
+  color: var(--gdp-amber);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-amber));
+}
+
+.gdp-safety-layers button.is-mint {
+  border-color: color-mix(in srgb, var(--gdp-mint) 20%, var(--gdp-line));
+  color: var(--gdp-mint);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-mint));
+}
+
+.gdp-safety-layers button span {
+  color: var(--gdp-ink);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.gdp-safety-layers button small {
+  color: var(--gdp-muted);
+  font-size: 11px;
+  font-weight: 740;
+  line-height: 1.45;
+}
+
+.gdp-safety-current {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-safety-current > span,
+.gdp-safety-current > strong,
+.gdp-safety-current p {
+  grid-column: 1 / -1;
+}
+
+.gdp-safety-current div {
+  display: grid;
+  gap: 5px;
+  min-height: 64px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--gdp-amber) 18%, var(--gdp-line));
+  border-radius: 12px;
+  background: var(--gdp-panel);
+}
+
+.gdp-safety-current small {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-safety-current b {
+  color: var(--gdp-amber);
+  font-size: 18px;
+  letter-spacing: -.04em;
+}
+
+.gdp-safety-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-safety-actions a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid rgba(212, 147, 36, .26);
+  border-radius: 12px;
+  background: rgba(212, 147, 36, .1);
+  color: var(--gdp-amber);
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.gdp-safety-actions a:first-child {
+  background: var(--gdp-amber);
+  color: #fff;
+}
+
+.gdp-analysis-list a:hover {
+  background: rgba(49, 89, 216, .06);
+}
+
+.gdp-analysis-list a span {
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(0, 168, 143, .1);
+  color: var(--gdp-mint);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-analysis-list a strong {
+  font-size: 14px;
+}
+
+.gdp-analysis-list a small,
+.gdp-analysis-list p {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gdp-analysis-list p {
+  margin: 0;
+  padding: 18px 20px;
+}
+
+.gdp-analysis-empty {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-panel-alt) 84%, var(--gdp-amber)), transparent 80%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-empty > span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-analysis-empty > strong {
+  color: var(--gdp-ink);
+  font-size: 17px;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-empty p {
+  padding: 0;
+}
+
+.gdp-analysis-empty div {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--gdp-amber) 22%, var(--gdp-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 76%, var(--gdp-amber));
+}
+
+.gdp-analysis-empty a {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(49, 89, 216, .24);
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-analysis-empty small {
+  color: var(--gdp-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gdp-analysis-evidence {
+  display: grid;
+  grid-template-columns: minmax(260px, .72fr) minmax(0, 1fr) auto;
+  gap: 0;
+  overflow: hidden;
+}
+
+.gdp-analysis-evidence header {
+  padding: 16px 18px;
+  border-right: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .06), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-coral .gdp-analysis-evidence header {
+  background:
+    linear-gradient(135deg, rgba(239, 107, 91, .065), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-mint .gdp-analysis-evidence header {
+  background:
+    linear-gradient(135deg, rgba(0, 168, 143, .065), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-page.is-amber .gdp-analysis-evidence header {
+  background:
+    linear-gradient(135deg, rgba(212, 147, 36, .075), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-analysis-evidence header span,
+.gdp-analysis-evidence article span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-analysis-evidence h2 {
+  margin: 6px 0 7px;
+  font-size: 19px;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-evidence p {
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.gdp-analysis-evidence > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gdp-analysis-evidence article {
+  min-height: 116px;
+  padding: 16px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-analysis-evidence article strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: var(--gdp-ink);
+  font-size: 16px;
+  letter-spacing: -.04em;
+}
+
+.gdp-analysis-evidence article small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.gdp-analysis-evidence > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 148px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-cobalt));
+  color: var(--gdp-cobalt);
+  font-size: 13px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.gdp-analysis-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.gdp-analysis-principles div {
+  min-height: 74px;
+  padding: 15px 18px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-analysis-principles div:last-child {
+  border-right: 0;
+}
+
+.gdp-analysis-principles strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.gdp-operational-page,
+.gdp-indicators-page,
+.gdp-compare-page,
+.gdp-topics-page,
+.gdp-about-page {
+  display: grid;
+  gap: 20px;
+}
+
+.gdp-operational-hero,
+.gdp-operational-strip article,
+.gdp-operational-timeline article,
+.gdp-indicator-grid article,
+.gdp-compare-controls,
+.gdp-compare-table,
+.gdp-topic-hub-grid a,
+.gdp-guide-grid article {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-operational-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+  min-height: 230px;
+  padding: clamp(26px, 4vw, 42px);
+  background:
+    radial-gradient(circle at 88% 20%, rgba(49, 89, 216, .14), transparent 280px),
+    linear-gradient(135deg, rgba(0, 168, 143, .08), transparent 50%),
+    var(--gdp-panel);
+}
+
+.gdp-operational-hero span,
+.gdp-operational-strip span,
+.gdp-operational-timeline time,
+.gdp-indicator-grid span,
+.gdp-compare-controls label,
+.gdp-compare-table span,
+.gdp-topic-hub-grid span,
+.gdp-guide-grid span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.gdp-operational-hero h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: .98;
+  letter-spacing: -.07em;
+}
+
+.gdp-operational-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.gdp-operational-hero a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 12px;
+  background: var(--gdp-cobalt);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-operational-strip,
+.gdp-indicator-grid,
+.gdp-topic-hub-grid,
+.gdp-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.gdp-operational-strip article,
+.gdp-indicator-grid article,
+.gdp-guide-grid article {
+  min-height: 150px;
+  padding: 20px;
+}
+
+.gdp-operational-strip strong,
+.gdp-indicator-grid strong,
+.gdp-guide-grid strong {
+  display: block;
+  margin: 12px 0 9px;
+  font-size: 30px;
+  letter-spacing: -.06em;
+}
+
+.gdp-operational-strip small,
+.gdp-indicator-grid dd,
+.gdp-guide-grid p,
+.gdp-operational-timeline p,
+.gdp-compare-table small,
+.gdp-topic-hub-grid strong {
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-operational-timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.gdp-operational-timeline article {
+  display: grid;
+  grid-template-columns: minmax(150px, .25fr) minmax(180px, .3fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+}
+
+.gdp-operational-timeline strong {
+  font-size: 17px;
+}
+
+.gdp-operational-timeline p {
+  margin: 0;
+}
+
+.gdp-indicator-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gdp-indicator-grid article strong {
+  font-size: 28px;
+}
+
+.gdp-indicator-grid dl {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.gdp-indicator-grid dl div {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.gdp-indicator-grid dt {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-indicator-grid dd {
+  margin: 0;
+  color: var(--gdp-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gdp-compare-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.gdp-compare-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.gdp-compare-controls select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+}
+
+.gdp-compare-table {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.gdp-compare-table div {
+  min-height: 150px;
+  padding: 20px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-compare-table div:last-child {
+  border-right: 0;
+}
+
+.gdp-compare-table strong {
+  display: block;
+  margin: 12px 0 8px;
+  font-size: 26px;
+  letter-spacing: -.05em;
+}
+
+.gdp-topic-hub-grid a {
+  min-height: 180px;
+  padding: 22px;
+}
+
+.gdp-topic-hub-grid a span {
+  display: block;
+  width: fit-content;
+  margin-bottom: 42px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  letter-spacing: 0;
+}
+
+.gdp-topic-hub-grid a strong {
+  display: block;
+  color: var(--gdp-ink);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.gdp-guide-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gdp-guide-grid strong {
+  font-size: 22px;
+}
+
+.gdp-guide-grid p {
+  margin: 0;
+}
+
+.gdp-overview {
+  display: grid;
+  gap: 14px;
+}
+
+.gdp-hero,
+.gdp-overview-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 0 24px;
+}
+
+.gdp-overview-head {
+  align-items: center;
+  min-height: 64px;
+  padding: 0;
+}
+
+.gdp-kicker,
+.gdp-panel-head span,
+.gdp-section-head span,
+.gdp-brief-strip span,
+.gdp-control-row span,
+.gdp-linked-chart span,
+.gdp-active-filter span {
+  color: var(--gdp-cobalt);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.gdp-hero h1,
+.gdp-overview-head h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(34px, 4vw, 58px);
+  line-height: .98;
+  letter-spacing: -.06em;
+}
+
+.gdp-overview-head h1 {
+  margin: 3px 0 5px;
+  font-size: clamp(24px, 2.3vw, 34px);
+  letter-spacing: -.055em;
+}
+
+.gdp-hero p,
+.gdp-overview-head p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gdp-muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.gdp-overview-head p {
+  max-width: 820px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gdp-hero-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.gdp-hero-actions button,
+.gdp-segmented button,
+.gdp-active-filter button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 10px;
+  background: var(--gdp-panel);
+  color: var(--gdp-ink);
+  font-weight: 850;
+}
+
+.gdp-action-status {
+  min-height: 18px;
+  margin-top: -8px;
+  margin-bottom: -2px;
+  color: var(--gdp-mint);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gdp-brief-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-data-status {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--gdp-panel) 94%, var(--gdp-cobalt));
+  color: var(--gdp-muted);
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-data-status > button {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 42px 6px 34px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gdp-data-status > button::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gdp-amber);
+  box-shadow: 0 0 0 5px rgba(212, 147, 36, .12);
+}
+
+.gdp-data-status > button::after {
+  content: "펼치기";
+  position: absolute;
+  right: 14px;
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-data-status.is-expanded > button::after {
+  content: "접기";
+}
+
+.gdp-data-status > button span,
+.gdp-data-status-detail span {
+  color: var(--gdp-cobalt);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-data-status > button strong,
+.gdp-data-status-detail strong {
+  color: var(--gdp-ink);
+  font-size: 13px;
+}
+
+.gdp-data-status > button small {
+  overflow: hidden;
+  color: var(--gdp-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdp-data-status.is-ready > button span {
+  color: var(--gdp-mint);
+}
+
+.gdp-data-status.is-ready > button::before {
+  background: var(--gdp-mint);
+  box-shadow: 0 0 0 5px rgba(0, 168, 143, .12);
+}
+
+.gdp-data-status.is-error > button span {
+  color: var(--gdp-coral);
+}
+
+.gdp-data-status.is-error > button::before {
+  background: var(--gdp-coral);
+  box-shadow: 0 0 0 5px rgba(239, 107, 91, .12);
+}
+
+.gdp-data-status-detail {
+  display: grid;
+  grid-template-columns: 1.3fr .65fr .65fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--gdp-line);
+  background: var(--gdp-panel);
+}
+
+.gdp-data-status-detail div {
+  min-height: 74px;
+  padding: 15px 18px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-data-status-detail div:last-child {
+  border-right: 0;
+}
+
+.gdp-data-status-detail span,
+.gdp-data-status-detail strong {
+  display: block;
+}
+
+.gdp-data-status-detail strong {
+  margin-top: 7px;
+  line-height: 1.45;
+}
+
+.gdp-brief-strip article {
+  min-height: 126px;
+  padding: 20px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-brief-strip article:last-child {
+  border-right: 0;
+}
+
+.gdp-brief-strip strong {
+  display: block;
+  margin: 10px 0 8px;
+  font-size: 24px;
+  letter-spacing: -.04em;
+}
+
+.gdp-brief-strip p,
+.gdp-map-foot,
+.gdp-kpi-card small,
+.gdp-kpi-card em,
+.gdp-linked-chart p,
+.gdp-insight-rail p,
+.gdp-insight-rail small,
+.gdp-insight-steps span {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gdp-insight-rail {
+  display: grid;
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.2fr) minmax(260px, .9fr);
+  gap: 0;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-insight-rail header {
+  padding: 20px;
+  border-right: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .1), transparent 56%),
+    var(--gdp-panel-alt);
+}
+
+.gdp-insight-rail header h2 {
+  margin: 7px 0 8px;
+  font-size: 19px;
+  letter-spacing: -.03em;
+}
+
+.gdp-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gdp-insight-grid article {
+  min-height: 124px;
+  padding: 20px 18px;
+  border-right: 1px solid var(--gdp-line);
+}
+
+.gdp-insight-grid article:last-child {
+  border-right: 0;
+}
+
+.gdp-insight-grid span,
+.gdp-insight-rail header span,
+.gdp-insight-steps strong {
+  color: var(--gdp-cobalt);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-insight-grid strong {
+  display: block;
+  margin: 10px 0 7px;
+  color: var(--gdp-ink);
+  font-size: 25px;
+  letter-spacing: -.04em;
+}
+
+.gdp-insight-grid small {
+  display: block;
+}
+
+.gdp-insight-steps {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--gdp-line);
+  list-style: none;
+}
+
+.gdp-insight-steps li {
+  display: grid;
+  gap: 5px;
+  min-height: 62px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-insight-steps li:last-child {
+  border-bottom: 0;
+}
+
+.gdp-command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.48fr) minmax(380px, .88fr);
+  gap: 14px;
+  margin-top: 0;
+}
+
+.gdp-map-panel,
+.gdp-analysis-panel,
+.gdp-kpi-section,
+.gdp-provenance {
+  position: relative;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-panel-head,
+.gdp-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-panel-head h2,
+.gdp-section-head h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  letter-spacing: -.03em;
+}
+
+.gdp-panel-head p,
+.gdp-section-head p {
+  margin: 4px 0 0;
+  color: var(--gdp-muted);
+  font-size: 13px;
+}
+
+.gdp-segmented {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 12px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-segmented button {
+  border: 0;
+  box-shadow: none;
+}
+
+.gdp-segmented .is-active {
+  background: var(--gdp-cobalt);
+  color: #fff;
+}
+
+.gdp-map-placeholder {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(49, 89, 216, .08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(49, 89, 216, .08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 46%, rgba(0, 168, 143, .12), transparent 240px),
+    #eaf0f7;
+  background-size: 40px 40px, 40px 40px, auto, auto;
+  text-align: center;
+}
+
+.gdp-app[data-theme="dark"] .gdp-map-placeholder,
+.gdp-app[data-theme="dark"] .gdp-vworld-shell {
+  background:
+    linear-gradient(90deg, rgba(93, 132, 255, .10) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(93, 132, 255, .10) 1px, transparent 1px),
+    #0d1b2d;
+}
+
+.gdp-vworld-shell {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  background: #eaf0f7;
+}
+
+.gdp-vworld-map {
+  min-height: 520px;
+  width: 100%;
+}
+
+.gdp-map-alert {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 500;
+  max-width: min(420px, calc(100% - 28px));
+  padding: 10px 12px;
+  border: 1px solid rgba(239, 107, 91, .22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .94);
+  color: var(--gdp-coral);
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-map-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: min(520px, calc(100% - 28px));
+  padding: 8px;
+  border: 1px solid rgba(219, 228, 238, .88);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: var(--gdp-shadow-tight);
+  backdrop-filter: blur(10px);
+}
+
+.gdp-app[data-theme="dark"] .gdp-map-legend {
+  border-color: rgba(99, 118, 143, .52);
+  background: rgba(14, 28, 44, .9);
+}
+
+.gdp-map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 8px;
+  color: var(--gdp-muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-map-legend i {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(15, 34, 54, .12);
+}
+
+.gdp-map-legend i.is-life { background: var(--gdp-cobalt); }
+.gdp-map-legend i.is-welfare { background: var(--gdp-mint); }
+.gdp-map-legend i.is-safety { background: var(--gdp-amber); }
+.gdp-map-legend i.is-other { background: var(--gdp-coral); }
+
+.gdp-app .leaflet-container {
+  font-family: inherit;
+}
+
+.gdp-app .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: var(--gdp-shadow-tight);
+}
+
+.gdp-app .leaflet-popup-content {
+  margin: 12px 14px;
+  color: var(--gdp-ink);
+}
+
+.gdp-map-placeholder strong {
+  font-size: 34px;
+  letter-spacing: -.05em;
+}
+
+.gdp-map-placeholder span {
+  color: var(--gdp-muted);
+}
+
+.gdp-map-grid i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 14px;
+  height: 14px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--gdp-coral);
+  box-shadow: 0 0 0 7px rgba(239, 107, 91, .18);
+}
+
+.gdp-map-list {
+  display: grid;
+  gap: 10px;
+  min-height: 520px;
+  padding: 18px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-map-list button {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 74px;
+  padding: 14px 16px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background: var(--gdp-panel);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gdp-map-list button:hover,
+.gdp-map-list button:focus-visible,
+.gdp-map-list button.is-selected {
+  border-color: rgba(49, 89, 216, .32);
+  background: rgba(49, 89, 216, .05);
+}
+
+.gdp-map-list button.is-selected {
+  box-shadow: inset 4px 0 0 var(--gdp-cobalt);
+}
+
+.gdp-map-list i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gdp-mint);
+}
+
+.gdp-map-list strong,
+.gdp-map-list span {
+  display: block;
+}
+
+.gdp-map-list span {
+  margin-top: 4px;
+  color: var(--gdp-muted);
+  font-size: 12px;
+}
+
+.gdp-map-list small {
+  color: var(--gdp-cobalt);
+  font-weight: 850;
+}
+
+.gdp-facility-drawer {
+  position: absolute;
+  right: 18px;
+  top: 98px;
+  z-index: 650;
+  width: min(390px, calc(100% - 36px));
+  overflow: hidden;
+  border: 1px solid var(--gdp-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: var(--gdp-shadow);
+  backdrop-filter: blur(14px);
+}
+
+.gdp-app[data-theme="dark"] .gdp-facility-drawer {
+  background: rgba(14, 28, 44, .96);
+}
+
+.gdp-facility-drawer-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid var(--gdp-line);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(49, 89, 216, .12), transparent 150px),
+    var(--gdp-panel);
+}
+
+.gdp-facility-drawer-head span {
+  color: var(--gdp-cobalt);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-facility-drawer-head h3 {
+  margin: 6px 0 0;
+  font-size: 20px;
+  letter-spacing: -.02em;
+  line-height: 1.25;
+}
+
+.gdp-facility-drawer-head button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 999px;
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-muted);
+  font-size: 18px;
+}
+
+.gdp-facility-dl {
+  margin: 0;
+  padding: 4px 18px;
+}
+
+.gdp-facility-dl div {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-facility-dl div:last-child {
+  border-bottom: 0;
+}
+
+.gdp-facility-dl dt {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-facility-dl dd {
+  margin: 0;
+  color: var(--gdp-ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gdp-facility-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 16px 18px 18px;
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-facility-actions a {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 11px;
+  background: var(--gdp-panel);
+  color: var(--gdp-cobalt);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gdp-facility-actions a:first-child {
+  background: var(--gdp-cobalt);
+  color: #fff;
+  border-color: var(--gdp-cobalt);
+}
+
+.gdp-map-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--gdp-line);
+  background: var(--gdp-panel-alt);
+}
+
+.gdp-analysis-panel {
+  overflow: hidden;
+}
+
+.gdp-state-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(0, 168, 143, .1);
+  color: var(--gdp-mint);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gdp-topic-control {
+  padding: 14px;
+}
+
+.gdp-control-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: end;
+}
+
+.gdp-control-row strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.gdp-control-row label {
+  display: grid;
+  gap: 6px;
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gdp-control-row select {
+  min-width: 150px;
+  min-height: 38px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 10px;
+  background: var(--gdp-panel);
+}
+
+.gdp-topic-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.gdp-topic-buttons button {
+  min-height: 62px;
+  padding: 11px 12px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background: var(--gdp-panel-alt);
+  text-align: left;
+}
+
+.gdp-topic-buttons button span,
+.gdp-topic-buttons button small {
+  display: block;
+}
+
+.gdp-topic-buttons button span {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.gdp-topic-buttons button small {
+  margin-top: 5px;
+  color: var(--gdp-muted);
+}
+
+.gdp-topic-buttons .is-active {
+  border-color: rgba(49, 89, 216, .4);
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+}
+
+.gdp-active-filter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 10px;
+  margin: 0 14px;
+  padding: 12px;
+  border: 1px solid rgba(49, 89, 216, .24);
+  border-radius: 14px;
+  background: rgba(49, 89, 216, .06);
+}
+
+.gdp-district-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 14px 0;
+}
+
+.gdp-filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 14px 0;
+}
+
+.gdp-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 8px 0 11px;
+  border: 1px solid rgba(49, 89, 216, .24);
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.gdp-filter-chip button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(49, 89, 216, .12);
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.gdp-district-shortcuts button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 999px;
+  background: var(--gdp-panel);
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gdp-district-shortcuts button.is-active {
+  border-color: rgba(49, 89, 216, .35);
+  background: rgba(49, 89, 216, .08);
+  color: var(--gdp-cobalt);
+}
+
+.gdp-active-filter span,
+.gdp-active-filter strong {
+  grid-column: 1;
+}
+
+.gdp-active-filter button {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.gdp-linked-chart {
+  display: grid;
+  grid-template-rows: auto minmax(210px, 1fr);
+  min-height: 276px;
+  margin: 14px;
+  padding: 14px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(0, 168, 143, .08), transparent),
+    var(--gdp-panel-alt);
+}
+
+.gdp-linked-chart-copy {
+  margin-bottom: 10px;
+}
+
+.gdp-linked-chart strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 18px;
+  letter-spacing: -.04em;
+}
+
+.gdp-linked-chart-canvas {
+  min-height: 190px;
+}
+
+.gdp-linked-chart-body {
+  display: grid;
+  grid-template-rows: minmax(190px, 1fr) auto;
+  gap: 12px;
+}
+
+.gdp-chart-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gdp-chart-values button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--gdp-panel) 86%, var(--gdp-mint));
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.gdp-chart-values button strong {
+  margin: 0;
+  color: var(--gdp-ink);
+  font-size: 13px;
+  letter-spacing: -.02em;
+}
+
+.gdp-chart-values button.is-active {
+  border-color: rgba(0, 168, 143, .5);
+  background: rgba(0, 168, 143, .12);
+  color: var(--gdp-mint);
+}
+
+.gdp-overview .gdp-linked-chart {
+  height: 300px;
+  min-height: 300px;
+  overflow: hidden;
+}
+
+.gdp-overview .gdp-linked-chart-body {
+  grid-template-rows: minmax(160px, 1fr) auto;
+}
+
+.gdp-overview .gdp-linked-chart-canvas {
+  min-height: 160px;
+}
+
+.gdp-overview .gdp-chart-values {
+  max-height: 70px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.gdp-overview .gdp-map-panel .gdp-vworld-shell,
+.gdp-overview .gdp-map-panel .gdp-vworld-map,
+.gdp-overview .gdp-map-panel .gdp-map-list {
+  min-height: 440px;
+}
+
+.gdp-overview .gdp-topic-buttons {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gdp-overview .gdp-topic-buttons button {
+  min-height: 58px;
+  padding: 10px;
+}
+
+.gdp-overview .gdp-topic-buttons button small {
+  display: none;
+}
+
+.gdp-overview .gdp-district-shortcuts {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.gdp-overview .gdp-district-shortcuts button {
+  flex: 0 0 auto;
+}
+
+.gdp-linked-chart-empty {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  padding: 18px;
+  border: 1px dashed var(--gdp-line-strong);
+  border-radius: 14px;
+  color: var(--gdp-muted);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gdp-kpi-section,
+.gdp-provenance {
+  margin-top: 20px;
+}
+
+.gdp-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gdp-kpi-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 126px;
+  padding: 18px;
+  border-right: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gdp-panel-alt) 55%, transparent), transparent 72%),
+    var(--gdp-panel);
+}
+
+.gdp-kpi-card:last-child {
+  border-right: 0;
+}
+
+.gdp-kpi-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gdp-kpi-card span {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.gdp-kpi-card strong {
+  align-self: center;
+  display: block;
+  margin: 10px 0 6px;
+  font-size: 28px;
+  letter-spacing: -.05em;
+}
+
+.gdp-kpi-card em {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 24px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.gdp-kpi-card small {
+  color: var(--gdp-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gdp-kpi-card.is-cobalt em { background: rgba(49, 89, 216, .1); color: var(--gdp-cobalt); }
+.gdp-kpi-card.is-mint em { background: rgba(0, 168, 143, .1); color: var(--gdp-mint); }
+.gdp-kpi-card.is-coral em { background: rgba(239, 107, 91, .1); color: var(--gdp-coral); }
+.gdp-kpi-card.is-amber em { background: rgba(212, 147, 36, .12); color: var(--gdp-amber); }
+
+.gdp-provenance dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+
+.gdp-provenance dl div {
+  min-height: 86px;
+  padding: 17px 18px;
+  border-right: 1px solid var(--gdp-line);
+  background:
+    linear-gradient(135deg, rgba(49, 89, 216, .045), transparent 70%),
+    var(--gdp-panel);
+}
+
+.gdp-provenance dl div:last-child {
+  border-right: 0;
+}
+
+.gdp-provenance dt {
+  color: var(--gdp-soft);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gdp-provenance dd {
+  margin: 8px 0 0;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.gdp-provenance-note {
+  margin: 0;
+  padding: 13px 18px;
+  border-top: 1px solid var(--gdp-line);
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
+@media (max-width: 1040px) {
+  .gdp-util-bar,
+  .gdp-pulse-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-block: 10px;
+  }
+
+  .gdp-pulse-bar > div {
+    width: 100%;
+  }
+
+  .gdp-shell-health > div,
+  .gdp-section-nav-shell,
+  .gdp-site-footer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gdp-section-nav-shell {
+    align-items: start;
+    padding-block: 12px;
+  }
+
+  .gdp-section-nav-shell nav {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  .gdp-placeholder-head,
+  .gdp-placeholder-status,
+  .gdp-placeholder-grid,
+  .gdp-catalog-head,
+  .gdp-catalog-status,
+  .gdp-catalog-toolbar,
+  .gdp-catalog-shortcuts,
+  .gdp-catalog-grid,
+  .gdp-finder-head,
+  .gdp-finder-toolbar,
+  .gdp-finder-status,
+  .gdp-finder-mix,
+  .gdp-finder-layout,
+  .gdp-analysis-hero,
+  .gdp-analysis-controls,
+  .gdp-analysis-context,
+  .gdp-analysis-lens,
+  .gdp-analysis-metrics,
+  .gdp-analysis-workbench,
+  .gdp-analysis-evidence,
+  .gdp-analysis-principles,
+  .gdp-operational-hero,
+  .gdp-operational-strip,
+  .gdp-indicator-grid,
+  .gdp-compare-controls,
+  .gdp-compare-table,
+  .gdp-topic-hub-grid,
+  .gdp-guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-placeholder-actions {
+    justify-content: flex-start;
+  }
+
+  .gdp-placeholder-status div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-placeholder-status div:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-catalog-status div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-catalog-head-stats {
+    place-items: start;
+    min-width: 0;
+  }
+
+  .gdp-catalog-shortcuts header {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-catalog-shortcuts > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gdp-catalog-shortcuts button:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .gdp-catalog-shortcuts button:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-finder-status div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-finder-status div:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-finder-mix > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gdp-analysis-principles div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-analysis-evidence header,
+  .gdp-analysis-evidence article {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-analysis-evidence > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .gdp-analysis-evidence > a {
+    min-height: 54px;
+  }
+
+  .gdp-analysis-principles div:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-operational-timeline article {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .gdp-compare-table div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-compare-table div:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-shell {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-block: 10px;
+  }
+
+  .gdp-command-grid,
+  .gdp-brief-strip,
+  .gdp-insight-rail,
+  .gdp-kpi-grid,
+  .gdp-provenance dl {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gdp-command-grid,
+  .gdp-insight-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-insight-rail header,
+  .gdp-insight-steps {
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .gdp-insight-rail header,
+  .gdp-insight-grid {
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-search-button {
+    width: 100%;
+  }
+
+  .gdp-analysis-hero {
+    gap: 12px;
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .gdp-analysis-hero h1 {
+    font-size: clamp(30px, 6vw, 38px);
+  }
+
+  .gdp-analysis-hero aside {
+    padding: 13px;
+  }
+
+  .gdp-analysis-controls {
+    grid-template-columns: minmax(150px, .72fr) minmax(220px, 1fr) auto;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .gdp-util-bar {
+    min-height: 28px;
+    font-size: 11px;
+  }
+
+  .gdp-util-bar nav {
+    display: none;
+  }
+
+  .gdp-pulse-bar {
+    align-items: center;
+    flex-direction: row;
+    min-height: auto;
+    padding-block: 6px;
+  }
+
+  .gdp-pulse-bar > div {
+    flex-wrap: nowrap;
+    gap: 6px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .gdp-pulse-bar > div::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gdp-pulse-bar span {
+    white-space: nowrap;
+  }
+
+  .gdp-pulse-bar span:nth-of-type(n + 3) {
+    display: none;
+  }
+
+  .gdp-pulse-bar button {
+    display: none;
+  }
+
+  .gdp-shell {
+    position: static;
+    gap: 10px;
+    min-height: auto;
+    padding-block: 9px;
+  }
+
+  .gdp-brand {
+    align-items: flex-start;
+  }
+
+  .gdp-nav {
+    width: 100%;
+    margin-inline: 0;
+    padding: 4px;
+    scrollbar-width: none;
+  }
+
+  .gdp-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gdp-nav a,
+  .gdp-nav-disabled {
+    min-height: 30px;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .gdp-search-button {
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  .gdp-shell-actions {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    width: 100%;
+    padding: 4px;
+  }
+
+  .gdp-shell-health > button {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    min-height: 28px;
+    padding-block: 0;
+  }
+
+  .gdp-shell-health > button small {
+    grid-column: auto;
+  }
+
+  .gdp-shell-health > div,
+  .gdp-section-nav-shell,
+  .gdp-site-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-section-context {
+    display: none;
+  }
+
+  .gdp-section-data-link {
+    display: none;
+    width: fit-content;
+  }
+
+  .gdp-catalog-toolbar {
+    padding: 12px;
+  }
+
+  .gdp-catalog-result-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gdp-catalog-head {
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .gdp-catalog-head h1 {
+    font-size: clamp(28px, 8vw, 34px);
+  }
+
+  .gdp-catalog-head p {
+    font-size: 12px;
+  }
+
+  .gdp-catalog-head-stats {
+    min-height: auto;
+    width: 100%;
+  }
+
+  .gdp-catalog-status div {
+    min-height: auto;
+  }
+
+  .gdp-catalog-shortcuts > div {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-catalog-shortcuts button {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-catalog-shortcuts button:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-finder-summary {
+    place-items: start;
+    min-width: 0;
+  }
+
+  .gdp-finder-segmented {
+    width: fit-content;
+  }
+
+  .gdp-finder-mix > div {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-analysis-controls a {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 36px;
+  }
+
+  .gdp-analysis-page {
+    gap: 10px;
+  }
+
+  .gdp-analysis-hero {
+    padding: 15px;
+  }
+
+  .gdp-analysis-hero h1 {
+    margin-block: 6px;
+    font-size: clamp(28px, 8vw, 32px);
+    line-height: 1.05;
+  }
+
+  .gdp-analysis-hero p {
+    font-size: 12px;
+    line-height: 1.48;
+  }
+
+  .gdp-analysis-hero aside {
+    padding: 11px;
+  }
+
+  .gdp-analysis-hero aside strong {
+    margin-block: 6px 0;
+    font-size: 14px;
+  }
+
+  .gdp-analysis-hero aside small {
+    display: none;
+  }
+
+  .gdp-analysis-controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .gdp-analysis-controls label {
+    gap: 5px;
+    font-size: 10px;
+  }
+
+  .gdp-analysis-controls input,
+  .gdp-analysis-controls select {
+    min-height: 36px;
+    padding-inline: 9px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .gdp-analysis-chart {
+    padding: 14px;
+  }
+
+  .gdp-analysis-chart h2,
+  .gdp-analysis-list h2 {
+    font-size: 18px;
+  }
+
+  .gdp-analysis-chart p {
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .gdp-analysis-page .gdp-linked-chart {
+    margin: 0;
+    min-height: 260px;
+    padding: 11px;
+  }
+
+  .gdp-analysis-page .gdp-linked-chart-body {
+    grid-template-rows: minmax(160px, 1fr) auto;
+  }
+
+  .gdp-analysis-page .gdp-linked-chart-canvas {
+    min-height: 160px;
+  }
+
+  .gdp-analysis-facility-list {
+    max-height: 240px;
+  }
+
+  .gdp-commerce-focus,
+  .gdp-commerce-actions,
+  .gdp-welfare-needs > div,
+  .gdp-welfare-current,
+  .gdp-welfare-actions,
+  .gdp-safety-layers > div,
+  .gdp-safety-current,
+  .gdp-safety-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-commerce-focus,
+  .gdp-welfare-needs,
+  .gdp-welfare-current,
+  .gdp-safety-layers,
+  .gdp-safety-current {
+    padding: 14px;
+  }
+
+  .gdp-commerce-focus > strong,
+  .gdp-welfare-needs header strong,
+  .gdp-welfare-current > strong,
+  .gdp-safety-layers header strong,
+  .gdp-safety-current > strong {
+    font-size: 21px;
+  }
+
+  .gdp-analysis-evidence > div {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-analysis-evidence header,
+  .gdp-analysis-evidence article,
+  .gdp-analysis-evidence > a {
+    padding: 14px;
+  }
+
+  .gdp-analysis-evidence article {
+    min-height: auto;
+  }
+
+  .gdp-analysis-bars div {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-analysis-bars strong {
+    justify-self: start;
+  }
+
+  .gdp-shell-health p,
+  .gdp-shell-health a {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-site-footer nav {
+    justify-content: flex-start;
+  }
+
+  .gdp-search-button kbd {
+    display: none;
+  }
+
+  .gdp-command {
+    padding: 12px;
+    place-items: start stretch;
+  }
+
+  .gdp-command-panel {
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .gdp-command-head {
+    padding: 14px;
+  }
+
+  .gdp-command-head strong {
+    font-size: 16px;
+  }
+
+  .gdp-command-input {
+    padding: 12px;
+  }
+
+  .gdp-command-input input {
+    min-height: 38px;
+    font-size: 15px;
+  }
+
+  .gdp-command-results {
+    max-height: min(58vh, 480px);
+  }
+
+  .gdp-command-results button {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .gdp-command-results button span {
+    grid-row: auto;
+  }
+
+  .gdp-command-panel footer {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .gdp-main {
+    width: min(100% - 28px, 1480px);
+    padding-top: 12px;
+  }
+
+  .gdp-hero,
+  .gdp-overview-head,
+  .gdp-panel-head,
+  .gdp-section-head,
+  .gdp-map-foot,
+  .gdp-control-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gdp-hero {
+    padding-top: 12px;
+  }
+
+  .gdp-overview-head {
+    gap: 10px;
+    min-height: auto;
+  }
+
+  .gdp-overview-head h1 {
+    font-size: clamp(27px, 8vw, 34px);
+  }
+
+  .gdp-overview-head p {
+    display: none;
+  }
+
+  .gdp-hero h1 {
+    font-size: clamp(32px, 11vw, 44px);
+  }
+
+  .gdp-hero-actions {
+    width: 100%;
+  }
+
+  .gdp-hero-actions button {
+    flex: 1;
+  }
+
+  .gdp-data-status {
+    width: 100%;
+    border-radius: 14px;
+  }
+
+  .gdp-data-status > button {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding-right: 18px;
+  }
+
+  .gdp-data-status > button::after {
+    position: static;
+    grid-row: 1;
+    justify-self: start;
+    margin-top: 3px;
+  }
+
+  .gdp-data-status-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-data-status-detail div {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-data-status-detail div:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-brief-strip,
+  .gdp-insight-grid,
+  .gdp-kpi-grid,
+  .gdp-provenance dl,
+  .gdp-topic-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-brief-strip article,
+  .gdp-insight-grid article,
+  .gdp-kpi-card,
+  .gdp-provenance dl div {
+    border-right: 0;
+    border-bottom: 1px solid var(--gdp-line);
+  }
+
+  .gdp-insight-grid article:last-child {
+    border-bottom: 0;
+  }
+
+  .gdp-map-placeholder,
+  .gdp-map-list,
+  .gdp-vworld-shell,
+  .gdp-vworld-map {
+    min-height: 420px;
+  }
+
+  .gdp-active-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-chart-values {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-active-filter button {
+    grid-column: 1;
+    grid-row: auto;
+    width: fit-content;
+  }
+
+  .gdp-facility-dl div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .gdp-facility-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-facility-drawer {
+    inset: auto 12px 12px;
+    width: auto;
+    max-height: min(70vh, 520px);
+    overflow: auto;
+    border-radius: 18px;
+  }
+}
+
+@media print {
+  body,
+  .gdp-app {
+    background: #fff !important;
+  }
+
+  .gdp-shell,
+  .gdp-hero-actions,
+  .gdp-search-button,
+  .gdp-theme-toggle,
+  .gdp-segmented,
+  .gdp-facility-drawer {
+    display: none !important;
+  }
+
+  .gdp-main {
+    width: 100%;
+    padding: 0;
+  }
+
+  .gdp-map-panel,
+  .gdp-analysis-panel,
+  .gdp-kpi-section,
+  .gdp-provenance,
+  .gdp-brief-strip {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .gdp-command-grid {
+    grid-template-columns: 1fr;
+  }
+}

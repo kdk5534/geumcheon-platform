@@ -704,6 +704,57 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void traditionalMarketStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("TRADITIONAL_MARKET"), anyList())).thenReturn(1);
+        // data.go.kr 표준데이터 응답: 금천구 시장 1건 + 구로구 시장 1건 (금천구만 저장돼야 함)
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "mrktNm": "가산시장",
+                    "rdnmadr": "서울특별시 금천구 가산디지털1로 168",
+                    "lnmadr": "서울특별시 금천구 가산동 345",
+                    "mrktType": "일반시장(상설)",
+                    "storNumber": "42",
+                    "latitude": "37.4768",
+                    "longitude": "126.8815"
+                  },
+                  {
+                    "mrktNm": "구로시장",
+                    "rdnmadr": "서울특별시 구로구 구로동로 1",
+                    "lnmadr": "서울특별시 구로구 구로동 100",
+                    "mrktType": "일반시장(상설)",
+                    "storNumber": "10",
+                    "latitude": "37.5000",
+                    "longitude": "126.8800"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncTraditionalMarkets("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("TRADITIONAL_MARKET"), rows.capture());
+        // 금천구 1건만 저장, 구로구 제외
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("mrktNm")).isEqualTo("가산시장");
+        assertThat(row.get("rdnmadr")).contains("금천구");
+        assertThat(row.get("latitude")).isEqualTo("37.4768");
+        assertThat(row.get("longitude")).isEqualTo("126.8815");
+        assertThat(row.get("mrktType")).isEqualTo("일반시장(상설)");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void knowledgeIndustryCenterApiFiltersToGeumcheonAndNormalizesFields() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

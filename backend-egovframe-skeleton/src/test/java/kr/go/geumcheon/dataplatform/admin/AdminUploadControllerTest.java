@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -190,6 +192,40 @@ class AdminUploadControllerTest {
 
         assertThat(response.success()).isTrue();
         verify(uploadStore).recentLogs(100);
+    }
+
+    @Test
+    void operatorStagesUploadAndSubmitsChangeRequestWithoutPublishingRows() {
+        StagedUploadStore stagedStore = mock(StagedUploadStore.class);
+        GovernanceStore governanceStore = mock(GovernanceStore.class);
+        UploadDraftManager drafts = new UploadDraftManager(Duration.ofMinutes(15), 5, tempDir);
+        AdminUploadController controller = new AdminUploadController(
+                uploadStore, excelUploadParser, datasetRegistry, new CsvParser(), new UploadValidator(), drafts,
+                stagedStore, governanceStore);
+        var preview = controller.previewUpload("facilities", facilitiesCsvFile()).getBody().data();
+        UploadCommitRequest request = new UploadCommitRequest(
+                "facilities", preview.uploadId(), preview.fileName(), preview.rowCount(), preview.columnCount(),
+                facilityMappings());
+        StagedUploadSummary staged = new StagedUploadSummary(
+                "stage-1", "facilities", preview.fileName(), preview.fileSize(), preview.rowCount(),
+                preview.columnCount(), "DRAFT", null, "operator", Instant.now(), Instant.now().plusSeconds(3600));
+        ChangeRequestSummary change = new ChangeRequestSummary(
+                "change-1", "DATA_UPLOAD", "STAGED_UPLOAD", "stage-1", "title", "description", Map.of(),
+                "DRAFT", "operator", null, null, null, null, Instant.now());
+        when(stagedStore.stage(eq("operator"), eq(request), any())).thenReturn(staged);
+        when(governanceStore.create(eq("operator"), any())).thenReturn(change);
+        when(governanceStore.submit("change-1", "operator")).thenReturn(change);
+        when(stagedStore.linkChangeRequest("stage-1", "change-1")).thenReturn(new StagedUploadSummary(
+                "stage-1", "facilities", preview.fileName(), preview.fileSize(), preview.rowCount(),
+                preview.columnCount(), "PENDING_REVIEW", "change-1", "operator", staged.stagedAt(), staged.expiresAt()));
+
+        var response = controller.stageUpload(request,
+                new UsernamePasswordAuthenticationToken("operator", "n/a",
+                        List.of(new SimpleGrantedAuthority("ROLE_OPERATOR"))));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().data().status()).isEqualTo("PENDING_REVIEW");
+        verifyNoInteractions(uploadStore);
     }
 
     private AdminUploadController controller() {

@@ -704,6 +704,53 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void libraryStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("LIBRARY"), anyList())).thenReturn(1);
+        // data.go.kr 표준데이터 응답: 금천구 도서관 1건 + 관악구 도서관 1건 (금천구만 저장돼야 함)
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"body":{"items":[
+                  {
+                    "LBRRY_NM": "독산도서관",
+                    "RDNMADR": "서울특별시 금천구 독산로 12",
+                    "LNMADR": "서울특별시 금천구 독산동 250",
+                    "LBRRY_SE_NM": "공공도서관",
+                    "LATITUDE": "37.4685",
+                    "LONGITUDE": "126.9003"
+                  },
+                  {
+                    "LBRRY_NM": "관악구립도서관",
+                    "RDNMADR": "서울특별시 관악구 봉천로 1",
+                    "LNMADR": "서울특별시 관악구 봉천동 100",
+                    "LBRRY_SE_NM": "공공도서관",
+                    "LATITUDE": "37.4800",
+                    "LONGITUDE": "126.9500"
+                  }
+                ]}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncLibraries("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("LIBRARY"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("LBRRY_NM")).isEqualTo("독산도서관");
+        assertThat(row.get("RDNMADR")).contains("금천구");
+        assertThat(row.get("LATITUDE")).isEqualTo("37.4685");
+        assertThat(row.get("LONGITUDE")).isEqualTo("126.9003");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void parkStandardApiFiltersToGeumcheonAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

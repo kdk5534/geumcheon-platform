@@ -377,6 +377,25 @@ public class DatasetRegistry {
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-20318",
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
+        // Phase 1 — 산업·상권(G밸리 특화) 신규
+        items.put("knowledge-industry-center", new DatasetDefinition(
+                "knowledge-industry-center", "지식산업센터", "산업", "공공데이터포털 금천구 지식산업센터 정보",
+                "비정기(자료변경시)", "번들 CSV 자동적재", false, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "시설명"),
+                        new DatasetFieldDefinition("location", "G밸리 입지"),
+                        new DatasetFieldDefinition("address", "도로명주소"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("status", "운영상태"),
+                        new DatasetFieldDefinition("completionDate", "준공일"),
+                        new DatasetFieldDefinition("buildingArea", "건축연면적(㎡)"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://www.data.go.kr/data/15034153/fileData.do",
+                "POINT", "", "생활지도"
+        ));
         this.definitions = Collections.unmodifiableMap(items);
     }
 

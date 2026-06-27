@@ -80,6 +80,7 @@ public class FacilityController {
             case "PHARMACY" -> "pharmacies";
             case "CHILDCARE" -> "childcare-centers";
             // Phase 1 신규
+            case "PLAYGROUND" -> "playgrounds";
             case "AED" -> "aed-devices";
             case "STREET_LIGHT" -> "street-lights";
             case "FIRE_HYDRANT" -> "fire-hydrants";

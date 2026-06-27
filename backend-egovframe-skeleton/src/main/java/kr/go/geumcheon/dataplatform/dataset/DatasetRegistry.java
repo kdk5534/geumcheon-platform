@@ -378,6 +378,23 @@ public class DatasetRegistry {
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
         // Phase 1 — 안전·환경 신규
+        items.put("playgrounds", new DatasetDefinition(
+                "playgrounds", "어린이놀이시설", "안전",
+                "행정안전부 전국어린이놀이시설정보서비스",
+                "연 1회", "data.go.kr 어린이놀이시설 API (좌표 포함)", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "놀이시설명"),
+                        new DatasetFieldDefinition("address", "도로명주소"),
+                        new DatasetFieldDefinition("instlPlaceCdNm", "설치장소유형"),
+                        new DatasetFieldDefinition("operYnCdNm", "운영여부"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://apis.data.go.kr/1741000/pfc3/getPfctInfo3",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         items.put("aed-devices", new DatasetDefinition(
                 "aed-devices", "자동제세동기(AED)", "안전",
                 "국립중앙의료원 전국AED정보조회서비스",

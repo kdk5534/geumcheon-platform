@@ -58,6 +58,7 @@ public class PublicDataCollectorService {
     private static final String PHARMACY_KEY     = "pharmacies";
     private static final String CHILDCARE_KEY    = "childcare-centers";
     // Phase 1 — 안전·환경 신규
+    private static final String PLAYGROUND_KEY   = "playgrounds";
     private static final String AED_KEY          = "aed-devices";
     private static final String STREET_LIGHT_KEY = "street-lights";
     private static final String FIRE_HYDRANT_KEY = "fire-hydrants";
@@ -316,6 +317,7 @@ public class PublicDataCollectorService {
                 , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
                 // Phase 1 신규 — 안전·환경
+                , collectorSpec(PLAYGROUND_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(AED_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(STREET_LIGHT_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(FIRE_HYDRANT_KEY, hasValue(dataGoKrApiKey))
@@ -483,6 +485,7 @@ public class PublicDataCollectorService {
             results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
             results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
             // Phase 1 신규 — 안전·환경
+            results.add(runSafely(PLAYGROUND_KEY, triggeredBy, () -> syncPlaygrounds(triggeredBy)));
             results.add(runSafely(AED_KEY, triggeredBy, () -> syncAedDevices(triggeredBy)));
             results.add(runSafely(STREET_LIGHT_KEY, triggeredBy, () -> syncStreetLights(triggeredBy)));
             results.add(runSafely(FIRE_HYDRANT_KEY, triggeredBy, () -> syncFireHydrants(triggeredBy)));
@@ -542,6 +545,7 @@ public class PublicDataCollectorService {
                 case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
                 case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
                 // Phase 1 신규 — 안전·환경
+                case PLAYGROUND_KEY   -> syncPlaygrounds(triggeredBy);
                 case AED_KEY          -> syncAedDevices(triggeredBy);
                 case STREET_LIGHT_KEY -> syncStreetLights(triggeredBy);
                 case FIRE_HYDRANT_KEY -> syncFireHydrants(triggeredBy);
@@ -1014,6 +1018,52 @@ public class PublicDataCollectorService {
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    // ─── 어린이놀이시설 (행정안전부 getPfctInfo3, 전국 순회 후 금천구 필터) ──────────────
+    // 시도·구군 필터 파라미터가 없어서 전국 데이터(~85,000건)를 1000건씩 페이지 순회하며 금천구만 추출한다.
+
+    public CollectionRunResult syncPlaygrounds(String triggeredBy) {
+        return runSyncPipeline(
+                PLAYGROUND_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                this::buildPlaygroundRequestUrl,
+                this::fetchPlaygroundRows,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "PLAYGROUND", rows),
+                saved -> "어린이놀이시설 " + saved + "건 저장 완료.",
+                triggeredBy);
+    }
+
+    private String buildPlaygroundRequestUrl() {
+        return "https://apis.data.go.kr/1741000/pfc3/getPfctInfo3"
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&pageIndex=1&recordCountPerPage=1000";
+    }
+
+    private List<Map<String, String>> fetchPlaygroundRows(String requestUrl, String datasetName) throws Exception {
+        // 1페이지로 totalPageCnt 확인 후 전 페이지 순회
+        JsonNode firstRoot = executeJsonWithRetry(requestUrl, datasetName);
+        int totalPageCnt = firstRoot.path("response").path("body").path("totalPageCnt").asInt(1);
+
+        List<Map<String, String>> result = new ArrayList<>();
+        filterGeumcheon(firstRoot, result);
+
+        // URL의 pageIndex 값만 교체하며 나머지 페이지 순회
+        String baseUrl = requestUrl.replaceFirst("pageIndex=\\d+", "pageIndex=");
+        for (int page = 2; page <= totalPageCnt; page++) {
+            JsonNode root = executeJsonWithRetry(baseUrl + page, datasetName + " page " + page);
+            filterGeumcheon(root, result);
+        }
+
+        return result;
+    }
+
+    private void filterGeumcheon(JsonNode root, List<Map<String, String>> target) {
+        for (Map<String, String> row : extractRows(root)) {
+            String addr = firstNonBlankIgnoreCase(row, "ronaAddr", "lotnoAddr", "rgnCdNm", "pfctNm");
+            if (containsGeumcheon(addr)) {
+                target.add(row);
+            }
+        }
     }
 
     // ─── AED (국립중앙의료원 getAedLcinfoInqire, 금천구 중심 좌표 기준 조회) ──────────────

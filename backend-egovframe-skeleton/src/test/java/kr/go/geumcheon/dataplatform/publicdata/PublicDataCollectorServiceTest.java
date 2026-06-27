@@ -704,6 +704,51 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void playgroundApiPaginatesAllPagesAndFiltersToGeumcheon() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("PLAYGROUND"), anyList())).thenReturn(2);
+
+        // 1페이지: 금천구 1건 + 타구 1건, totalPageCnt=2
+        HttpResponse<String> page1 = successResponse("""
+                {"response":{"header":{"resultCode":"00"},"body":{
+                  "pageIndex":1,"recordCountPerPage":1000,"totalPageCnt":2,"totalCnt":2,
+                  "items":[
+                    {"pfctNm":"독산동 어린이놀이터","ronaAddr":"서울 금천구 독산로 10","rgnCdNm":"서울특별시 금천구 독산1동","latCrtsVl":"37.4693","lotCrtsVl":"126.8975","instlPlaceCdNm":"주택단지","operYnCdNm":"운영"},
+                    {"pfctNm":"강남구 놀이터","ronaAddr":"서울 강남구 삼성로 100","rgnCdNm":"서울특별시 강남구 삼성동","latCrtsVl":"37.5140","lotCrtsVl":"127.0570","instlPlaceCdNm":"주택단지","operYnCdNm":"운영"}
+                  ]
+                }}}
+                """);
+        // 2페이지: 금천구 1건
+        HttpResponse<String> page2 = successResponse("""
+                {"response":{"header":{"resultCode":"00"},"body":{
+                  "pageIndex":2,"recordCountPerPage":1000,"totalPageCnt":2,"totalCnt":2,
+                  "items":[
+                    {"pfctNm":"시흥동 어린이놀이터","ronaAddr":"서울 금천구 시흥대로 200","rgnCdNm":"서울특별시 금천구 시흥동","latCrtsVl":"37.4510","lotCrtsVl":"126.9010","instlPlaceCdNm":"도시공원","operYnCdNm":"운영"}
+                  ]
+                }}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(page1)
+                .thenReturn(page2);
+
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncPlaygrounds("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("PLAYGROUND"), rows.capture());
+        assertThat(rows.getValue()).hasSize(2);
+        assertThat(rows.getValue()).allMatch(r -> (r.get("ronaAddr") + r.get("rgnCdNm")).contains("금천구"));
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void aedApiFiltersToGeumcheonByBuildAddressAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

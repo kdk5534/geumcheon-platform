@@ -62,6 +62,7 @@ public final class DatasetPolicyRegistry {
         add(policies, policy("pharmacies", "sourceOriginalId|name+address", 1, 10_000, Duration.ofDays(7), Duration.ofDays(180), true, LOW));
         add(policies, policy("childcare-centers", "sourceOriginalId|name+address", 1, 10_000, Duration.ofDays(30), Duration.ofDays(365), true, LOW));
         // Phase 1 — 안전·환경 신규
+        add(policies, policy("playgrounds", "name+address", 1, 2000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("aed-devices", "name+address", 1, 2000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("street-lights", "name+address", 1, 10000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("fire-hydrants", "name+address", 1, 2000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));

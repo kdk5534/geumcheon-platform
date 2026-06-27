@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import kr.go.geumcheon.dataplatform.admin.CsvParser;
-import org.springframework.core.io.ClassPathResource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -61,6 +59,10 @@ public class PublicDataCollectorService {
     private static final String CHILDCARE_KEY    = "childcare-centers";
     // Phase 1 — 산업·상권(G밸리 특화) 신규
     private static final String KNOWLEDGE_INDUSTRY_CENTER_KEY = "knowledge-industry-center";
+    // odcloud 전국지식산업센터현황 API — 2025년 6/30 기준판
+    // 매년 새 uddi 경로 추가됨: infuser.odcloud.kr/oas/docs?namespace=15117154/v1 에서 최신 uddi 확인 후 교체
+    private static final String KNOWLEDGE_INDUSTRY_CENTER_URL =
+            "https://api.odcloud.kr/api/15117154/v1/uddi:a72ac85b-0dac-46a1-bfb6-eba4fc7895d7";
     private static final Map<String, String> LIVING_FACILITY_SERVICES = Map.of(
             WELFARE_KEY, "fcltOpenInfo_GC",
             CIVIL_SHELTER_KEY, "LOCALDATA_114602_GC",
@@ -108,6 +110,9 @@ public class PublicDataCollectorService {
     private final int storePageDelayMillis;
     private final boolean allowInsecureSeoulHttp;
     private final AtomicBoolean collectorRunning = new AtomicBoolean(false);
+    // VWorld 지오코딩 키 — @Value 필드 주입 (테스트 생성자에서는 null, 지오코딩 건너뜀)
+    @Value("${geumcheon.api-keys.vworld:}")
+    private String vworldApiKey;
 
     @Autowired
     public PublicDataCollectorService(
@@ -975,54 +980,112 @@ public class PublicDataCollectorService {
                 triggeredBy);
     }
 
-    // ─── 지식산업센터 (번들 CSV) ─────────────────────────────────────────────────
+    // ─── 지식산업센터 (odcloud API + VWorld 지오코딩) ────────────────────────────
 
     public CollectionRunResult syncKnowledgeIndustryCenters(String triggeredBy) {
         return runSyncPipeline(
-                KNOWLEDGE_INDUSTRY_CENTER_KEY, "bundled-csv-resource", "Bundled CSV resource is unavailable.",
-                () -> "classpath:data/knowledge-industry-center.csv",
-                (url, name) -> fetchKnowledgeIndustryCenterRows(),
+                KNOWLEDGE_INDUSTRY_CENTER_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                this::buildKnowledgeIndustryCenterRequestUrl,
+                this::fetchKnowledgeIndustryCenterRows,
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "KNOWLEDGE_INDUSTRY_CENTER", rows),
-                saved -> "Saved " + saved + " knowledge industry center(s).",
+                saved -> "지식산업센터 " + saved + "건 저장 완료.",
                 triggeredBy);
     }
 
-    private List<Map<String, String>> fetchKnowledgeIndustryCenterRows() throws IOException {
-        ClassPathResource resource = new ClassPathResource("data/knowledge-industry-center.csv");
-        if (!resource.exists()) {
-            throw new IllegalStateException("Bundled data/knowledge-industry-center.csv not found in classpath.");
-        }
-        byte[] bytes = resource.getInputStream().readAllBytes();
-        CsvParser parser = new CsvParser();
-        List<List<String>> rawRows = parser.parse(parser.decode(bytes));
-        if (rawRows.size() < 2) return List.of();
-        List<String> headers = rawRows.get(0);
+    private String buildKnowledgeIndustryCenterRequestUrl() {
+        // totalCount 1,549건이므로 perPage=2000으로 단일 요청 처리
+        return KNOWLEDGE_INDUSTRY_CENTER_URL
+                + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                + "&page=1&perPage=2000&returnType=JSON";
+    }
+
+    private List<Map<String, String>> fetchKnowledgeIndustryCenterRows(String requestUrl, String datasetName) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(requestUrl))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        HttpResponse<String> response = httpClient().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        requireSuccessStatus(response.statusCode(), datasetName);
+        JsonNode root = objectMapper.readTree(response.body());
+        JsonNode data = root.path("data");
+        if (!data.isArray()) return List.of();
         List<Map<String, String>> rows = new ArrayList<>();
-        for (int i = 1; i < rawRows.size(); i++) {
-            List<String> cells = rawRows.get(i);
-            if (cells.stream().allMatch(String::isBlank)) continue;
-            Map<String, String> raw = new LinkedHashMap<>();
-            for (int j = 0; j < headers.size() && j < cells.size(); j++) {
-                if (!cells.get(j).isBlank()) raw.put(headers.get(j), cells.get(j));
-            }
-            String name = raw.getOrDefault("시설명", "");
+        for (JsonNode item : data) {
+            if (!"서울특별시".equals(textOfNode(item, "시도"))
+                    || !"금천구".equals(textOfNode(item, "시군구"))) continue;
+            String name = textOfNode(item, "지식산업센터명");
             if (name.isBlank()) continue;
+            String addressRoad = textOfNode(item, "공장대표주소(도로명)");
+            String addressLot  = textOfNode(item, "공장대표주소(지번)");
+            String addr = addressRoad.isBlank() ? addressLot : addressRoad;
             Map<String, String> row = new LinkedHashMap<>();
-            row.put("STAT_NM",        name);
-            row.put("ADDR",           raw.getOrDefault("도로명주소", raw.getOrDefault("지번주소", "")));
-            row.put("LAT",            raw.getOrDefault("위도", ""));
-            row.put("LNG",            raw.getOrDefault("경도", ""));
-            row.put("입지",           raw.getOrDefault("입지", ""));
-            row.put("상태",           raw.getOrDefault("상태", ""));
-            row.put("준공일",         raw.getOrDefault("준공일", ""));
-            row.put("건축연면적",     raw.getOrDefault("건축연면적", ""));
-            row.put("지하층",         raw.getOrDefault("지하층", ""));
-            row.put("지상층",         raw.getOrDefault("지상층", ""));
-            row.put("REFERENCE_DATE", raw.getOrDefault("데이터기준일자", ""));
-            row.put("source",         "공공데이터포털 금천구 지식산업센터 정보");
+            row.put("STAT_NM",    name);
+            row.put("ADDR",       addr);
+            row.put("입지구분",   textOfNode(item, "입지구분"));
+            row.put("단지명",     textOfNode(item, "단지명"));
+            row.put("상태",       textOfNode(item, "상태"));
+            row.put("건축연면적", textOfNode(item, "건축면적(제곱미터)"));
+            row.put("설치자",     textOfNode(item, "설치자"));
+            row.put("source",     "공공데이터포털 한국산업단지공단 전국지식산업센터현황");
+            // VWorld 지오코딩: 도로명 우선, 실패 시 지번 재시도
+            String[] coords = geocodeAddress(
+                    addressRoad.isBlank() ? null : addressRoad,
+                    addressLot.isBlank()  ? null : addressLot);
+            if (coords != null) {
+                row.put("LAT", coords[0]);
+                row.put("LNG", coords[1]);
+            }
             rows.add(row);
         }
         return rows;
+    }
+
+    /** JsonNode에서 문자열 값을 안전하게 추출한다. */
+    private String textOfNode(JsonNode node, String key) {
+        JsonNode val = node.get(key);
+        return (val == null || val.isNull()) ? "" : val.asText().trim();
+    }
+
+    /**
+     * VWorld Geocoder 2.0으로 도로명→지번 순서로 좌표 변환.
+     * 키 미설정·변환 실패 시 null 반환(좌표 없이 저장).
+     *
+     * @return [위도(y), 경도(x)] 또는 null
+     */
+    private String[] geocodeAddress(String roadAddress, String lotAddress) {
+        if (vworldApiKey == null || vworldApiKey.isBlank()) return null;
+        String[] result = geocodeWithType(roadAddress, "ROAD");
+        if (result != null) return result;
+        return geocodeWithType(lotAddress, "PARCEL");
+    }
+
+    private String[] geocodeWithType(String address, String type) {
+        if (address == null || address.isBlank()) return null;
+        try {
+            String encoded = URLEncoder.encode(address, StandardCharsets.UTF_8);
+            URI uri = URI.create(
+                    "https://api.vworld.kr/req/address"
+                    + "?service=address&request=getCoord&version=2.0"
+                    + "&crs=EPSG:4326&type=" + type
+                    + "&address=" + encoded
+                    + "&format=json&key=" + vworldApiKey);
+            HttpRequest req = HttpRequest.newBuilder(uri)
+                    .timeout(Duration.ofSeconds(timeoutSeconds))
+                    .GET().build();
+            HttpResponse<String> resp = httpClient().send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (resp.statusCode() != 200) return null;
+            JsonNode root = objectMapper.readTree(resp.body());
+            if (!"OK".equals(root.path("response").path("status").asText())) return null;
+            JsonNode point = root.path("response").path("result").path("point");
+            String x = point.path("x").asText(); // 경도(LNG)
+            String y = point.path("y").asText(); // 위도(LAT)
+            if (x.isBlank() || y.isBlank() || "null".equalsIgnoreCase(x)) return null;
+            return new String[]{y, x};
+        } catch (Exception e) {
+            log.warn("[지식산업센터] VWorld 지오코딩 실패 — type={}, address={}: {}", type, address, e.getMessage());
+            return null;
+        }
     }
 
     private String buildSchoolZoneRequestUrl() {

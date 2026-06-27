@@ -704,10 +704,34 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void knowledgeIndustryCenterCsvIsLoadedAndNormalizedToFacilityFormat() {
+    void knowledgeIndustryCenterApiFiltersToGeumcheonAndNormalizesFields() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);
-        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("KNOWLEDGE_INDUSTRY_CENTER"), anyList())).thenReturn(2);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("KNOWLEDGE_INDUSTRY_CENTER"), anyList())).thenReturn(1);
+        // odcloud API 응답: 금천구 1건 + 구로구 1건 (금천구만 저장돼야 함)
+        HttpResponse<String> apiResponse = successResponse("""
+                {
+                  "page": 1, "perPage": 2000, "totalCount": 2, "currentCount": 2,
+                  "data": [
+                    {
+                      "시도": "서울특별시", "시군구": "금천구",
+                      "지식산업센터명": "금천첨단R&D산업센터",
+                      "공장대표주소(도로명)": "서울특별시 금천구 가산디지털1로 168",
+                      "공장대표주소(지번)": "서울특별시 금천구 가산동 691-14",
+                      "입지구분": "도시형공장지역", "단지명": "G밸리",
+                      "상태": "완공", "건축면적(제곱미터)": "49834", "설치자": "금천구"
+                    },
+                    {
+                      "시도": "서울특별시", "시군구": "구로구",
+                      "지식산업센터명": "구로테크밸리",
+                      "공장대표주소(도로명)": "서울특별시 구로구 디지털로 1",
+                      "공장대표주소(지번)": "", "입지구분": "", "단지명": "",
+                      "상태": "완공", "건축면적(제곱미터)": "12000", "설치자": ""
+                    }
+                  ]
+                }
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
         PublicDataCollectorService service = new PublicDataCollectorService(
                 repository, datasetRegistry, objectMapper,
                 "data-key", "seoul-key", true,
@@ -718,15 +742,17 @@ class PublicDataCollectorServiceTest {
 
         ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
         verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("KNOWLEDGE_INDUSTRY_CENTER"), rows.capture());
-        assertThat(rows.getValue()).isNotEmpty();
-        Map<String, String> firstRow = rows.getValue().get(0);
-        assertThat(firstRow.get("STAT_NM")).isEqualTo("금천첨단R&D산업센터");
-        assertThat(firstRow.get("LAT")).isNotBlank();
-        assertThat(firstRow.get("LNG")).isNotBlank();
-        assertThat(firstRow.get("ADDR")).contains("금천구");
-        assertThat(firstRow.get("source")).isEqualTo("공공데이터포털 금천구 지식산업센터 정보");
+        // 금천구 1건만 저장, 구로구 제외
+        assertThat(rows.getValue()).hasSize(1);
+        Map<String, String> row = rows.getValue().get(0);
+        assertThat(row.get("STAT_NM")).isEqualTo("금천첨단R&D산업센터");
+        assertThat(row.get("ADDR")).contains("금천구");
+        assertThat(row.get("입지구분")).isEqualTo("도시형공장지역");
+        assertThat(row.get("건축연면적")).isEqualTo("49834");
+        assertThat(row.get("source")).isEqualTo("공공데이터포털 한국산업단지공단 전국지식산업센터현황");
+        // vworldApiKey가 null(테스트 생성자)이므로 지오코딩 건너뜀 → LAT/LNG 키 없음
+        assertThat(row).doesNotContainKey("LAT");
         assertThat(result.status()).isEqualTo("success");
-        verifyNoInteractions(httpClient);
     }
 
     private void addBikeRow(

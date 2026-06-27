@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import kr.go.geumcheon.dataplatform.admin.CsvParser;
+import org.springframework.core.io.ClassPathResource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -57,6 +59,8 @@ public class PublicDataCollectorService {
     private static final String HOSPITAL_KEY     = "hospitals";
     private static final String PHARMACY_KEY     = "pharmacies";
     private static final String CHILDCARE_KEY    = "childcare-centers";
+    // Phase 1 — 산업·상권(G밸리 특화) 신규
+    private static final String KNOWLEDGE_INDUSTRY_CENTER_KEY = "knowledge-industry-center";
     private static final Map<String, String> LIVING_FACILITY_SERVICES = Map.of(
             WELFARE_KEY, "fcltOpenInfo_GC",
             CIVIL_SHELTER_KEY, "LOCALDATA_114602_GC",
@@ -297,6 +301,8 @@ public class PublicDataCollectorService {
                 , collectorSpec(HOSPITAL_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(PHARMACY_KEY, hasValue(livingFacilityRelayToken))
                 , collectorSpec(CHILDCARE_KEY, hasValue(livingFacilityRelayToken))
+                // Phase 1 신규
+                , collectorSpec(KNOWLEDGE_INDUSTRY_CENTER_KEY, true)
         );
     }
 
@@ -453,6 +459,8 @@ public class PublicDataCollectorService {
             results.add(runSafely(HOSPITAL_KEY, triggeredBy, () -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy)));
             results.add(runSafely(PHARMACY_KEY, triggeredBy, () -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy)));
             results.add(runSafely(CHILDCARE_KEY, triggeredBy, () -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy)));
+            // Phase 1 신규
+            results.add(runSafely(KNOWLEDGE_INDUSTRY_CENTER_KEY, triggeredBy, () -> syncKnowledgeIndustryCenters(triggeredBy)));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -501,6 +509,8 @@ public class PublicDataCollectorService {
                 case HOSPITAL_KEY     -> syncLivingFacility(HOSPITAL_KEY, "HOSPITAL", triggeredBy);
                 case PHARMACY_KEY     -> syncLivingFacility(PHARMACY_KEY, "PHARMACY", triggeredBy);
                 case CHILDCARE_KEY    -> syncLivingFacility(CHILDCARE_KEY, "CHILDCARE", triggeredBy);
+                // Phase 1 신규
+                case KNOWLEDGE_INDUSTRY_CENTER_KEY -> syncKnowledgeIndustryCenters(triggeredBy);
                 default               -> missingRoutineResult(spec);
             };
         } finally {
@@ -963,6 +973,56 @@ public class PublicDataCollectorService {
                 (id, rows) -> repository.replaceFacilitySnapshot(id, "EV_CHARGER", rows),
                 saved -> "Saved " + saved + " EV charger(s).",
                 triggeredBy);
+    }
+
+    // ─── 지식산업센터 (번들 CSV) ─────────────────────────────────────────────────
+
+    public CollectionRunResult syncKnowledgeIndustryCenters(String triggeredBy) {
+        return runSyncPipeline(
+                KNOWLEDGE_INDUSTRY_CENTER_KEY, "bundled-csv-resource", "Bundled CSV resource is unavailable.",
+                () -> "classpath:data/knowledge-industry-center.csv",
+                (url, name) -> fetchKnowledgeIndustryCenterRows(),
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "KNOWLEDGE_INDUSTRY_CENTER", rows),
+                saved -> "Saved " + saved + " knowledge industry center(s).",
+                triggeredBy);
+    }
+
+    private List<Map<String, String>> fetchKnowledgeIndustryCenterRows() throws IOException {
+        ClassPathResource resource = new ClassPathResource("data/knowledge-industry-center.csv");
+        if (!resource.exists()) {
+            throw new IllegalStateException("Bundled data/knowledge-industry-center.csv not found in classpath.");
+        }
+        byte[] bytes = resource.getInputStream().readAllBytes();
+        CsvParser parser = new CsvParser();
+        List<List<String>> rawRows = parser.parse(parser.decode(bytes));
+        if (rawRows.size() < 2) return List.of();
+        List<String> headers = rawRows.get(0);
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (int i = 1; i < rawRows.size(); i++) {
+            List<String> cells = rawRows.get(i);
+            if (cells.stream().allMatch(String::isBlank)) continue;
+            Map<String, String> raw = new LinkedHashMap<>();
+            for (int j = 0; j < headers.size() && j < cells.size(); j++) {
+                if (!cells.get(j).isBlank()) raw.put(headers.get(j), cells.get(j));
+            }
+            String name = raw.getOrDefault("시설명", "");
+            if (name.isBlank()) continue;
+            Map<String, String> row = new LinkedHashMap<>();
+            row.put("STAT_NM",        name);
+            row.put("ADDR",           raw.getOrDefault("도로명주소", raw.getOrDefault("지번주소", "")));
+            row.put("LAT",            raw.getOrDefault("위도", ""));
+            row.put("LNG",            raw.getOrDefault("경도", ""));
+            row.put("입지",           raw.getOrDefault("입지", ""));
+            row.put("상태",           raw.getOrDefault("상태", ""));
+            row.put("준공일",         raw.getOrDefault("준공일", ""));
+            row.put("건축연면적",     raw.getOrDefault("건축연면적", ""));
+            row.put("지하층",         raw.getOrDefault("지하층", ""));
+            row.put("지상층",         raw.getOrDefault("지상층", ""));
+            row.put("REFERENCE_DATE", raw.getOrDefault("데이터기준일자", ""));
+            row.put("source",         "공공데이터포털 금천구 지식산업센터 정보");
+            rows.add(row);
+        }
+        return rows;
     }
 
     private String buildSchoolZoneRequestUrl() {

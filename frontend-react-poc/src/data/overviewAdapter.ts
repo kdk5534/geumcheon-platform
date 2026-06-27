@@ -70,6 +70,7 @@ function facilityCategory(item: RawFacility) {
       SCHOOL_ZONE: "스쿨존",
       CIVIL_DEFENSE_SHELTER: "민방위대피소",
       // Phase 1 신규 — 생활편의·문화
+      LIBRARY: "도서관",
       PARK: "도시공원",
       // Phase 1 신규 — G밸리 산업·상권
       TRADITIONAL_MARKET: "전통시장",

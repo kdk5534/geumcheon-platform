@@ -1,5 +1,7 @@
 -- 지식산업센터 데이터셋을 카탈로그에 등록한다 (Phase 1 배치 1-A)
--- Flyway V8__knowledge_industry_center.sql 과 동일 내용 — 수동 적재용 사본
+-- 수집원: 공공데이터포털 한국산업단지공단 전국지식산업센터현황 (odcloud 15117154)
+-- 좌표: 응답에 좌표 없음 → VWorld Geocoder 2.0으로 보완
+-- Flyway 정본: backend-egovframe-skeleton/src/main/resources/db/migration/V8__knowledge_industry_center.sql
 
 INSERT INTO dataset (
     dataset_key, dataset_name, domain, source_name, source_url,
@@ -8,9 +10,10 @@ INSERT INTO dataset (
 )
 VALUES (
     'knowledge-industry-center', '지식산업센터', '산업',
-    '공공데이터포털 금천구 지식산업센터 정보',
-    'https://www.data.go.kr/data/15034153/fileData.do',
-    '비정기(자료변경시)', 'POINT', '번들 CSV 자동적재', FALSE, NULL, TRUE, TRUE
+    '공공데이터포털 한국산업단지공단 전국지식산업센터현황',
+    'https://www.data.go.kr/data/15117154/openapi.do',
+    '연 1회(6/30 기준)', 'POINT', 'odcloud 전국집계 API + VWorld 지오코딩',
+    TRUE, 'DATA_GO_KR_API_KEY', TRUE, TRUE
 )
 ON CONFLICT (dataset_key) DO UPDATE SET
     dataset_name     = EXCLUDED.dataset_name,

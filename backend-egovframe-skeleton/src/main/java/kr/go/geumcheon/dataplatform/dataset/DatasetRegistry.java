@@ -379,22 +379,22 @@ public class DatasetRegistry {
         ));
         // Phase 1 — 산업·상권(G밸리 특화) 신규
         items.put("knowledge-industry-center", new DatasetDefinition(
-                "knowledge-industry-center", "지식산업센터", "산업", "공공데이터포털 금천구 지식산업센터 정보",
-                "비정기(자료변경시)", "번들 CSV 자동적재", false, "API", false, false, true,
+                "knowledge-industry-center", "지식산업센터", "산업", "공공데이터포털 한국산업단지공단 전국지식산업센터현황",
+                "연 1회(6/30 기준)", "odcloud 전국집계 API + VWorld 지오코딩", true, "API", false, false, true,
                 List.of("name", "latitude", "longitude"),
                 List.of(
-                        new DatasetFieldDefinition("name", "시설명"),
-                        new DatasetFieldDefinition("location", "G밸리 입지"),
-                        new DatasetFieldDefinition("address", "도로명주소"),
-                        new DatasetFieldDefinition("latitude", "위도"),
-                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("name", "지식산업센터명"),
+                        new DatasetFieldDefinition("address", "공장대표주소(도로명)"),
+                        new DatasetFieldDefinition("location", "입지구분"),
+                        new DatasetFieldDefinition("complex", "단지명"),
                         new DatasetFieldDefinition("status", "운영상태"),
-                        new DatasetFieldDefinition("completionDate", "준공일"),
-                        new DatasetFieldDefinition("buildingArea", "건축연면적(㎡)"),
+                        new DatasetFieldDefinition("buildingArea", "건축면적(㎡)"),
+                        new DatasetFieldDefinition("latitude", "위도(VWorld 지오코딩)"),
+                        new DatasetFieldDefinition("longitude", "경도(VWorld 지오코딩)"),
                         new DatasetFieldDefinition("source", "출처")
                 ),
-                "https://www.data.go.kr/data/15034153/fileData.do",
-                "POINT", "", "생활지도"
+                "https://www.data.go.kr/data/15117154/openapi.do",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
         ));
         this.definitions = Collections.unmodifiableMap(items);
     }

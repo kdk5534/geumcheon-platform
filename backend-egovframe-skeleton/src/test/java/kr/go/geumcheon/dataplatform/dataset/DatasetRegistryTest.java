@@ -61,7 +61,7 @@ class DatasetRegistryTest {
         assertThat(registry.getRequired("pharmacies").sourceUrl()).contains("OA-16327");
         assertThat(registry.getRequired("childcare-centers").sourceUrl()).contains("OA-20318");
         // Phase 1 신규
-        assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15034153");
+        assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15117154");
     }
 
     @Test
@@ -69,10 +69,10 @@ class DatasetRegistryTest {
         var def = registry.getRequired("knowledge-industry-center");
         assertThat(def.datasetName()).isEqualTo("지식산업센터");
         assertThat(def.domain()).isEqualTo("산업");
-        assertThat(def.authKeyRequired()).isFalse();
-        assertThat(def.envVarName()).isEmpty();
+        assertThat(def.authKeyRequired()).isTrue();
+        assertThat(def.envVarName()).isEqualTo("DATA_GO_KR_API_KEY");
         assertThat(def.spatialType()).isEqualTo("POINT");
         assertThat(def.publicVisible()).isTrue();
-        assertThat(def.apiStatus()).isEqualTo("번들 CSV 자동적재");
+        assertThat(def.apiStatus()).contains("odcloud");
     }
 }

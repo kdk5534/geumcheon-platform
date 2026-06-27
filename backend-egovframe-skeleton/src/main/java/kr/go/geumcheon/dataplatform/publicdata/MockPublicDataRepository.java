@@ -78,7 +78,7 @@ public class MockPublicDataRepository implements PublicDataRepository {
         return defaultFacilities().stream()
                 .filter(f -> !query.hasBbox() || isInBbox(f.latitude(), f.longitude(), query))
                 .filter(f -> query.category() == null || query.category().isBlank()
-                        || "전체".equals(query.category()) || query.category().equals(f.category()))
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(f.category()))
                 .filter(f -> query.spatialScopes().contains(f.spatialScope()))
                 .skip((long) query.page() * query.size())
                 .limit(query.size())
@@ -90,7 +90,7 @@ public class MockPublicDataRepository implements PublicDataRepository {
         return defaultStores().stream()
                 .filter(s -> !query.hasBbox() || isInBbox(s.latitude(), s.longitude(), query))
                 .filter(s -> query.category() == null || query.category().isBlank()
-                        || "전체".equals(query.category()) || query.category().equals(s.category()))
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(s.category()))
                 .filter(s -> query.spatialScopes().contains(s.spatialScope()))
                 .skip((long) query.page() * query.size())
                 .limit(query.size())
@@ -102,7 +102,7 @@ public class MockPublicDataRepository implements PublicDataRepository {
         return defaultFacilities().stream()
                 .filter(f -> !query.hasBbox() || isInBbox(f.latitude(), f.longitude(), query))
                 .filter(f -> query.category() == null || query.category().isBlank()
-                        || "전체".equals(query.category()) || query.category().equals(f.category()))
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(f.category()))
                 .filter(f -> query.spatialScopes().contains(f.spatialScope()))
                 .count();
     }

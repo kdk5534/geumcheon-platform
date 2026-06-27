@@ -50,7 +50,11 @@ class DatasetControllerTest {
                         "NO_SUCCESS", null, 0, 0
                 )
         ));
-        DatasetController controller = new DatasetController(repository, new DatasetRegistry(), "db");
+        // 고정 시계: parking-lots SLA(7일) 이내(마지막 성공 2026-06-19 기준 약 21시간 후)
+        DatasetController controller = new DatasetController(
+                repository, new DatasetRegistry(), "db",
+                Clock.fixed(Instant.parse("2026-06-20T00:00:00Z"), ZoneOffset.UTC)
+        );
 
         ApiResponse<List<DatasetOperationalStatusSummary>> response = controller.listDatasetStatuses();
 

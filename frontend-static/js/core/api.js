@@ -32,6 +32,9 @@ export async function fetchWithTimeout(url, timeoutMs = API_TIMEOUT_MS, { signal
 
 /** ./assets/data/mock-data.json 에서 로컬 데이터를 로드한다. */
 export async function loadLocalData() {
+  if (!isDevelopmentSampleEnabled()) {
+    return emptyOperationalData();
+  }
   const response = await fetch("./assets/data/mock-data.json");
   const data = await response.json();
   return {
@@ -45,6 +48,34 @@ export async function loadLocalData() {
         realtimeEnabled: false,
       },
     },
+  };
+}
+
+export function isDevelopmentSampleEnabled() {
+  const configured = globalThis.window?.__ENV__?.ENABLE_SAMPLE_DATA;
+  if (configured != null && configured !== "") {
+    return String(configured).toLowerCase() === "true";
+  }
+  const hostname = globalThis.window?.location?.hostname || "";
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+export function isBackendApiEnabled() {
+  const configured = globalThis.window?.__ENV__?.ENABLE_BACKEND_API;
+  if (configured != null && configured !== "") {
+    return String(configured).toLowerCase() === "true";
+  }
+  const params = new URLSearchParams(globalThis.window?.location?.search || "");
+  if (params.get("backend") === "1") return true;
+  return !isDevelopmentSampleEnabled();
+}
+
+function emptyOperationalData() {
+  const waiting = { source: "공개 API 연결 대기", asOf: "", status: "UNAVAILABLE" };
+  return {
+    meta: { overview: waiting, life: waiting, commercial: waiting, geo: waiting, api: waiting, population: waiting },
+    metrics: [], facilities: [], stores: [], population: [], airQuality: [], notices: [],
+    operationalSnapshots: {}, sourceMode: "unavailable", sourceModeText: "데이터 연결 대기",
   };
 }
 
@@ -87,18 +118,45 @@ async function loadAllFacilityPayload() {
  * 실패 시 빈 배열을 반환한다.
  */
 export async function loadApiSources() {
+  if (!isBackendApiEnabled()) {
+    return loadLocalApiSources();
+  }
   try {
-    const response = await fetch(`${BACKEND_API_BASE}/api/public/api-sources`);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload?.success && Array.isArray(payload.data)) {
-        return payload.data;
-      }
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/api-sources`);
+    const payload = await response.json();
+    if (payload?.success && Array.isArray(payload.data)) {
+      return payload.data;
     }
   } catch {
     // 아래 번들 데이터로 폴백
   }
 
+  return loadLocalApiSources();
+}
+
+/**
+ * API 로그를 백엔드 또는 번들 JSON에서 로드한다.
+ * mergeApiLogEdits는 페이지 모듈에서 처리하므로 원시 데이터를 반환한다.
+ */
+export async function loadApiLogsRaw() {
+  if (!isBackendApiEnabled()) {
+    return loadLocalApiLogs();
+  }
+  try {
+    const response = await fetchWithTimeout(`${BACKEND_API_BASE}/api/public/api-logs`);
+    const payload = await response.json();
+    if (payload?.success && Array.isArray(payload.data)) {
+      return { source: "backend", data: payload.data };
+    }
+  } catch {
+    // 아래 번들 데이터로 폴백
+  }
+
+  return loadLocalApiLogs();
+}
+
+async function loadLocalApiSources() {
+  if (!isDevelopmentSampleEnabled()) return [];
   try {
     const response = await fetch("./assets/data/api-sources.json");
     const data = await response.json();
@@ -108,23 +166,8 @@ export async function loadApiSources() {
   }
 }
 
-/**
- * API 로그를 백엔드 또는 번들 JSON에서 로드한다.
- * mergeApiLogEdits는 페이지 모듈에서 처리하므로 원시 데이터를 반환한다.
- */
-export async function loadApiLogsRaw() {
-  try {
-    const response = await fetch(`${BACKEND_API_BASE}/api/public/api-logs`);
-    if (response.ok) {
-      const payload = await response.json();
-      if (payload?.success && Array.isArray(payload.data)) {
-        return { source: "backend", data: payload.data };
-      }
-    }
-  } catch {
-    // 아래 번들 데이터로 폴백
-  }
-
+async function loadLocalApiLogs() {
+  if (!isDevelopmentSampleEnabled()) return { source: "unavailable", data: [] };
   try {
     const response = await fetch("./assets/data/api-logs.json");
     const data = await response.json();
@@ -139,6 +182,13 @@ export async function loadApiLogsRaw() {
  * 실패 시 localData에 sourceMode:"local" 정보를 추가해 반환한다.
  */
 export async function loadBackendData(localData) {
+  if (!isBackendApiEnabled()) {
+    return {
+      ...localData,
+      sourceMode: "local",
+      sourceModeText: "개발 미리보기",
+    };
+  }
   try {
     const requests = [
       ["datasets", fetchJson(`${BACKEND_API_BASE}/api/public/datasets`)],
@@ -239,9 +289,9 @@ export async function loadBackendData(localData) {
   } catch (error) {
     return {
       ...localData,
-      meta: updateOverviewMeta(localData.meta, "금천구 로컬 샘플"),
-      sourceMode: "local",
-      sourceModeText: "로컬 샘플",
+      meta: updateOverviewMeta(localData.meta, isDevelopmentSampleEnabled() ? "금천구 개발 샘플" : "공개 API 연결 실패"),
+      sourceMode: isDevelopmentSampleEnabled() ? "local" : "unavailable",
+      sourceModeText: isDevelopmentSampleEnabled() ? "개발 샘플" : "데이터 연결 실패",
       sourceModeError: error?.message || "Backend unavailable"
     };
   }
@@ -257,6 +307,7 @@ export async function loadBackendData(localData) {
  * @returns {Promise<Array|null>}
  */
 async function loadItemsPageInBbox(path, { minLat, minLng, maxLat, maxLng, category, scope = "GEUMCHEON", page = 0, size = 200, signal } = {}) {
+  if (!isBackendApiEnabled()) return null;
   const params = new URLSearchParams({ page, size });
   // undefined/null인 bbox 파라미터는 추가하지 않는다 (String("undefined")가 서버 400을 유발)
   if (minLat != null) params.set("minLat", minLat);
@@ -322,6 +373,7 @@ export async function loadStoresInBbox(opts = {}) {
 }
 
 export async function loadStoreScopeCount(scope = "GEUMCHEON") {
+  if (!isBackendApiEnabled()) return null;
   try {
     const params = new URLSearchParams({ scope });
     const response = await fetchWithTimeout(

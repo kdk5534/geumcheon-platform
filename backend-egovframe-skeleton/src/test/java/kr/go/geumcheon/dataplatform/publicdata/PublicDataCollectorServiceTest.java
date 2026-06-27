@@ -704,6 +704,50 @@ class PublicDataCollectorServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void aedApiFiltersToGeumcheonByBuildAddressAndIncludesCoordinates() throws Exception {
+        UUID datasetId = UUID.randomUUID();
+        when(repository.upsertDataset(any())).thenReturn(datasetId);
+        when(repository.replaceFacilitySnapshot(eq(datasetId), eq("AED"), anyList())).thenReturn(1);
+        // AED 응답: response.body.items.item[] 구조
+        HttpResponse<String> apiResponse = successResponse("""
+                {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL SERVICE."},"body":{"items":{"item":[
+                  {
+                    "buildAddress": "서울특별시 금천구 독산로 10, 1층",
+                    "buildPlace": "1층 로비",
+                    "org": "금천구청",
+                    "mfg": "메디아나",
+                    "model": "A10",
+                    "wgs84Lat": "37.4693",
+                    "wgs84Lon": "126.8975"
+                  },
+                  {
+                    "buildAddress": "서울특별시 종로구 세종대로 209",
+                    "buildPlace": "정문",
+                    "org": "서울시청",
+                    "wgs84Lat": "37.5662",
+                    "wgs84Lon": "126.9784"
+                  }
+                ]},"numOfRows":2,"pageNo":1,"totalCount":2}}}
+                """);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class))).thenReturn(apiResponse);
+        PublicDataCollectorService service = new PublicDataCollectorService(
+                repository, datasetRegistry, objectMapper,
+                "data-key", "seoul-key", true,
+                5, 0, 0, 500, 200, 0, httpClient
+        );
+
+        CollectionRunResult result = service.syncAedDevices("manual");
+
+        ArgumentCaptor<List<Map<String, String>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(repository).replaceFacilitySnapshot(eq(datasetId), eq("AED"), rows.capture());
+        assertThat(rows.getValue()).hasSize(1);
+        assertThat(rows.getValue().get(0).get("buildAddress")).contains("금천구");
+        assertThat(rows.getValue().get(0).get("wgs84Lat")).isEqualTo("37.4693");
+        assertThat(result.status()).isEqualTo("success");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void streetLightStandardApiFiltersToGeumcheonByInsttNmAndIncludesCoordinates() throws Exception {
         UUID datasetId = UUID.randomUUID();
         when(repository.upsertDataset(any())).thenReturn(datasetId);

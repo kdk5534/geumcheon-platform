@@ -65,6 +65,14 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
+    void aedDevicePolicyIsEnabledWithAnnualFreshness() {
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("aed-devices");
+        assertThat(policy.collectionEnabled()).isTrue();
+        assertThat(policy.naturalKey()).isEqualTo("name+address");
+        assertThat(policy.freshnessSla().toDays()).isEqualTo(365);
+    }
+
+    @Test
     void streetLightPolicyIsEnabledWithAnnualFreshness() {
         DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("street-lights");
         assertThat(policy.collectionEnabled()).isTrue();

@@ -70,6 +70,7 @@ function facilityCategory(item: RawFacility) {
       SCHOOL_ZONE: "스쿨존",
       CIVIL_DEFENSE_SHELTER: "민방위대피소",
       // Phase 1 신규 — 안전·환경
+      AED: "자동제세동기(AED)",
       STREET_LIGHT: "보안등",
       FIRE_HYDRANT: "소방용수시설",
       // Phase 1 신규 — 생활편의·문화

@@ -102,6 +102,7 @@ async function loadAllFacilities(signal?: AbortSignal) {
     "SCHOOL_ZONE",
     "CIVIL_DEFENSE_SHELTER",
     // Phase 1 신규 — 안전·환경
+    "AED",
     "STREET_LIGHT",
     "FIRE_HYDRANT",
     // Phase 1 신규 — 생활편의·문화

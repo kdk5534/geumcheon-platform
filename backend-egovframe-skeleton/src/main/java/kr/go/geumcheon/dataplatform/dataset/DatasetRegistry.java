@@ -378,6 +378,24 @@ public class DatasetRegistry {
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
         // Phase 1 — 안전·환경 신규
+        items.put("aed-devices", new DatasetDefinition(
+                "aed-devices", "자동제세동기(AED)", "안전",
+                "국립중앙의료원 전국AED정보조회서비스",
+                "연 1회", "data.go.kr AED 좌표 조회 API (좌표 포함)", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "설치기관명"),
+                        new DatasetFieldDefinition("address", "건물주소"),
+                        new DatasetFieldDefinition("buildPlace", "설치장소"),
+                        new DatasetFieldDefinition("mfg", "제조사"),
+                        new DatasetFieldDefinition("model", "모델명"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://apis.data.go.kr/B552657/AEDInfoInqireService/getAedLcinfoInqire",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         items.put("street-lights", new DatasetDefinition(
                 "street-lights", "보안등", "안전", "공공데이터포털 전국보안등정보표준데이터",
                 "연 1회", "data.go.kr 표준데이터 API (좌표 포함)", true, "API", false, false, true,

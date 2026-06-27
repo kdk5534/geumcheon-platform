@@ -378,6 +378,22 @@ public class DatasetRegistry {
                 "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
         ));
         // Phase 1 — 산업·상권(G밸리 특화) 신규
+        items.put("traditional-markets", new DatasetDefinition(
+                "traditional-markets", "전통시장", "상권", "공공데이터포털 소상공인시장진흥공단 전국전통시장표준데이터",
+                "연 1회", "data.go.kr 표준데이터 API (좌표 포함)", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "시장명"),
+                        new DatasetFieldDefinition("address", "도로명주소"),
+                        new DatasetFieldDefinition("mrktType", "시장유형"),
+                        new DatasetFieldDefinition("storNumber", "점포수"),
+                        new DatasetFieldDefinition("latitude", "위도"),
+                        new DatasetFieldDefinition("longitude", "경도"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://www.data.go.kr/data/15012894/standard.do",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         items.put("knowledge-industry-center", new DatasetDefinition(
                 "knowledge-industry-center", "지식산업센터", "산업", "공공데이터포털 한국산업단지공단 전국지식산업센터현황",
                 "연 1회(6/30 기준)", "odcloud 전국집계 API + VWorld 지오코딩", true, "API", false, false, true,

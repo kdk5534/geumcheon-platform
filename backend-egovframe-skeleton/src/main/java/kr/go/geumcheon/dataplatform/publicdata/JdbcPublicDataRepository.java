@@ -843,7 +843,8 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         String name = firstValue(n,
                 "stationName", "cctv_nm", "pklt_nm", "prkplceNm", "시설명", "name",
                 // P4 신규: 공공와이파이(X_SWIFI_MAIN_NM), 무더위쉼터(SHTER_NM), 어린이보호구역(ZONE_NM), 전기차충전소(STAT_NM)
-                "X_SWIFI_MAIN_NM", "SHTER_NM", "ZONE_NM", "STAT_NM", "TRGET_FCLTY_NM");
+                // Phase 1 신규: 전통시장(mrktNm)
+                "X_SWIFI_MAIN_NM", "SHTER_NM", "ZONE_NM", "STAT_NM", "TRGET_FCLTY_NM", "mrktNm");
         if (name == null || name.isBlank()) {
             return null;
         }

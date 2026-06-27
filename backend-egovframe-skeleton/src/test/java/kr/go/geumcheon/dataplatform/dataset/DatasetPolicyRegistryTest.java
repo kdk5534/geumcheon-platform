@@ -65,6 +65,17 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
+    void traditionalMarketPolicyIsEnabledWithAnnualFreshness() {
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("traditional-markets");
+        assertThat(policy.collectionEnabled()).isTrue();
+        assertThat(policy.naturalKey()).isEqualTo("name+address");
+        assertThat(policy.minimumRows()).isEqualTo(1);
+        assertThat(policy.maximumRows()).isEqualTo(500);
+        assertThat(policy.freshnessSla().toDays()).isEqualTo(365);
+        assertThat(policy.lastGoodRetention().toDays()).isGreaterThanOrEqualTo(365);
+    }
+
+    @Test
     void knowledgeIndustryCenterPolicyIsEnabledWithLongRetention() {
         DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("knowledge-industry-center");
         assertThat(policy.collectionEnabled()).isTrue();

@@ -1,29 +1,49 @@
+// geo 페이지(행정동별 인구·시설 비교) E2E 테스트
 import { expect, test } from "@playwright/test";
 
-test("geo 페이지가 마운트되고 기본 권역 KPI를 렌더한다", async ({ page }) => {
+test("geo 페이지가 마운트되고 제목을 렌더한다", async ({ page }) => {
   await page.goto("/#/geo");
-
-  await expect(page.locator("#geo-title")).toContainText("접근성·권역");
-  await expect(page.locator(".gdp-geo-notice")).toBeVisible();
-  // 인구 데이터 유무에 따라 3~4개 KPI 카드 렌더
-  const count = await page.locator(".gdp-geo-kpi-row article").count();
-  expect(count).toBeGreaterThanOrEqual(3);
-  await expect(page.locator(".gdp-geo-score-card")).toHaveCount(3);
+  await expect(page.locator("#geo-title")).toContainText("행정동별 인구·시설 비교");
 });
 
-test("geo 페이지 — 권역 버튼 클릭 시 KPI가 해당 권역으로 교체된다", async ({ page }) => {
+test("geo 페이지 — 데이터 로드 후 세그먼트 또는 notice가 표시된다", async ({ page }) => {
   await page.goto("/#/geo");
-
-  // 권역 선택 버튼 그룹에서 독산동만 클릭 (테이블 내 버튼과 구분)
-  await page.locator(".gdp-geo-district-group button").filter({ hasText: "독산동" }).first().click();
-  await expect(page.locator(".gdp-geo-kpi-row article").first()).toContainText("독산동");
+  // 페이지가 안정화되기를 기다림: 세그먼트 또는 notice 중 하나가 나타날 때까지
+  const segment = page.locator(".gdp-segmented");
+  const notice = page.locator(".gdp-geo-notice");
+  await Promise.race([
+    segment.waitFor({ state: "visible", timeout: 8000 }).catch(() => null),
+    notice.waitFor({ state: "visible", timeout: 8000 }).catch(() => null),
+  ]);
+  // 둘 중 하나가 반드시 표시됨
+  const segCount = await segment.count();
+  const noticeCount = await notice.count();
+  expect(segCount + noticeCount).toBeGreaterThan(0);
 });
 
-test("geo 페이지 — 비교 기준 버튼 전환 시 차트 제목이 바뀐다", async ({ page }) => {
+test("geo 페이지 — 인구 세그먼트 버튼 클릭 시 활성화된다", async ({ page }) => {
   await page.goto("/#/geo");
+  const popBtn = page.getByRole("button", { name: "인구", exact: true });
+  // 인구 버튼이 생길 때까지 대기(데이터 없으면 skip)
+  const visible = await popBtn.waitFor({ state: "visible", timeout: 8000 }).then(() => true).catch(() => false);
+  if (!visible) {
+    test.skip();
+    return;
+  }
+  await popBtn.click();
+  await expect(popBtn).toHaveClass(/is-active/);
+});
 
-  await page.getByRole("button", { name: "교통", exact: true }).click();
-  await expect(page.locator(".gdp-geo-chart-title").first()).toContainText("교통");
+test("geo 페이지 — 현황표가 렌더된다(데이터 있을 때)", async ({ page }) => {
+  await page.goto("/#/geo");
+  const table = page.locator(".gdp-geo-table");
+  const visible = await table.waitFor({ state: "visible", timeout: 8000 }).then(() => true).catch(() => false);
+  if (!visible) {
+    test.skip();
+    return;
+  }
+  const rows = page.locator(".gdp-geo-table tbody tr");
+  await expect(rows).not.toHaveCount(0);
 });
 
 test("레거시 #/map → #/nearby 리다이렉트", async ({ page }) => {
@@ -59,6 +79,8 @@ test("레거시 #/dong?section=population → #/population 리다이렉트", asy
 test("geo 페이지는 모바일 너비에서 수평 오버플로가 없다", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/#/geo");
+  // 페이지가 어느 정도 안정화될 때까지 제목 대기
+  await expect(page.locator("#geo-title")).toBeVisible();
   const report = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,

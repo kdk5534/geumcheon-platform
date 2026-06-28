@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { API_TIMEOUT_MS, BACKEND_API_BASE, isBackendApiEnabled } from "../../data/env";
+import { Button, Card, Grid, KPICard } from "../../components/ui";
 
 interface DatasetItem {
   id: string;
@@ -314,22 +315,28 @@ export function CatalogPage() {
       </header>
 
       <section className="gdp-catalog-status" aria-label="데이터 운영 상태">
-        <div>
-          <span>운영 데이터셋</span>
-          <strong>{summary.total.toLocaleString("ko-KR")}</strong>
-        </div>
-        <div>
-          <span>{statuses.length ? "정상자료 보유" : "API 형식"}</span>
-          <strong>{summary.available.toLocaleString("ko-KR")}</strong>
-        </div>
-        <div>
-          <span>최근 실패·자료 유지</span>
-          <strong>{summary.attention.toLocaleString("ko-KR")}</strong>
-        </div>
-        <div>
-          <span>최근 기준</span>
-          <strong>{summary.latest}</strong>
-        </div>
+        <Grid cols={4}>
+          <KPICard
+            label="운영 데이터셋"
+            value={summary.total.toLocaleString("ko-KR")}
+            accent="cobalt"
+          />
+          <KPICard
+            label={statuses.length ? "정상자료 보유" : "API 형식"}
+            value={summary.available.toLocaleString("ko-KR")}
+            accent="mint"
+          />
+          <KPICard
+            label="최근 실패·자료 유지"
+            value={summary.attention.toLocaleString("ko-KR")}
+            accent="amber"
+          />
+          <KPICard
+            label="최근 기준"
+            value={summary.latest}
+            small
+          />
+        </Grid>
         <p>
           {summary.noSuccess
             ? `정상 수집 이력이 없는 데이터셋 ${summary.noSuccess.toLocaleString("ko-KR")}건은 공개 지표에서 제외됩니다.`
@@ -416,7 +423,7 @@ export function CatalogPage() {
           <strong>{filtered.length.toLocaleString("ko-KR")}개 데이터셋</strong>
           <span>{activeFilterLabels.length ? activeFilterLabels.join(" · ") : "전체 공개 카탈로그"}</span>
         </div>
-        <button type="button" onClick={clearFilters}>필터 초기화</button>
+        <Button variant="ghost" size="sm" onClick={clearFilters}>필터 초기화</Button>
       </div>
 
       <section className="gdp-catalog-grid" aria-label="데이터셋 목록">
@@ -424,7 +431,7 @@ export function CatalogPage() {
           filtered.map((dataset) => {
             const status = datasetStatusFor(dataset, statuses);
             return (
-              <article key={dataset.id}>
+              <Card key={dataset.id} interactive className="gdp-catalog-card">
                 <div className="gdp-catalog-card-head">
                   <span>{dataset.category}</span>
                   <small>{dataset.updateCycle}</small>
@@ -454,7 +461,7 @@ export function CatalogPage() {
                     <span key={item}>{typeLabels[item] || item}</span>
                   ))}
                 </div>
-              </article>
+              </Card>
             );
           })
         ) : (
@@ -462,7 +469,7 @@ export function CatalogPage() {
             <span>NO DATASET MATCH</span>
             <strong>조건에 맞는 데이터셋이 없습니다</strong>
             <p>검색어, 주제, 형식, 다운로드 조건을 완화해 주세요. 분석 화면의 근거가 보이지 않으면 수집 상태 또는 공개 가능 여부를 먼저 확인합니다.</p>
-            <button type="button" onClick={clearFilters}>전체 카탈로그 보기</button>
+            <Button variant="outline" size="sm" onClick={clearFilters}>전체 카탈로그 보기</Button>
           </div>
         )}
       </section>

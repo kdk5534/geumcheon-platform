@@ -1072,40 +1072,39 @@ body {
 
 .gdp-catalog-page {
   display: grid;
-  gap: 14px;
+  gap: var(--gdp-space-4);
 }
 
 .gdp-catalog-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: var(--gdp-space-5);
   align-items: center;
-  min-height: 160px;
-  padding: clamp(20px, 2.4vw, 28px);
+  min-height: 10rem;
+  padding: clamp(var(--gdp-space-5), 2.4vw, var(--gdp-space-7));
   border: 1px solid var(--gdp-line);
   border-radius: var(--gdp-radius);
   background:
-    radial-gradient(circle at 94% 12%, rgba(49, 89, 216, .13), transparent 230px),
-    linear-gradient(135deg, rgba(0, 168, 143, .05), transparent 54%),
+    radial-gradient(circle at 94% 12%, color-mix(in srgb, var(--gdp-action) 13%, transparent), transparent 230px),
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-mint) 5%, transparent), transparent 54%),
     var(--gdp-panel);
   box-shadow: var(--gdp-shadow);
 }
 
 .gdp-catalog-head span,
-.gdp-catalog-status span,
 .gdp-catalog-toolbar label,
 .gdp-catalog-shortcuts header span,
 .gdp-catalog-card-head span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
+  letter-spacing: var(--gdp-tracking-caps);
 }
 
 .gdp-catalog-head h1 {
-  margin: 8px 0;
-  font-size: clamp(30px, 3.2vw, 46px);
-  line-height: 1.02;
+  margin: var(--gdp-space-2) 0;
+  font-size: var(--gdp-text-4xl);
+  line-height: var(--gdp-leading-tight);
   letter-spacing: -.065em;
 }
 
@@ -1113,74 +1112,55 @@ body {
   max-width: 760px;
   margin: 0;
   color: var(--gdp-muted);
-  font-size: 14px;
-  line-height: 1.58;
+  font-size: var(--gdp-text-sm);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-catalog-head-stats {
   display: grid;
   place-items: center;
-  min-width: 142px;
-  min-height: 104px;
-  padding: 16px;
-  border: 1px solid rgba(49, 89, 216, .22);
-  border-radius: 20px;
-  background: rgba(49, 89, 216, .08);
+  min-width: 9rem;
+  min-height: 6.5rem;
+  padding: var(--gdp-space-4);
+  border: 1px solid color-mix(in srgb, var(--gdp-action) 22%, var(--gdp-line));
+  border-radius: var(--gdp-radius-xl);
+  background: var(--gdp-action-subtle);
 }
 
 .gdp-catalog-head-stats strong {
-  color: var(--gdp-cobalt);
-  font-size: 34px;
+  color: var(--gdp-action);
+  font-size: var(--gdp-text-3xl);
   line-height: 1;
-  letter-spacing: -.06em;
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-catalog-head-stats span {
-  color: var(--gdp-cobalt);
+  color: var(--gdp-action);
   letter-spacing: 0;
 }
 
 .gdp-catalog-status {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  overflow: hidden;
-  border: 1px solid var(--gdp-line);
-  border-radius: var(--gdp-radius);
-  background: var(--gdp-panel);
-  box-shadow: var(--gdp-shadow);
-}
-
-.gdp-catalog-status div {
-  min-height: 86px;
-  padding: 16px 18px;
-  border-right: 1px solid var(--gdp-line);
-}
-
-.gdp-catalog-status strong {
-  display: block;
-  margin-top: 8px;
-  color: var(--gdp-ink);
-  font-size: 21px;
-  letter-spacing: -.04em;
+  gap: var(--gdp-space-3);
 }
 
 .gdp-catalog-status p {
-  grid-column: 1 / -1;
   margin: 0;
-  padding: 14px 20px;
-  border-top: 1px solid var(--gdp-line);
+  padding: var(--gdp-space-3) var(--gdp-space-5);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
   background: color-mix(in srgb, var(--gdp-panel-alt) 86%, var(--gdp-amber));
   color: var(--gdp-muted);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--gdp-text-xs);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-catalog-toolbar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(160px, auto) minmax(140px, auto) auto;
-  gap: 12px;
+  gap: var(--gdp-space-3);
   align-items: end;
-  padding: 12px;
+  padding: var(--gdp-space-3);
   border: 1px solid var(--gdp-line);
   border-radius: var(--gdp-radius);
   background: var(--gdp-panel);
@@ -1189,28 +1169,28 @@ body {
 
 .gdp-catalog-toolbar label {
   display: grid;
-  gap: 7px;
+  gap: var(--gdp-space-2);
 }
 
 .gdp-catalog-toolbar input,
 .gdp-catalog-toolbar select {
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 2.625rem;
+  padding: 0 var(--gdp-space-3);
   border: 1px solid var(--gdp-line);
-  border-radius: 12px;
+  border-radius: var(--gdp-radius-md);
   background: var(--gdp-panel-alt);
   color: var(--gdp-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--gdp-text-sm);
 }
 
 .gdp-catalog-check {
   display: flex !important;
   align-items: center;
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 2.625rem;
+  padding: 0 var(--gdp-space-3);
   border: 1px solid var(--gdp-line);
-  border-radius: 12px;
+  border-radius: var(--gdp-radius-md);
   background: var(--gdp-panel-alt);
   color: var(--gdp-muted);
   white-space: nowrap;
@@ -1231,25 +1211,25 @@ body {
 }
 
 .gdp-catalog-shortcuts header {
-  padding: 16px 18px;
+  padding: var(--gdp-space-4) var(--gdp-space-5);
   border-right: 1px solid var(--gdp-line);
   background:
-    linear-gradient(135deg, rgba(49, 89, 216, .06), transparent 72%),
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-action) 6%, transparent), transparent 72%),
     var(--gdp-panel);
 }
 
 .gdp-catalog-shortcuts h2 {
-  margin: 6px 0 7px;
-  font-size: 19px;
-  letter-spacing: -.04em;
+  margin: var(--gdp-space-2) 0;
+  font-size: var(--gdp-text-lg);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-catalog-shortcuts p {
   margin: 0;
   color: var(--gdp-muted);
-  font-size: 12px;
-  font-weight: 760;
-  line-height: 1.5;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  line-height: var(--gdp-leading-snug);
 }
 
 .gdp-catalog-shortcuts > div {
@@ -1259,9 +1239,9 @@ body {
 
 .gdp-catalog-shortcuts button {
   display: grid;
-  gap: 6px;
-  min-height: 124px;
-  padding: 16px;
+  gap: var(--gdp-space-2);
+  min-height: 7.75rem;
+  padding: var(--gdp-space-4);
   border: 0;
   border-right: 1px solid var(--gdp-line);
   background: var(--gdp-panel);
@@ -1274,136 +1254,122 @@ body {
 }
 
 .gdp-catalog-shortcuts button:hover {
-  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-cobalt));
+  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-action));
 }
 
 .gdp-catalog-shortcuts button span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
+  letter-spacing: var(--gdp-tracking-caps);
 }
 
 .gdp-catalog-shortcuts button strong {
-  color: var(--gdp-cobalt);
-  font-size: 16px;
-  letter-spacing: -.04em;
+  color: var(--gdp-action);
+  font-size: var(--gdp-text-md);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-catalog-shortcuts button small {
   color: var(--gdp-muted);
-  font-size: 12px;
-  font-weight: 740;
-  line-height: 1.45;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  line-height: var(--gdp-leading-snug);
 }
 
 .gdp-catalog-result-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: var(--gdp-space-3);
+  padding: var(--gdp-space-3) var(--gdp-space-4);
   border: 1px solid var(--gdp-line);
-  border-radius: 14px;
+  border-radius: var(--gdp-radius-md);
   background: var(--gdp-panel);
   box-shadow: var(--gdp-shadow-tight);
 }
 
 .gdp-catalog-result-head div {
   display: grid;
-  gap: 4px;
+  gap: var(--gdp-space-1);
 }
 
 .gdp-catalog-result-head strong {
-  font-size: 16px;
+  font-size: var(--gdp-text-md);
 }
 
 .gdp-catalog-result-head span {
   color: var(--gdp-muted);
-  font-size: 12px;
-  font-weight: 760;
-}
-
-.gdp-catalog-result-head button {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--gdp-line);
-  border-radius: 999px;
-  background: var(--gdp-panel);
-  color: var(--gdp-cobalt);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
 }
 
 .gdp-catalog-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--gdp-space-4);
 }
 
-.gdp-catalog-grid article {
+/* Card 컴포넌트가 박스(배경·테두리·radius·그림자)를 제공하므로 내부 레이아웃만 지정 */
+.gdp-catalog-card.gdp-ui-card {
   display: grid;
-  gap: 12px;
-  min-height: 294px;
-  padding: 18px;
-  border: 1px solid var(--gdp-line);
-  border-radius: var(--gdp-radius);
-  background: var(--gdp-panel);
-  box-shadow: var(--gdp-shadow);
+  gap: var(--gdp-space-3);
+  min-height: 18.375rem;
+  padding: var(--gdp-space-5); /* gdp-ui-card 기본 space-6 오버라이드 */
 }
 
 .gdp-catalog-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--gdp-space-3);
 }
 
 .gdp-catalog-card-head span {
   width: fit-content;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: rgba(49, 89, 216, .08);
-  color: var(--gdp-cobalt);
+  padding: var(--gdp-space-1) var(--gdp-space-2);
+  border-radius: var(--gdp-radius-pill);
+  background: var(--gdp-action-subtle);
+  color: var(--gdp-action);
   letter-spacing: 0;
 }
 
 .gdp-catalog-card-head small {
   color: var(--gdp-soft);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
 }
 
 .gdp-catalog-state {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  min-height: 38px;
-  padding: 8px 10px;
+  gap: var(--gdp-space-3);
+  min-height: 2.375rem;
+  padding: var(--gdp-space-2) var(--gdp-space-3);
   border: 1px solid var(--gdp-line);
-  border-radius: 12px;
+  border-radius: var(--gdp-radius-md);
   background: var(--gdp-panel-alt);
 }
 
 .gdp-catalog-state strong {
-  font-size: 12px;
-  font-weight: 950;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
   white-space: nowrap;
 }
 
 .gdp-catalog-state small {
   overflow: hidden;
   color: var(--gdp-muted);
-  font-size: 11px;
-  font-weight: 760;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .gdp-catalog-state.is-ready {
   border-color: color-mix(in srgb, var(--gdp-mint) 28%, var(--gdp-line));
-  background: rgba(0, 168, 143, .08);
+  background: color-mix(in srgb, var(--gdp-mint) 8%, var(--gdp-panel));
 }
 
 .gdp-catalog-state.is-ready strong {
@@ -1412,7 +1378,7 @@ body {
 
 .gdp-catalog-state.is-attention {
   border-color: color-mix(in srgb, var(--gdp-amber) 28%, var(--gdp-line));
-  background: rgba(212, 147, 36, .1);
+  background: color-mix(in srgb, var(--gdp-amber) 10%, var(--gdp-panel));
 }
 
 .gdp-catalog-state.is-attention strong {
@@ -1421,7 +1387,7 @@ body {
 
 .gdp-catalog-state.is-blocked {
   border-color: color-mix(in srgb, var(--gdp-coral) 28%, var(--gdp-line));
-  background: rgba(239, 107, 91, .08);
+  background: color-mix(in srgb, var(--gdp-coral) 8%, var(--gdp-panel));
 }
 
 .gdp-catalog-state.is-blocked strong {
@@ -1430,27 +1396,27 @@ body {
 
 .gdp-catalog-state.is-pending strong,
 .gdp-catalog-state.is-static strong {
-  color: var(--gdp-cobalt);
+  color: var(--gdp-action);
 }
 
 .gdp-catalog-grid h2 {
   margin: 0;
-  font-size: 19px;
-  letter-spacing: -.04em;
+  font-size: var(--gdp-text-lg);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-catalog-grid p {
   margin: 0;
   color: var(--gdp-muted);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: var(--gdp-text-sm);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-catalog-grid dl {
   display: grid;
-  gap: 8px;
+  gap: var(--gdp-space-2);
   margin: 0;
-  padding: 14px 0;
+  padding: var(--gdp-space-4) 0;
   border-top: 1px solid var(--gdp-line);
   border-bottom: 1px solid var(--gdp-line);
 }
@@ -1458,81 +1424,69 @@ body {
 .gdp-catalog-grid dl div {
   display: grid;
   grid-template-columns: 70px minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--gdp-space-3);
 }
 
 .gdp-catalog-grid dt {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
 }
 
 .gdp-catalog-grid dd {
   margin: 0;
   color: var(--gdp-ink);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
 }
 
 .gdp-catalog-types {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: var(--gdp-space-2);
   align-self: end;
 }
 
 .gdp-catalog-types span {
-  padding: 5px 8px;
-  border-radius: 999px;
+  padding: var(--gdp-space-1) var(--gdp-space-2);
+  border-radius: var(--gdp-radius-pill);
   background: color-mix(in srgb, var(--gdp-panel-alt) 80%, var(--gdp-mint));
   color: var(--gdp-mint);
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
 }
 
 .gdp-catalog-empty {
   grid-column: 1 / -1;
   display: grid;
-  gap: 10px;
-  padding: 24px;
-  border: 1px dashed color-mix(in srgb, var(--gdp-cobalt) 34%, var(--gdp-line));
+  gap: var(--gdp-space-3);
+  padding: var(--gdp-space-6);
+  border: 1px dashed color-mix(in srgb, var(--gdp-action) 34%, var(--gdp-line));
   border-radius: var(--gdp-radius);
   background:
-    linear-gradient(135deg, rgba(49, 89, 216, .06), transparent 72%),
+    linear-gradient(135deg, color-mix(in srgb, var(--gdp-action) 6%, transparent), transparent 72%),
     var(--gdp-panel);
 }
 
 .gdp-catalog-empty span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-heavy);
+  letter-spacing: var(--gdp-tracking-caps);
 }
 
 .gdp-catalog-empty strong {
   color: var(--gdp-ink);
-  font-size: 22px;
-  letter-spacing: -.045em;
+  font-size: var(--gdp-text-xl);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-catalog-empty p {
   max-width: 720px;
   margin: 0;
   color: var(--gdp-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.gdp-catalog-empty button {
-  width: fit-content;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid rgba(49, 89, 216, .24);
-  border-radius: 999px;
-  background: rgba(49, 89, 216, .08);
-  color: var(--gdp-cobalt);
-  font-size: 12px;
-  font-weight: 950;
+  font-size: var(--gdp-text-sm);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-finder-page {

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MapMode, OverviewModel, OverviewTopic } from "../overviewTypes";
 import type { FacilitySummary } from "../overviewTypes";
 import { VworldMap } from "./VworldMap";
+import type { ChoroplethProps } from "./VworldMap";
 import { FacilityDetailDrawer } from "./FacilityDetailDrawer";
+import { normalizeDongName } from "../../../data/dongName";
 
 interface Props {
   model: OverviewModel;
@@ -36,6 +38,21 @@ const topicFacilityAliases: Record<OverviewTopic, string[]> = {
 
 export function OverviewMapPanel({ model, topic, district, mapMode, selectedBreakdown, onMapModeChange }: Props) {
   const [selectedFacility, setSelectedFacility] = useState<FacilitySummary | null>(null);
+  const [choroplethOn, setChoroplethOn] = useState(false);
+
+  // 인구 행정동별 값 맵 — populationSeries에서 정규화 키로 구성
+  const populationMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of model.populationSeries) {
+      map.set(normalizeDongName(item.name), item.value);
+    }
+    return map;
+  }, [model.populationSeries]);
+
+  const choroplethProp: ChoroplethProps | undefined =
+    choroplethOn && populationMap.size > 0
+      ? { valuesByDong: populationMap, metricLabel: "행정동별 인구(명)" }
+      : undefined;
   const topicFilteredFacilities = model.facilities.filter((facility) => {
     const haystack = `${facility.name} ${facility.category} ${facility.address}`.toLocaleLowerCase("ko-KR");
     return topicFacilityAliases[topic].some((alias) => haystack.includes(alias.toLocaleLowerCase("ko-KR")));
@@ -69,21 +86,34 @@ export function OverviewMapPanel({ model, topic, district, mapMode, selectedBrea
           <h2>{topicTitle[topic]}</h2>
           <p>VWorld 지도와 동일 조건의 대체 목록을 함께 제공합니다.</p>
         </div>
-        <div className="gdp-segmented" role="group" aria-label="지도 보기 방식">
-          <button
-            className={mapMode === "map" ? "is-active" : ""}
-            type="button"
-            onClick={() => onMapModeChange("map")}
-          >
-            지도
-          </button>
-          <button
-            className={mapMode === "list" ? "is-active" : ""}
-            type="button"
-            onClick={() => onMapModeChange("list")}
-          >
-            목록
-          </button>
+        <div className="gdp-map-panel-controls">
+          {mapMode === "map" && populationMap.size > 0 && (
+            <button
+              className={`gdp-choropleth-toggle${choroplethOn ? " is-active" : ""}`}
+              type="button"
+              aria-pressed={choroplethOn}
+              onClick={() => setChoroplethOn((v) => !v)}
+              title="행정동별 인구를 색으로 표시합니다"
+            >
+              {choroplethOn ? "인구 색칠 끄기" : "인구 색칠 켜기"}
+            </button>
+          )}
+          <div className="gdp-segmented" role="group" aria-label="지도 보기 방식">
+            <button
+              className={mapMode === "map" ? "is-active" : ""}
+              type="button"
+              onClick={() => onMapModeChange("map")}
+            >
+              지도
+            </button>
+            <button
+              className={mapMode === "list" ? "is-active" : ""}
+              type="button"
+              onClick={() => onMapModeChange("list")}
+            >
+              목록
+            </button>
+          </div>
         </div>
       </header>
 
@@ -92,6 +122,7 @@ export function OverviewMapPanel({ model, topic, district, mapMode, selectedBrea
           facilities={displayedFacilities}
           onSelectFacility={setSelectedFacility}
           selectedFacilityId={selectedFacility?.id}
+          choropleth={choroplethProp}
         />
       ) : (
         <div className="gdp-map-list" aria-label="지도 대체 시설 목록">

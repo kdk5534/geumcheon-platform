@@ -40,4 +40,19 @@
   --gdp-soft: #7f95aa;
   --gdp-shadow: 0 1px 0 rgba(255, 255, 255, .035), 0 22px 58px rgba(0, 0, 0, .30);
   --gdp-shadow-tight: 0 1px 0 rgba(255, 255, 255, .035), 0 12px 28px rgba(0, 0, 0, .24);
+  /* choropleth — 다크 모드에서 약간 더 진하게 */
+  --gdp-choro-1: #a8d8f0;
+  --gdp-choro-2: #4ea8d8;
+  --gdp-choro-3: #0a7fb8;
+  --gdp-choro-4: #0a6ea0;
+  --gdp-choro-5: #073660;
+}
+
+.gdp-app {
+  /* choropleth 5단계 파랑 팔레트 (연→진) */
+  --gdp-choro-1: #c5e8f7;
+  --gdp-choro-2: #63bde3;
+  --gdp-choro-3: #0d93cf;
+  --gdp-choro-4: #0c7fb8;
+  --gdp-choro-5: #0a4570;
 }

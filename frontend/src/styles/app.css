@@ -3612,6 +3612,118 @@ body {
 .gdp-map-legend i.is-safety { background: var(--gdp-amber); }
 .gdp-map-legend i.is-other { background: var(--gdp-coral); }
 
+/* ─── choropleth 단계구분도 범례 ─────────────────────────────────────────── */
+.gdp-choropleth-legend {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 500;
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius-sm);
+  padding: 8px 12px;
+  min-width: 130px;
+  box-shadow: var(--gdp-shadow-tight);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.gdp-app[data-theme="dark"] .gdp-choropleth-legend {
+  border-color: rgba(99, 118, 143, .52);
+  background: rgba(14, 28, 44, .9);
+}
+
+.gdp-choropleth-legend-title {
+  font-weight: 700;
+  color: var(--gdp-ink);
+  margin-bottom: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-choropleth-legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gdp-choropleth-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gdp-choropleth-legend-swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, .12);
+  flex-shrink: 0;
+}
+
+.gdp-choropleth-legend-label {
+  color: var(--gdp-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 인구 색칠 토글 버튼 + 지도 패널 컨트롤 영역 ──────────────────────── */
+.gdp-map-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gdp-choropleth-toggle {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--gdp-cobalt);
+  background: transparent;
+  color: var(--gdp-cobalt);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.gdp-choropleth-toggle:hover {
+  background: var(--gdp-cobalt);
+  color: #fff;
+}
+
+.gdp-choropleth-toggle.is-active {
+  background: var(--gdp-cobalt);
+  color: #fff;
+}
+
+.gdp-app[data-theme="dark"] .gdp-choropleth-toggle {
+  border-color: var(--gdp-choro-2);
+  color: var(--gdp-choro-2);
+}
+
+.gdp-app[data-theme="dark"] .gdp-choropleth-toggle:hover,
+.gdp-app[data-theme="dark"] .gdp-choropleth-toggle.is-active {
+  background: var(--gdp-choro-2);
+  color: #081522;
+}
+
+@media (max-width: 640px) {
+  .gdp-choropleth-legend {
+    right: 10px;
+    bottom: 10px;
+    max-width: calc(50% - 10px);
+    font-size: 10px;
+  }
+
+  .gdp-choropleth-toggle {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}
+
 .gdp-app .leaflet-container {
   font-family: inherit;
 }

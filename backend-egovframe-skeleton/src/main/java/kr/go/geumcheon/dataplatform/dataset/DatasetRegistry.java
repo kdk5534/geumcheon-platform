@@ -292,7 +292,7 @@ public class DatasetRegistry {
         ));
         items.put("welfare-facilities", new DatasetDefinition(
                 "welfare-facilities", "사회복지시설", "복지", "금천구 열린데이터광장",
-                "월", "격리 중계 연결·이용조건 검토", true, "API", false, false, true,
+                "월", "서울 OpenAPI 직접·이용조건 검토", true, "API", false, false, true,
                 List.of("name", "address"),
                 List.of(
                         new DatasetFieldDefinition("sourceOriginalId", "시설코드"),
@@ -304,11 +304,11 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("source", "출처")
                 ),
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-20394",
-                "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
         ));
         items.put("civil-defense-shelters", new DatasetDefinition(
                 "civil-defense-shelters", "민방위 대피시설", "안전", "금천구 열린데이터광장",
-                "월", "격리 중계 연결·이용조건 검토", true, "API", false, false, true,
+                "월", "서울 OpenAPI 직접·이용조건 검토", true, "API", false, false, true,
                 List.of("name", "address"),
                 List.of(
                         new DatasetFieldDefinition("sourceOriginalId", "관리번호"),
@@ -321,11 +321,11 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("source", "출처")
                 ),
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-20044",
-                "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
         ));
         items.put("hospitals", new DatasetDefinition(
                 "hospitals", "병원", "보건", "금천구 열린데이터광장",
-                "주", "격리 중계 연결·이용조건 검토", true, "API", false, false, true,
+                "주", "서울 OpenAPI 직접·이용조건 검토", true, "API", false, false, true,
                 List.of("name", "address"),
                 List.of(
                         new DatasetFieldDefinition("sourceOriginalId", "관리번호"),
@@ -338,11 +338,11 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("source", "출처")
                 ),
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-16176",
-                "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
         ));
         items.put("pharmacies", new DatasetDefinition(
                 "pharmacies", "약국", "보건", "금천구 열린데이터광장",
-                "주", "격리 중계 연결·이용조건 검토", true, "API", false, false, true,
+                "주", "서울 OpenAPI 직접·이용조건 검토", true, "API", false, false, true,
                 List.of("name", "address"),
                 List.of(
                         new DatasetFieldDefinition("sourceOriginalId", "관리번호"),
@@ -354,11 +354,11 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("source", "출처")
                 ),
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-16327",
-                "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
         ));
         items.put("childcare-centers", new DatasetDefinition(
                 "childcare-centers", "어린이집", "보육", "금천구 열린데이터광장",
-                "월", "격리 중계 연결·이용조건 검토", true, "API", false, false, true,
+                "월", "서울 OpenAPI 직접·이용조건 검토", true, "API", false, false, true,
                 List.of("name", "address", "latitude", "longitude"),
                 List.of(
                         new DatasetFieldDefinition("sourceOriginalId", "어린이집코드"),
@@ -375,7 +375,7 @@ public class DatasetRegistry {
                         new DatasetFieldDefinition("source", "출처")
                 ),
                 "https://data.geumcheon.go.kr/openinf/openapiview.jsp?infId=OA-20318",
-                "POINT", "LIVING_FACILITY_RELAY_TOKEN", "생활지도"
+                "POINT", "SEOUL_OPEN_API_KEY", "생활지도"
         ));
         // Phase 1 — 안전·환경 신규
         items.put("playgrounds", new DatasetDefinition(

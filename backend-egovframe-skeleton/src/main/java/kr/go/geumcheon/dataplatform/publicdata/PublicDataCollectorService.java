@@ -903,97 +903,110 @@ public class PublicDataCollectorService {
             throw new IllegalArgumentException("Unsupported living facility dataset: " + datasetKey);
         }
         return runSyncPipeline(
-                datasetKey, livingFacilityRelayToken, "LIVING_FACILITY_RELAY_TOKEN is missing.",
-                () -> livingFacilityRelayBaseUrl + "/v1/facilities?service="
-                        + URLEncoder.encode(serviceId, StandardCharsets.UTF_8),
-                (url, name) -> fetchLivingFacilityRows(url, name, serviceId),
+                datasetKey, seoulOpenApiKey, "SEOUL_OPEN_API_KEY is missing.",
+                () -> "http://openapi.seoul.go.kr:8088/" + seoulOpenApiKey + "/json/" + serviceId + "/1/1000/",
+                (url, name) -> fetchLivingFacilityDirectRows(url, name, serviceId),
                 (id, rows) -> repository.replaceFacilitySnapshot(id, category, rows),
-                saved -> "Saved " + saved + " validated living facility record(s).",
+                saved -> "생활시설 " + saved + "건 저장 완료.",
                 triggeredBy
         );
     }
 
-    private List<Map<String, String>> fetchLivingFacilityRows(
+    private List<Map<String, String>> fetchLivingFacilityDirectRows(
             String requestUrl, String datasetName, String serviceId
     ) throws Exception {
-        JsonNode root = executeRelayJsonWithRetry(
-                requestUrl, datasetName, livingFacilityRelayToken, "Living facility"
-        );
-        if (!"SUCCESS".equals(root.path("status").asText())
-                || !serviceId.equals(root.path("sourceService").asText())) {
-            throw new IllegalStateException("Living facility relay contract validation failed.");
+        HttpRequest request = HttpRequest.newBuilder(URI.create(requestUrl))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("Accept", "application/json")
+                .GET().build();
+        HttpResponse<String> response = httpClient().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException(datasetName + " 서울 OpenAPI 응답 오류: " + response.statusCode());
         }
-        List<Map<String, String>> sourceRows = extractRows(root);
-        if (sourceRows.isEmpty()) {
-            throw new IllegalStateException("Living facility relay returned 0 validated rows.");
+        JsonNode root = objectMapper.readTree(response.body());
+        JsonNode rowsNode = root.path(serviceId).path("row");
+        if (rowsNode.isMissingNode() || !rowsNode.isArray()) {
+            throw new IllegalStateException(datasetName + " 응답에 row 항목이 없습니다.");
         }
-        Set<String> identifiers = new java.util.HashSet<>();
-        List<Map<String, String>> normalized = new ArrayList<>();
-        for (Map<String, String> source : sourceRows) {
-            if (!serviceId.equals(source.get("sourceService"))
-                    || !"금천구".equals(source.get("district"))) {
-                throw new IllegalStateException("Living facility relay row source validation failed.");
+
+        Set<String> seen = new java.util.HashSet<>();
+        List<Map<String, String>> result = new ArrayList<>();
+        for (JsonNode item : rowsNode) {
+            // 병원·약국: 영업/정상(TRDSTATEGBN=01)만 수집
+            if ("LOCALDATA_010101_GC".equals(serviceId) || "LOCALDATA_010106_GC".equals(serviceId)) {
+                if (!"01".equals(item.path("TRDSTATEGBN").asText("").trim())) continue;
             }
-            Map<String, String> row = normalizeLivingFacilityRow(serviceId, source);
-            String identifier = row.get("sourceOriginalId");
-            if (!hasValue(identifier) || !hasValue(row.get("name")) || !hasValue(row.get("address"))) {
-                throw new IllegalStateException("Living facility relay row required fields are missing.");
+            Map<String, String> row = normalizeLivingFacilityDirectRow(serviceId, item);
+            String name = row.get("STAT_NM");
+            String addr = row.get("ADDR");
+            if (!hasValue(name) || !hasValue(addr)) continue;
+
+            String sourceId = row.get("sourceOriginalId");
+            if (hasValue(sourceId) && !seen.add(sourceId)) continue;
+
+            // 좌표가 없는 경우 VWorld 지오코딩으로 보완
+            if (!hasValue(row.get("LAT"))) {
+                String[] coords = geocodeAddress(addr, addr);
+                if (coords != null) {
+                    row.put("LAT", coords[0]);
+                    row.put("LNG", coords[1]);
+                }
             }
-            if (!identifiers.add(identifier)) {
-                throw new IllegalStateException("Living facility relay returned a duplicate identifier.");
-            }
-            validateOptionalLivingFacilityCoordinates(row);
-            normalized.add(row);
+            result.add(row);
         }
-        return normalized;
+        if (result.isEmpty()) {
+            throw new IllegalStateException(datasetName + " 정규화된 유효 행이 없습니다.");
+        }
+        return result;
     }
 
-    private Map<String, String> normalizeLivingFacilityRow(String serviceId, Map<String, String> source) {
-        Map<String, String> row = new LinkedHashMap<>(source);
-        row.put("sourceOriginalId", source.getOrDefault("sourceOriginalId", ""));
+    private Map<String, String> normalizeLivingFacilityDirectRow(String serviceId, JsonNode item) {
+        Map<String, String> row = new LinkedHashMap<>();
         switch (serviceId) {
             case "fcltOpenInfo_GC" -> {
-                row.put("name", firstNonBlank(source, new String[]{"FCLT_NM"}));
-                row.put("address", firstNonBlank(source, new String[]{"FCLT_ADDR"}));
-                row.put("description", firstNonBlank(source, new String[]{"FCLT_KIND_NM", "FCLT_TY_NM"}));
+                row.put("sourceOriginalId", item.path("FCLT_CD").asText("").trim());
+                row.put("STAT_NM", item.path("FCLT_NM").asText("").trim());
+                row.put("ADDR", item.path("FCLT_ADDR").asText("").trim());
+                row.put("description", item.path("FCLT_KIND_NM").asText("").trim());
             }
             case "LOCALDATA_114602_GC" -> {
-                row.put("name", firstNonBlank(source, new String[]{"BPLC_NM"}));
-                row.put("address", firstNonBlank(source, new String[]{"ROAD_NM_ADDR", "LOTNO_ADDR"}));
-                row.put("description", firstNonBlank(source, new String[]{"SALS_STTS_NM"}));
+                row.put("sourceOriginalId", item.path("MNG_NO").asText("").trim());
+                row.put("STAT_NM", item.path("BPLC_NM").asText("").trim());
+                String ciAddr = item.path("ROAD_NM_ADDR").asText("").trim();
+                if (ciAddr.isEmpty()) ciAddr = item.path("LOTNO_ADDR").asText("").trim();
+                row.put("ADDR", ciAddr);
+                // XCRD=위도(37.xxx), YCRD=경도(126.xxx) — 이 API는 이름과 값이 반대
+                String xcrd = item.path("XCRD").asText("").trim();
+                String ycrd = item.path("YCRD").asText("").trim();
+                if (!xcrd.isEmpty() && !ycrd.isEmpty()) {
+                    row.put("LAT", xcrd);
+                    row.put("LNG", ycrd);
+                }
             }
             case "LOCALDATA_010101_GC", "LOCALDATA_010106_GC" -> {
-                row.put("name", firstNonBlank(source, new String[]{"BPLCNM"}));
-                row.put("address", firstNonBlank(source, new String[]{"RDNWHLADDR", "SITEWHLADDR"}));
-                row.put("description", firstNonBlank(source, new String[]{"TRDSTATENM", "DTLSTATENM"}));
+                row.put("sourceOriginalId", item.path("MGTNO").asText("").trim());
+                row.put("STAT_NM", item.path("BPLCNM").asText("").trim());
+                String hoAddr = item.path("RDNWHLADDR").asText("").trim();
+                if (hoAddr.isEmpty()) hoAddr = item.path("SITEWHLADDR").asText("").trim();
+                row.put("ADDR", hoAddr);
+                row.put("description", item.path("TRDSTATENM").asText("").trim());
+                // X/Y는 TM 좌표계 — 주소 기반 VWorld 지오코딩으로 대체
             }
             case "ChildCareInfoGC" -> {
-                row.put("name", firstNonBlank(source, new String[]{"CRNAME"}));
-                row.put("address", firstNonBlank(source, new String[]{"CRADDR"}));
-                row.put("description", firstNonBlank(source, new String[]{"CRTYPENAME"}));
+                row.put("sourceOriginalId", item.path("STCODE").asText("").trim());
+                row.put("STAT_NM", item.path("CRNAME").asText("").trim());
+                row.put("ADDR", item.path("CRADDR").asText("").trim());
+                row.put("description", item.path("CRTYPENAME").asText("").trim());
+                String la = item.path("LA").asText("").trim();
+                String lo = item.path("LO").asText("").trim();
+                if (!la.isEmpty() && !lo.isEmpty()) {
+                    row.put("LAT", la);
+                    row.put("LNG", lo);
+                }
             }
-            default -> throw new IllegalArgumentException("Unsupported relay service.");
+            default -> throw new IllegalArgumentException("Unsupported living facility service: " + serviceId);
         }
-        row.values().removeIf(java.util.Objects::isNull);
         return row;
-    }
-
-    private void validateOptionalLivingFacilityCoordinates(Map<String, String> row) {
-        String lat = row.get("LAT");
-        String lon = row.get("LNG");
-        if (!hasValue(lat) && !hasValue(lon)) return;
-        if (!hasValue(lat) || !hasValue(lon)) {
-            throw new IllegalStateException("Living facility relay returned an incomplete coordinate pair.");
-        }
-        try {
-            double latitude = Double.parseDouble(lat);
-            double longitude = Double.parseDouble(lon);
-            if (latitude < 37.42 || latitude > 37.51 || longitude < 126.85 || longitude > 126.93) {
-                throw new IllegalStateException("Living facility relay returned an out-of-range coordinate.");
-            }
-        } catch (NumberFormatException error) {
-            throw new IllegalStateException("Living facility relay returned an invalid coordinate.", error);
-        }
     }
 
     public CollectionRunResult syncHeatShelters(String triggeredBy) {

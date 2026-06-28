@@ -153,14 +153,14 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
-    void firstWaveLivingFacilitiesUseApprovedIsolatedRelayButKeepTermsReview() {
+    void firstWaveLivingFacilitiesUseSeoulOpenApiDirectAndKeepTermsReview() {
         assertThat(Set.of(
                 "welfare-facilities", "civil-defense-shelters", "hospitals",
                 "pharmacies", "childcare-centers"
         )).allSatisfy(key -> {
             DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired(key);
             assertThat(policy.collectionEnabled()).isTrue();
-            assertThat(policy.technicalStatus()).isEqualTo(DatasetOperationalPolicy.TechnicalStatus.DRAFT);
+            assertThat(policy.technicalStatus()).isEqualTo(DatasetOperationalPolicy.TechnicalStatus.PROVISIONALLY_APPROVED);
             assertThat(policy.termsStatus()).isEqualTo(DatasetOperationalPolicy.TermsStatus.REVIEW_REQUIRED);
         });
     }

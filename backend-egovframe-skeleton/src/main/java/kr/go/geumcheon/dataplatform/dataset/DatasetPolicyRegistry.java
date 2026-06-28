@@ -23,8 +23,7 @@ public final class DatasetPolicyRegistry {
     private static final String SYSTEM_OWNER_ROLE = "플랫폼 운영 담당";
     private static final String APPROVAL_OWNER_ROLE = "정보보안·개인정보 담당";
     private static final Set<String> UNCONFIRMED_SOURCE_KEYS = Set.of(
-            "heat-shelters", "welfare-facilities", "civil-defense-shelters",
-            "hospitals", "pharmacies", "childcare-centers"
+            "heat-shelters"
     );
     private static final Set<String> CONFIRMED_TERMS_KEYS = Set.of("heat-shelters", "ev-chargers");
     private static final Map<String, DatasetOperationalPolicy> POLICIES = buildPolicies();

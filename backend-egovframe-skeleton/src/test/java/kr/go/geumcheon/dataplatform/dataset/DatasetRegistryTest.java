@@ -41,8 +41,8 @@ class DatasetRegistryTest {
                 "welfare-facilities", "civil-defense-shelters", "hospitals",
                 "pharmacies", "childcare-centers"
         )).allSatisfy(key -> {
-            assertThat(registry.getRequired(key).apiStatus()).contains("격리 중계 연결");
-            assertThat(registry.getRequired(key).envVarName()).isEqualTo("LIVING_FACILITY_RELAY_TOKEN");
+            assertThat(registry.getRequired(key).apiStatus()).contains("서울 OpenAPI 직접");
+            assertThat(registry.getRequired(key).envVarName()).isEqualTo("SEOUL_OPEN_API_KEY");
             assertThat(registry.getRequired(key).publicVisible()).isTrue();
         });
     }

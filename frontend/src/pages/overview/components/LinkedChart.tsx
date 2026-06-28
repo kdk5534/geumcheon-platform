@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useTheme } from "../../../shell/ThemeContext";
+import { readChartTokens } from "../../../data/themeTokens";
 import * as echarts from "echarts/core";
 import { BarChart, PieChart } from "echarts/charts";
 import {
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export function LinkedChart({ model, topic, selectedBreakdown, onSelectBreakdown }: Props) {
+  const theme = useTheme();
   const ref = useRef<HTMLDivElement | null>(null);
   const chartData = useMemo(() => {
     if (topic === "commercial") return model.storeCategorySeries;
@@ -31,25 +34,28 @@ export function LinkedChart({ model, topic, selectedBreakdown, onSelectBreakdown
     if (!chartData.length) return undefined;
     const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
     const isCommercial = topic === "commercial";
+    const tok = readChartTokens();
     chart.setOption({
-      color: isCommercial ? ["#ef6b5b", "#3159d8", "#00a88f", "#d49324"] : ["#3159d8"],
+      color: isCommercial
+        ? [tok.series[2], tok.series[0], tok.series[1], tok.series[3]]
+        : [tok.series[0]],
       tooltip: { trigger: isCommercial ? "item" : "axis" },
       grid: isCommercial ? undefined : { left: 12, right: 14, top: 16, bottom: 22, containLabel: true },
-      legend: isCommercial ? { bottom: 0, textStyle: { color: "#607487" } } : undefined,
+      legend: isCommercial ? { bottom: 0, textStyle: { color: tok.axisLabel } } : undefined,
       xAxis: isCommercial
         ? undefined
         : {
             type: "category",
             data: chartData.map((item) => item.name),
-            axisLabel: { color: "#607487", interval: 0, fontSize: 10 },
-            axisLine: { lineStyle: { color: "#dbe4ee" } },
+            axisLabel: { color: tok.axisLabel, interval: 0, fontSize: 10 },
+            axisLine: { lineStyle: { color: tok.axisLine } },
           },
       yAxis: isCommercial
         ? undefined
         : {
             type: "value",
-            axisLabel: { color: "#8497a8", fontSize: 10 },
-            splitLine: { lineStyle: { color: "#edf2f7" } },
+            axisLabel: { color: tok.axisLabel, fontSize: 10 },
+            splitLine: { lineStyle: { color: tok.gridLine } },
           },
       series: isCommercial
         ? [
@@ -62,7 +68,7 @@ export function LinkedChart({ model, topic, selectedBreakdown, onSelectBreakdown
                 selected: selectedBreakdown === item.name,
               })),
               selectedMode: "single",
-              label: { color: "#607487", fontSize: 11 },
+              label: { color: tok.axisLabel, fontSize: 11 },
             },
           ]
         : [
@@ -71,7 +77,7 @@ export function LinkedChart({ model, topic, selectedBreakdown, onSelectBreakdown
               data: chartData.map((item) => ({
                 value: item.value,
                 itemStyle: {
-                  color: selectedBreakdown && selectedBreakdown !== item.name ? "#b8c6d6" : "#3159d8",
+                  color: selectedBreakdown && selectedBreakdown !== item.name ? tok.inactiveBar : tok.action,
                   opacity: selectedBreakdown && selectedBreakdown !== item.name ? 0.46 : 1,
                 },
               })),
@@ -91,7 +97,7 @@ export function LinkedChart({ model, topic, selectedBreakdown, onSelectBreakdown
       window.removeEventListener("resize", onResize);
       chart.dispose();
     };
-  }, [chartData, onSelectBreakdown, selectedBreakdown, topic]);
+  }, [chartData, onSelectBreakdown, selectedBreakdown, topic, theme]);
 
   if (!chartData.length) {
     return (

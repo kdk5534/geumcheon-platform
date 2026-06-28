@@ -8,6 +8,8 @@ import { BACKEND_API_BASE } from "../../../data/env";
 import type { FacilitySummary } from "../overviewTypes";
 import { normalizeDongName } from "../../../data/dongName";
 import { choroplethColor, legendRanges, quantileBreaks } from "./choropleth";
+import { useTheme } from "../../../shell/ThemeContext";
+import { readChartTokens } from "../../../data/themeTokens";
 
 /** choropleth(단계구분도) 모드 — 행정동별 값과 라벨 */
 export interface ChoroplethProps {
@@ -32,6 +34,7 @@ const GEUMCHEON_BOUNDS: L.LatLngBoundsExpression = [
 const DONG_GEOJSON_URL = "./assets/data/geumcheon-dong.geojson";
 
 export function VworldMap({ facilities, onUnavailable, onSelectFacility, selectedFacilityId, choropleth }: Props) {
+  const theme = useTheme();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -97,7 +100,8 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
 
     const markerLayer = L.markerClusterGroup({ chunkedLoading: true }).addTo(map);
     markerLayerRef.current = markerLayer;
-    addBoundaryLayer(map, choropleth).then((layer) => {
+    const initTok = readChartTokens();
+    addBoundaryLayer(map, choropleth, initTok.action).then((layer) => {
       if (!disposed) boundaryLayerRef.current = layer;
     });
     const sizingTimer = window.setTimeout(() => map.invalidateSize(), 120);
@@ -114,7 +118,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onUnavailable]);
 
-  // choropleth prop 변경 시 경계 레이어 스타일·범례만 갱신
+  // choropleth prop 또는 테마 변경 시 경계 레이어 스타일·범례만 갱신
   useEffect(() => {
     const map = instanceRef.current;
     const layer = boundaryLayerRef.current;
@@ -122,22 +126,24 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     // 기존 레이어 제거 후 재렌더
     layer.remove();
     boundaryLayerRef.current = null;
-    addBoundaryLayer(map, choropleth).then((newLayer) => {
+    const tok = readChartTokens();
+    addBoundaryLayer(map, choropleth, tok.action).then((newLayer) => {
       boundaryLayerRef.current = newLayer;
     });
-  }, [choropleth]);
+  }, [choropleth, theme]);
 
   useEffect(() => {
     const markerLayer = markerLayerRef.current;
     if (!markerLayer) return;
     markerLayer.clearLayers();
     markerRefs.current.clear();
+    const tok = readChartTokens();
     facilities
       .filter((facility) => facility.lat && facility.lng)
       .forEach((facility) => {
         const selected = selectedFacilityId === facility.id;
         const marker = L.marker([facility.lat!, facility.lng!], {
-          icon: facilityDivIcon(facility.category, selected),
+          icon: facilityDivIcon(facility.category, selected, tok),
         });
         const ariaLabel = `${facility.name} (${facility.category})`;
         marker
@@ -150,7 +156,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
           .addTo(markerLayer);
         markerRefs.current.set(facility.id, marker);
       });
-  }, [facilities, onSelectFacility, selectedFacilityId]);
+  }, [facilities, onSelectFacility, selectedFacilityId, theme]);
 
   useEffect(() => {
     if (!selectedFacilityId) return;
@@ -211,7 +217,8 @@ function ChoroplethLegend({ choropleth }: { choropleth: ChoroplethProps }) {
  * choropleth prop이 있으면 값 기반 채색, 없으면 경계선만 표시.
  * 경계 데이터는 정적 파일(public/assets/data/geumcheon-dong.geojson)을 우선 사용한다.
  */
-async function addBoundaryLayer(map: L.Map, choropleth?: ChoroplethProps): Promise<L.GeoJSON | null> {
+async function addBoundaryLayer(map: L.Map, choropleth?: ChoroplethProps, actionColor?: string): Promise<L.GeoJSON | null> {
+  const borderColor = actionColor ?? "#3159d8";
   try {
     const response = await fetch(DONG_GEOJSON_URL);
     if (!response.ok) return null;
@@ -226,10 +233,10 @@ async function addBoundaryLayer(map: L.Map, choropleth?: ChoroplethProps): Promi
       style: (feature) => {
         if (!choropleth || !feature?.properties) {
           return {
-            color: "#3159d8",
+            color: borderColor,
             weight: 1.2,
             opacity: 0.72,
-            fillColor: "#3159d8",
+            fillColor: borderColor,
             fillOpacity: 0.035,
             dashArray: "4 4",
           };
@@ -297,18 +304,18 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
-function markerTone(category: string) {
+function markerTone(category: string, tok: { series: string[] }): string {
   const normalized = category.toLocaleLowerCase("ko-KR");
   if (normalized.includes("cctv") || normalized.includes("안전") || normalized.includes("쉼터") || normalized.includes("대피")) {
-    return "#d49324";
+    return tok.series[3]; /* amber */
   }
   if (normalized.includes("복지") || normalized.includes("의료") || normalized.includes("병원") || normalized.includes("약국")) {
-    return "#00a88f";
+    return tok.series[1]; /* mint */
   }
   if (normalized.includes("주차") || normalized.includes("전기차") || normalized.includes("자전거") || normalized.includes("wi-fi")) {
-    return "#3159d8";
+    return tok.series[0]; /* cobalt */
   }
-  return "#ef6b5b";
+  return tok.series[2]; /* coral */
 }
 
 /** 카테고리별 마커 도형 — 색맹 이중 인코딩용 */
@@ -348,8 +355,8 @@ function buildMarkerSvg(color: string, shape: MarkerShape, size: number, selecte
 }
 
 /** L.divIcon 생성 — 선택 여부에 따라 크기 조정 */
-function facilityDivIcon(category: string, selected: boolean): L.DivIcon {
-  const color = markerTone(category);
+function facilityDivIcon(category: string, selected: boolean, tok: { series: string[] }): L.DivIcon {
+  const color = markerTone(category, tok);
   const shape = markerShape(category);
   const size = selected ? 28 : 22;
   return L.divIcon({

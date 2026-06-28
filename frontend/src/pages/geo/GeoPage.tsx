@@ -1,5 +1,7 @@
 // 행정동별 인구·시설 비교 화면 — 실데이터 기반 행정동 인구·시설 수 비교
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../../shell/ThemeContext";
+import { readChartTokens } from "../../data/themeTokens";
 import * as echarts from "echarts/core";
 import { BarChart } from "echarts/charts";
 import { GridComponent, TooltipComponent } from "echarts/components";
@@ -28,13 +30,15 @@ function DongBarChart({
   selectedDong: string | null;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const theme = useTheme();
 
   useEffect(() => {
     if (!ref.current || data.size === 0) return undefined;
     const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
     const dongs = [...data.keys()].sort();
     const values = dongs.map((d) => data.get(d) ?? 0);
-    const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+    const avg = Math.round(values.reduce((s, val) => s + val, 0) / values.length);
+    const tok = readChartTokens();
 
     chart.setOption({
       tooltip: {
@@ -49,17 +53,17 @@ function DongBarChart({
       xAxis: {
         type: "category",
         data: dongs,
-        axisLabel: { color: "#607487", fontSize: 11, rotate: 30 },
-        axisLine: { lineStyle: { color: "#dbe4ee" } },
+        axisLabel: { color: tok.axisLabel, fontSize: 11, rotate: 30 },
+        axisLine: { lineStyle: { color: tok.axisLine } },
         axisTick: { show: false },
       },
       yAxis: {
         type: "value",
-        splitLine: { lineStyle: { color: "#edf2f7" } },
+        splitLine: { lineStyle: { color: tok.gridLine } },
         axisLabel: {
-          color: "#8497a8",
+          color: tok.axisLabel,
           fontSize: 10,
-          formatter: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v),
+          formatter: (val: number) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : String(val),
         },
         axisLine: { show: false },
       },
@@ -70,7 +74,7 @@ function DongBarChart({
           data: dongs.map((d) => ({
             value: data.get(d) ?? 0,
             itemStyle: {
-              color: selectedDong && selectedDong !== d ? "#b8c6d6" : "#3159d8",
+              color: selectedDong && selectedDong !== d ? tok.inactiveBar : tok.action,
               borderRadius: [4, 4, 0, 0],
             },
           })),
@@ -78,8 +82,8 @@ function DongBarChart({
           markLine: {
             silent: true,
             symbol: "none",
-            lineStyle: { color: "#d49324", type: "dashed" },
-            data: [{ yAxis: avg, label: { formatter: `평균 ${avg.toLocaleString("ko-KR")}`, color: "#d49324", fontSize: 10 } }],
+            lineStyle: { color: tok.amber, type: "dashed" },
+            data: [{ yAxis: avg, label: { formatter: `평균 ${avg.toLocaleString("ko-KR")}`, color: tok.amber, fontSize: 10 } }],
           },
         },
       ],
@@ -91,7 +95,7 @@ function DongBarChart({
       window.removeEventListener("resize", onResize);
       chart.dispose();
     };
-  }, [data, label, selectedDong]);
+  }, [data, label, selectedDong, theme]);
 
   return (
     <div

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { CommandSearch } from "./CommandSearch";
 import { usePublicData } from "../data/PublicDataContext";
 import { currentPageKey, routeToSection, sectionConfig } from "./sectionConfig";
+import { ThemeContext } from "./ThemeContext";
 
 const navItems = [
   { key: "home", to: "/home", label: "종합 현황" },
@@ -77,6 +78,7 @@ export function AppShell() {
   }, [activeSection?.documentTitle]);
 
   return (
+    <ThemeContext.Provider value={theme}>
     <div className="gdp-app" data-theme={theme}>
       <a className="gdp-skip-link" href="#gdp-main">
         본문으로 바로 이동
@@ -239,5 +241,6 @@ export function AppShell() {
       </footer>
       <CommandSearch open={searchOpen} language={language} onClose={() => setSearchOpen(false)} />
     </div>
+    </ThemeContext.Provider>
   );
 }

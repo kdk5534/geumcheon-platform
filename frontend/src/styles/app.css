@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  background: #f4f7fb;
+  background: var(--gdp-bg, #f4f7fb);
 }
 
 .gdp-app,
@@ -11,10 +11,12 @@ body {
 .gdp-app {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 10% -8%, rgba(49, 89, 216, .12), transparent 28rem),
-    radial-gradient(circle at 92% 0%, rgba(0, 168, 143, .08), transparent 28rem),
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--gdp-cobalt) 8%, transparent), transparent 50%),
+    radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--gdp-mint) 5%, transparent), transparent 44%),
     var(--gdp-bg);
   color: var(--gdp-ink);
+  font-size: var(--gdp-text-base);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-app a {
@@ -31,75 +33,85 @@ body {
 .gdp-app button:focus-visible,
 .gdp-app input:focus-visible,
 .gdp-app select:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--gdp-cobalt) 72%, #fff);
+  outline: 2.5px solid color-mix(in srgb, var(--gdp-action) 72%, #fff);
   outline-offset: 3px;
+  border-radius: var(--gdp-radius-xs);
 }
 
+/* ── 본문 바로가기 ── */
 .gdp-skip-link {
   position: fixed;
-  left: 16px;
-  top: 10px;
-  z-index: 1200;
+  left: var(--gdp-space-4);
+  top: var(--gdp-space-3);
+  z-index: var(--gdp-z-skip);
   transform: translateY(-160%);
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: var(--gdp-cobalt);
+  padding: var(--gdp-space-2) var(--gdp-space-4);
+  border-radius: var(--gdp-radius-sm);
+  background: var(--gdp-action);
   color: #fff;
-  font-size: 13px;
-  font-weight: 900;
-  transition: transform .18s ease;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-wide);
+  transition: transform var(--gdp-dur-2) var(--gdp-ease-decelerate);
 }
 
 .gdp-skip-link:focus {
   transform: translateY(0);
 }
 
+/* ── 유틸리티 바 + 펄스 바 공통 ── */
 .gdp-util-bar,
 .gdp-pulse-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 0 clamp(18px, 4vw, 48px);
+  gap: var(--gdp-space-4);
+  padding: 0 clamp(var(--gdp-space-5), 4vw, var(--gdp-space-12));
 }
 
+/* ── 유틸리티 바 (최상단 — 관련 기관 링크 + 날짜) ── */
 .gdp-util-bar {
-  min-height: 28px;
-  background: #0d3148;
-  color: rgba(255, 255, 255, .78);
-  font-size: 11px;
-  font-weight: 850;
+  min-height: 32px;
+  background: color-mix(in srgb, var(--gdp-ink) 92%, var(--gdp-cobalt));
+  color: rgba(255, 255, 255, .72);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
 }
 
 .gdp-util-bar nav,
 .gdp-site-footer nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: var(--gdp-space-5);
 }
 
 .gdp-util-bar a:hover,
 .gdp-site-footer a:hover {
+  color: #fff;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
+/* ── 지표 펄스 바 (주요 수치 요약) ── */
 .gdp-pulse-bar {
-  min-height: 34px;
+  min-height: 36px;
   border-bottom: 1px solid var(--gdp-line);
-  background: color-mix(in srgb, var(--gdp-panel) 94%, var(--gdp-cobalt));
-  box-shadow: 0 8px 22px rgba(7, 22, 38, .04);
+  background: var(--gdp-panel);
+  box-shadow: 0 1px 0 var(--gdp-line);
 }
 
 .gdp-pulse-bar > strong {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 9px;
-  border-radius: 7px;
-  background: var(--gdp-cobalt);
+  height: 22px;
+  padding: 0 var(--gdp-space-3);
+  border-radius: var(--gdp-radius-xs);
+  background: var(--gdp-action);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-caps);
   white-space: nowrap;
 }
 
@@ -107,105 +119,112 @@ body {
   display: flex;
   flex: 1;
   flex-wrap: wrap;
-  gap: 12px 18px;
+  gap: var(--gdp-space-3) var(--gdp-space-5);
   min-width: 0;
 }
 
 .gdp-pulse-bar span {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--gdp-space-2);
   color: var(--gdp-muted);
-  font-size: 11px;
-  font-weight: 850;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
   white-space: nowrap;
 }
 
 .gdp-pulse-bar b {
   color: var(--gdp-ink);
-  font-size: 13px;
-  letter-spacing: -.02em;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-pulse-bar i {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--gdp-cobalt);
-  box-shadow: 0 0 0 4px rgba(49, 89, 216, .1);
+  width: 7px;
+  height: 7px;
+  border-radius: var(--gdp-radius-pill);
+  background: var(--gdp-action);
+  flex-shrink: 0;
 }
 
-.gdp-pulse-bar i.is-mint {
-  background: var(--gdp-mint);
-  box-shadow: 0 0 0 4px rgba(0, 168, 143, .12);
-}
-
-.gdp-pulse-bar i.is-coral {
-  background: var(--gdp-coral);
-  box-shadow: 0 0 0 4px rgba(239, 107, 91, .12);
-}
-
-.gdp-pulse-bar i.is-amber {
-  background: var(--gdp-amber);
-  box-shadow: 0 0 0 4px rgba(212, 147, 36, .12);
-}
+.gdp-pulse-bar i.is-mint  { background: var(--gdp-mint); }
+.gdp-pulse-bar i.is-coral { background: var(--gdp-coral); }
+.gdp-pulse-bar i.is-amber { background: var(--gdp-amber); }
+.gdp-pulse-bar i.is-cobalt { background: var(--gdp-cobalt); }
 
 .gdp-pulse-bar button {
   border: 0;
   background: transparent;
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 850;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
   white-space: nowrap;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--gdp-dur-1) var(--gdp-ease-standard);
 }
 
+.gdp-pulse-bar button:hover {
+  color: var(--gdp-action);
+}
+
+/* ── 메인 헤더 셸 ── */
 .gdp-shell {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--gdp-z-header);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(260px, 340px);
-  gap: 18px;
+  grid-template-columns: auto minmax(0, 1fr) minmax(240px, 320px);
+  gap: var(--gdp-space-5);
   align-items: center;
-  min-height: 58px;
-  padding: 0 clamp(18px, 4vw, 48px);
+  min-height: 60px;
+  padding: 0 clamp(var(--gdp-space-5), 4vw, var(--gdp-space-12));
   border-bottom: 1px solid var(--gdp-line);
-  background: color-mix(in srgb, var(--gdp-panel) 94%, transparent);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 10px 28px rgba(7, 22, 38, .045);
+  background: color-mix(in srgb, var(--gdp-panel) 96%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 var(--gdp-line), var(--gdp-elev-1);
 }
 
 .gdp-app[data-theme="dark"] .gdp-shell {
-  background: rgba(14, 28, 44, .92);
+  background: color-mix(in srgb, var(--gdp-panel) 92%, transparent);
 }
 
+/* ── 셸 액션(검색·언어·테마) 그룹 ── */
 .gdp-shell-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
-  padding: 5px;
+  gap: var(--gdp-space-1);
+  padding: var(--gdp-space-1);
   border: 1px solid var(--gdp-line);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--gdp-panel-alt) 78%, transparent);
+  border-radius: var(--gdp-radius-md);
+  background: var(--gdp-panel-alt);
 }
 
+/* ── 브랜드 로고 ── */
 .gdp-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 208px;
+  gap: var(--gdp-space-3);
+  min-width: 200px;
 }
 
 .gdp-brand-mark {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--gdp-cobalt), var(--gdp-mint));
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--gdp-radius-sm);
+  background: linear-gradient(145deg, var(--gdp-cobalt) 20%, color-mix(in srgb, var(--gdp-cobalt) 60%, var(--gdp-mint)));
   color: #fff;
-  font-size: 13px;
-  font-weight: 900;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-heavy);
+  letter-spacing: var(--gdp-tracking-tight);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gdp-cobalt) 30%, transparent);
 }
 
 .gdp-brand strong,
@@ -214,28 +233,31 @@ body {
 }
 
 .gdp-brand strong {
-  font-size: 15px;
-  letter-spacing: -.02em;
+  font-size: var(--gdp-text-base);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
+  color: var(--gdp-ink);
 }
 
 .gdp-brand small {
   margin-top: 2px;
   color: var(--gdp-soft);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
 }
 
+/* ── 주 내비게이션 ── */
 .gdp-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--gdp-space-1);
   min-width: 0;
   overflow-x: auto;
-  padding: 4px;
+  padding: var(--gdp-space-1);
   border: 1px solid var(--gdp-line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--gdp-panel-alt) 70%, transparent);
+  border-radius: var(--gdp-radius-pill);
+  background: color-mix(in srgb, var(--gdp-panel-alt) 80%, transparent);
   scrollbar-width: none;
 }
 
@@ -248,111 +270,173 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
+  padding: 0 var(--gdp-space-4);
+  border-radius: var(--gdp-radius-pill);
   color: var(--gdp-muted);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
   white-space: nowrap;
+  transition:
+    color       var(--gdp-dur-1) var(--gdp-ease-standard),
+    background  var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-nav a:hover:not(.active) {
+  color: var(--gdp-ink);
+  background: color-mix(in srgb, var(--gdp-ink) 6%, transparent);
 }
 
 .gdp-nav a.active {
-  background: var(--gdp-cobalt);
+  background: var(--gdp-action);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(49, 89, 216, .22);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gdp-action) 28%, transparent);
 }
 
 .gdp-nav-disabled {
-  opacity: .48;
+  opacity: .42;
+  cursor: not-allowed;
 }
 
+/* ── 검색 버튼 ── */
 .gdp-search-button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  min-height: 32px;
-  padding: 0 10px 0 12px;
+  gap: var(--gdp-space-3);
+  min-height: 34px;
+  padding: 0 var(--gdp-space-3);
   border: 0;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--gdp-panel) 86%, var(--gdp-cobalt));
+  border-radius: var(--gdp-radius-sm);
+  background: transparent;
   color: var(--gdp-muted);
-  box-shadow: none;
-  font-size: 12px;
-  font-weight: 850;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  cursor: pointer;
+  transition: background var(--gdp-dur-1) var(--gdp-ease-standard);
 }
 
+.gdp-search-button:hover {
+  background: color-mix(in srgb, var(--gdp-action) 8%, transparent);
+  color: var(--gdp-action);
+}
+
+.gdp-search-button kbd {
+  padding: 2px var(--gdp-space-2);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius-xs);
+  background: var(--gdp-panel);
+  color: var(--gdp-soft);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  font-family: inherit;
+}
+
+/* ── 테마·언어 토글 ── */
 .gdp-theme-toggle {
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 var(--gdp-space-3);
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--gdp-radius-sm);
   background: transparent;
+  color: var(--gdp-muted);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
+  cursor: pointer;
+  transition:
+    background  var(--gdp-dur-1) var(--gdp-ease-standard),
+    color       var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-theme-toggle:hover {
+  background: color-mix(in srgb, var(--gdp-ink) 6%, transparent);
   color: var(--gdp-ink);
-  font-size: 12px;
-  font-weight: 900;
-  box-shadow: none;
 }
 
 .gdp-language-select {
-  min-height: 32px;
-  padding: 0 9px;
+  min-height: 34px;
+  padding: 0 var(--gdp-space-2);
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--gdp-radius-sm);
   background: transparent;
-  color: var(--gdp-ink);
-  font-size: 12px;
-  font-weight: 900;
-  box-shadow: none;
+  color: var(--gdp-muted);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  cursor: pointer;
+  transition:
+    background  var(--gdp-dur-1) var(--gdp-ease-standard),
+    color       var(--gdp-dur-1) var(--gdp-ease-standard);
 }
 
+.gdp-language-select:hover {
+  background: color-mix(in srgb, var(--gdp-ink) 6%, transparent);
+  color: var(--gdp-ink);
+}
+
+/* ── 데이터 상태 배너 ── */
 .gdp-shell-health {
   margin: 0;
   border-bottom: 1px solid var(--gdp-line);
-  background: color-mix(in srgb, var(--gdp-panel-alt) 82%, var(--gdp-mint));
+  background: color-mix(in srgb, var(--gdp-panel) 95%, var(--gdp-mint));
+}
+
+.gdp-app[data-theme="dark"] .gdp-shell-health {
+  background: color-mix(in srgb, var(--gdp-panel) 95%, var(--gdp-mint));
 }
 
 .gdp-shell-health > button {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  gap: 9px;
+  display: flex;
   align-items: center;
+  gap: var(--gdp-space-3);
   width: 100%;
-  min-height: 30px;
-  padding: 0 clamp(18px, 4vw, 48px);
+  min-height: 32px;
+  padding: 0 clamp(var(--gdp-space-5), 4vw, var(--gdp-space-12));
   border: 0;
   background: transparent;
   color: var(--gdp-muted);
   text-align: left;
+  cursor: pointer;
+  font-size: var(--gdp-text-xs);
+  transition: color var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-shell-health > button:hover {
+  color: var(--gdp-ink);
 }
 
 .gdp-shell-health > button span {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--gdp-radius-pill);
   background: var(--gdp-amber);
-  box-shadow: 0 0 0 5px rgba(212, 147, 36, .12);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gdp-amber) 16%, transparent);
 }
 
 .gdp-shell-health.is-ready > button span {
   background: var(--gdp-mint);
-  box-shadow: 0 0 0 5px rgba(0, 168, 143, .12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gdp-mint) 16%, transparent);
 }
 
 .gdp-shell-health.is-error > button span {
   background: var(--gdp-coral);
-  box-shadow: 0 0 0 5px rgba(239, 107, 91, .12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gdp-coral) 16%, transparent);
 }
 
 .gdp-shell-health > button strong {
   color: var(--gdp-ink);
-  font-size: 12px;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
 }
 
 .gdp-shell-health > button small {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--gdp-soft);
 }
 
 .gdp-shell-health > div {
@@ -365,208 +449,261 @@ body {
 .gdp-shell-health p,
 .gdp-shell-health a {
   display: grid;
-  gap: 5px;
-  min-height: 72px;
+  gap: var(--gdp-space-1);
+  min-height: 68px;
   margin: 0;
-  padding: 15px clamp(14px, 2vw, 22px);
+  padding: var(--gdp-space-4) clamp(var(--gdp-space-4), 2vw, var(--gdp-space-6));
   border-right: 1px solid var(--gdp-line);
 }
 
 .gdp-shell-health a {
   align-content: center;
-  color: var(--gdp-cobalt);
-  font-size: 13px;
-  font-weight: 900;
+  color: var(--gdp-action);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
+  transition: color var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-shell-health a:hover {
+  color: var(--gdp-action-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .gdp-shell-health p span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
 }
 
 .gdp-shell-health p strong {
-  font-size: 13px;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  color: var(--gdp-ink);
 }
 
+/* ── 섹션 서브 내비 ── */
 .gdp-section-nav-shell {
   display: grid;
-  grid-template-columns: minmax(180px, auto) minmax(0, 1fr) auto;
-  gap: 14px;
+  grid-template-columns: minmax(160px, auto) minmax(0, 1fr) auto;
+  gap: var(--gdp-space-4);
   align-items: center;
-  min-height: 44px;
-  padding: 0 clamp(18px, 4vw, 48px);
+  min-height: 42px;
+  padding: 0 clamp(var(--gdp-space-5), 4vw, var(--gdp-space-12));
   border-bottom: 1px solid var(--gdp-line);
-  background: color-mix(in srgb, var(--gdp-panel) 94%, var(--gdp-mint));
+  background: var(--gdp-panel);
 }
 
 .gdp-section-context {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 10px;
+  display: flex;
   align-items: center;
+  gap: var(--gdp-space-2);
   min-width: 0;
 }
 
 .gdp-section-context span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .gdp-section-context strong {
   color: var(--gdp-ink);
-  font-size: 15px;
-  letter-spacing: -.02em;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gdp-section-nav-shell nav {
   display: flex;
-  gap: 6px;
+  gap: var(--gdp-space-1);
   min-width: 0;
   overflow-x: auto;
+  scrollbar-width: none;
 }
+
+.gdp-section-nav-shell nav::-webkit-scrollbar { display: none; }
 
 .gdp-section-nav-shell nav a,
 .gdp-section-data-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
+  min-height: 26px;
+  padding: 0 var(--gdp-space-3);
+  border-radius: var(--gdp-radius-pill);
   color: var(--gdp-muted);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
   white-space: nowrap;
+  transition:
+    color       var(--gdp-dur-1) var(--gdp-ease-standard),
+    background  var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-section-nav-shell nav a:hover:not(.is-active) {
+  color: var(--gdp-ink);
+  background: color-mix(in srgb, var(--gdp-ink) 5%, transparent);
 }
 
 .gdp-section-nav-shell nav a.is-active {
-  background: rgba(0, 168, 143, .14);
+  background: color-mix(in srgb, var(--gdp-mint) 12%, transparent);
+  color: color-mix(in srgb, var(--gdp-mint) 80%, #000);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gdp-mint) 20%, transparent);
+}
+
+.gdp-app[data-theme="dark"] .gdp-section-nav-shell nav a.is-active {
   color: var(--gdp-mint);
-  box-shadow: inset 0 0 0 1px rgba(0, 168, 143, .16);
+  background: color-mix(in srgb, var(--gdp-mint) 16%, transparent);
 }
 
 .gdp-section-data-link {
   border: 1px solid var(--gdp-line);
-  background: var(--gdp-panel);
-  color: var(--gdp-cobalt);
-  box-shadow: var(--gdp-shadow-tight);
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-action);
+  box-shadow: var(--gdp-elev-1);
+  transition:
+    background  var(--gdp-dur-1) var(--gdp-ease-standard),
+    box-shadow  var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-section-data-link:hover {
+  background: color-mix(in srgb, var(--gdp-action) 6%, var(--gdp-panel));
+  box-shadow: var(--gdp-elev-2);
 }
 
 .gdp-command {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--gdp-z-modal);
   display: grid;
   place-items: start center;
-  padding: min(10vh, 84px) 18px 18px;
+  padding: min(10vh, 80px) var(--gdp-space-5) var(--gdp-space-5);
 }
 
 .gdp-command-backdrop {
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(7, 22, 38, .44);
-  backdrop-filter: blur(8px);
+  background: rgba(7, 22, 38, .48);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .gdp-command-panel {
   position: relative;
   z-index: 1;
-  width: min(760px, 100%);
+  width: min(720px, 100%);
   overflow: hidden;
   border: 1px solid var(--gdp-line);
-  border-radius: 20px;
+  border-radius: var(--gdp-radius-xl);
   background: var(--gdp-panel);
   color: var(--gdp-ink);
-  box-shadow: 0 28px 90px rgba(7, 22, 38, .28);
+  box-shadow: var(--gdp-elev-4);
+  animation: gdp-cmd-in var(--gdp-dur-3) var(--gdp-ease-decelerate) both;
+}
+
+@keyframes gdp-cmd-in {
+  from { opacity: 0; transform: translateY(-12px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gdp-command-panel { animation: none; }
 }
 
 .gdp-command-head {
   display: grid;
-  gap: 6px;
-  padding: 16px 18px 13px;
+  gap: var(--gdp-space-1);
+  padding: var(--gdp-space-4) var(--gdp-space-5) var(--gdp-space-3);
   border-bottom: 1px solid var(--gdp-line);
-  background:
-    linear-gradient(135deg, rgba(49, 89, 216, .07), transparent 70%),
-    var(--gdp-panel);
+  background: color-mix(in srgb, var(--gdp-panel) 96%, var(--gdp-cobalt));
 }
 
 .gdp-command-head span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
 }
 
 .gdp-command-head strong {
   color: var(--gdp-ink);
-  font-size: 18px;
-  letter-spacing: -.04em;
+  font-size: var(--gdp-text-xl);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-command-input {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: var(--gdp-space-3);
   align-items: center;
-  padding: 14px 16px;
+  padding: var(--gdp-space-4);
   border-bottom: 1px solid var(--gdp-line);
   background: var(--gdp-panel-alt);
 }
 
 .gdp-command-input input {
-  min-height: 42px;
+  min-height: 40px;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--gdp-ink);
-  font-size: 17px;
-  font-weight: 750;
+  font-size: var(--gdp-text-lg);
+  font-weight: var(--gdp-weight-medium);
+  letter-spacing: var(--gdp-tracking-tight);
+  caret-color: var(--gdp-action);
 }
 
 .gdp-command-input kbd,
 .gdp-command-panel footer span {
-  padding: 4px 7px;
+  padding: 2px var(--gdp-space-2);
   border: 1px solid var(--gdp-line);
-  border-radius: 7px;
+  border-radius: var(--gdp-radius-xs);
   background: var(--gdp-panel);
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-bold);
+  font-family: inherit;
 }
 
 .gdp-command-source {
-  padding: 8px 18px;
+  padding: var(--gdp-space-2) var(--gdp-space-5);
   border-bottom: 1px solid var(--gdp-line);
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .06em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
 }
 
-.gdp-command-source.is-ready {
-  color: var(--gdp-mint);
-}
-
-.gdp-command-source.is-error {
-  color: var(--gdp-coral);
-}
+.gdp-command-source.is-ready { color: var(--gdp-mint); }
+.gdp-command-source.is-error { color: var(--gdp-coral); }
 
 .gdp-command-results {
   max-height: min(52vh, 460px);
   overflow: auto;
-  padding: 10px 12px;
+  padding: var(--gdp-space-2) var(--gdp-space-3);
   background: var(--gdp-panel);
 }
 
 .gdp-command-group {
   display: grid;
-  gap: 6px;
-  padding: 8px 0;
+  gap: var(--gdp-space-1);
+  padding: var(--gdp-space-2) 0;
 }
 
 .gdp-command-group + .gdp-command-group {
@@ -575,37 +712,47 @@ body {
 
 .gdp-command-group h2 {
   margin: 0;
-  padding: 5px 4px 2px;
+  padding: var(--gdp-space-1) var(--gdp-space-2) 0;
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
 }
 
 .gdp-command-results button {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 4px 12px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--gdp-space-1) var(--gdp-space-3);
   width: 100%;
-  min-height: 62px;
-  padding: 11px 12px;
+  min-height: 58px;
+  padding: var(--gdp-space-3);
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--gdp-radius-sm);
   background: transparent;
   color: var(--gdp-ink);
   text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--gdp-dur-1) var(--gdp-ease-standard),
+    border-color var(--gdp-dur-1) var(--gdp-ease-standard);
+}
+
+.gdp-command-results button:hover {
+  background: var(--gdp-panel-alt);
 }
 
 .gdp-command-results button span {
   grid-row: 1 / 3;
   align-self: center;
   width: fit-content;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: rgba(49, 89, 216, .09);
-  color: var(--gdp-cobalt);
-  font-size: 11px;
-  font-weight: 900;
+  padding: var(--gdp-space-1) var(--gdp-space-2);
+  border-radius: var(--gdp-radius-xs);
+  background: color-mix(in srgb, var(--gdp-action) 10%, transparent);
+  color: var(--gdp-action);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
 }
 
 .gdp-command-results button strong,
@@ -614,37 +761,40 @@ body {
 }
 
 .gdp-command-results button strong {
-  font-size: 15px;
-  letter-spacing: -.03em;
+  font-size: var(--gdp-text-base);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-tight);
 }
 
 .gdp-command-results button small {
   color: var(--gdp-muted);
-  font-size: 12px;
+  font-size: var(--gdp-text-xs);
+  letter-spacing: var(--gdp-tracking-normal);
 }
 
 .gdp-command-results button.is-active {
-  border-color: rgba(49, 89, 216, .28);
+  border-color: color-mix(in srgb, var(--gdp-action) 24%, transparent);
   background:
-    linear-gradient(90deg, rgba(49, 89, 216, .1), transparent 68%),
+    linear-gradient(90deg, color-mix(in srgb, var(--gdp-action) 8%, transparent), transparent 64%),
     var(--gdp-panel-alt);
-  box-shadow: inset 3px 0 0 var(--gdp-cobalt);
+  box-shadow: inset 2px 0 0 var(--gdp-action);
 }
 
 .gdp-command-empty {
   display: grid;
-  gap: 10px;
+  gap: var(--gdp-space-3);
   margin: 0;
-  padding: 30px 18px;
+  padding: var(--gdp-space-8) var(--gdp-space-5);
   color: var(--gdp-muted);
   text-align: left;
 }
 
 .gdp-command-empty span {
   color: var(--gdp-soft);
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  text-transform: uppercase;
 }
 
 .gdp-command-empty strong {
@@ -694,47 +844,48 @@ body {
 }
 
 .gdp-main {
-  width: min(1480px, calc(100% - 36px));
+  width: min(1440px, calc(100% - clamp(var(--gdp-space-8), 6vw, var(--gdp-space-16))));
   margin: 0 auto;
-  padding: 18px 0 64px;
+  padding: var(--gdp-space-6) 0 var(--gdp-space-16);
 }
 
 .gdp-route-fallback {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: min(1480px, calc(100% - 36px));
-  min-height: 120px;
-  margin: 24px auto;
-  padding: 18px;
+  gap: var(--gdp-space-3);
+  width: min(1440px, calc(100% - clamp(var(--gdp-space-8), 6vw, var(--gdp-space-16))));
+  min-height: 100px;
+  margin: var(--gdp-space-6) auto;
+  padding: var(--gdp-space-5);
   border: 1px solid var(--gdp-line);
   border-radius: var(--gdp-radius);
   background: var(--gdp-panel);
   color: var(--gdp-muted);
-  font-size: 13px;
-  font-weight: 850;
-  box-shadow: var(--gdp-shadow-tight);
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  box-shadow: var(--gdp-elev-1);
 }
 
 .gdp-route-fallback span {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--gdp-radius-pill);
   background: var(--gdp-mint);
-  box-shadow: 0 0 0 5px rgba(0, 168, 143, .12);
+  flex-shrink: 0;
 }
 
+/* ── 푸터 ── */
 .gdp-site-footer {
   display: grid;
-  grid-template-columns: minmax(240px, .8fr) minmax(0, 1fr) auto;
-  gap: 18px;
+  grid-template-columns: minmax(220px, .8fr) minmax(0, 1fr) auto;
+  gap: var(--gdp-space-5);
   align-items: start;
-  padding: 28px clamp(18px, 4vw, 54px);
+  padding: var(--gdp-space-8) clamp(var(--gdp-space-5), 4vw, var(--gdp-space-16));
   border-top: 1px solid var(--gdp-line);
-  background: color-mix(in srgb, var(--gdp-panel) 88%, var(--gdp-cobalt));
+  background: color-mix(in srgb, var(--gdp-panel) 96%, var(--gdp-ink));
   color: var(--gdp-muted);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: var(--gdp-text-xs);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-site-footer strong,
@@ -744,7 +895,9 @@ body {
 
 .gdp-site-footer strong {
   color: var(--gdp-ink);
-  font-size: 14px;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  margin-bottom: var(--gdp-space-1);
 }
 
 .gdp-site-footer p {
@@ -756,8 +909,8 @@ body {
 }
 
 .gdp-site-footer a {
-  color: var(--gdp-cobalt);
-  font-weight: 900;
+  color: var(--gdp-action);
+  font-weight: var(--gdp-weight-semibold);
 }
 
 .gdp-placeholder {

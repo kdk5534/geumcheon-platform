@@ -1,0 +1,78 @@
+/* 공통 Card/Panel 컴포넌트 — 공공기관 정제형 카드 */
+
+.gdp-ui-card {
+  background: var(--gdp-panel);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  padding: var(--gdp-space-6);
+  box-shadow: var(--gdp-elev-1);
+  transition: box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+/* 고도 변형 */
+.gdp-ui-card--flat {
+  box-shadow: none;
+}
+
+.gdp-ui-card--raised {
+  box-shadow: var(--gdp-elev-2);
+}
+
+.gdp-ui-card--floating {
+  box-shadow: var(--gdp-elev-3);
+}
+
+/* 인터랙티브 카드 */
+.gdp-ui-card--interactive {
+  cursor: pointer;
+}
+.gdp-ui-card--interactive:hover {
+  box-shadow: var(--gdp-elev-3);
+  border-color: var(--gdp-line-strong);
+}
+
+/* 강조 카드 (왼쪽 border accent) */
+.gdp-ui-card--accent {
+  border-left: 3px solid var(--gdp-action);
+}
+.gdp-ui-card--accent-mint   { border-left-color: var(--gdp-mint); }
+.gdp-ui-card--accent-coral  { border-left-color: var(--gdp-coral); }
+.gdp-ui-card--accent-amber  { border-left-color: var(--gdp-amber); }
+
+/* ── 카드 내부 구조 ── */
+.gdp-ui-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gdp-space-4);
+  margin-bottom: var(--gdp-space-4);
+}
+
+.gdp-ui-card-title {
+  font-size: var(--gdp-text-base);
+  font-weight: var(--gdp-weight-semibold);
+  line-height: var(--gdp-leading-tight);
+  color: var(--gdp-ink);
+  margin: 0;
+}
+
+.gdp-ui-card-description {
+  font-size: var(--gdp-text-sm);
+  color: var(--gdp-muted);
+  margin: var(--gdp-space-1) 0 0;
+  line-height: var(--gdp-leading-normal);
+}
+
+.gdp-ui-card-body {
+  /* 본문 영역 — 기본 패딩 없음, 자식이 제어 */
+}
+
+.gdp-ui-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gdp-space-3);
+  margin-top: var(--gdp-space-4);
+  padding-top: var(--gdp-space-4);
+  border-top: 1px solid var(--gdp-line);
+}

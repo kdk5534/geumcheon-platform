@@ -1,3 +1,6 @@
+/* 디자인 시스템 토큰 — 색상·간격·타이포·반경·고도·모션·z-인덱스·차트 변수 정의 */
+
+/* ─── 전역 기반 ──────────────────────────────────────────── */
 :root {
   color-scheme: light;
   font-family:
@@ -10,49 +13,230 @@
     sans-serif;
 }
 
+/* ─── 라이트 모드 ────────────────────────────────────────── */
 .gdp-app {
-  --gdp-bg: #f4f7fb;
-  --gdp-panel: #ffffff;
-  --gdp-panel-alt: #f7f9fc;
-  --gdp-line: #dbe4ee;
-  --gdp-line-strong: #b8c8d8;
-  --gdp-ink: #10243a;
+
+  /* ── 배경·패널·선 (기존 변수 유지) ── */
+  --gdp-bg:         #f4f7fb;
+  --gdp-panel:      #ffffff;
+  --gdp-panel-alt:  #f7f9fc;
+  --gdp-line:       #dbe4ee;
+  --gdp-line-strong:#b8c8d8;
+
+  /* ── 텍스트 (기존 변수 유지) ── */
+  --gdp-ink:   #10243a;
   --gdp-muted: #607487;
-  --gdp-soft: #8497a8;
+  --gdp-soft:  #8497a8;
+
+  /* ── 브랜드 색상 (기존 변수 유지) ── */
   --gdp-cobalt: #3159d8;
-  --gdp-mint: #00a88f;
-  --gdp-coral: #ef6b5b;
-  --gdp-amber: #d49324;
-  --gdp-radius: 16px;
+  --gdp-mint:   #00a88f;
+  --gdp-coral:  #ef6b5b;
+  --gdp-amber:  #d49324;
+
+  /* ── 반경 (기존 변수 유지 + 확장) ── */
+  --gdp-radius:    16px;
   --gdp-radius-sm: 10px;
-  --gdp-shadow: 0 1px 2px rgba(16, 36, 58, .035), 0 14px 34px rgba(16, 36, 58, .055);
+
+  /* ── 그림자 (기존 변수 유지) ── */
+  --gdp-shadow:       0 1px 2px rgba(16, 36, 58, .035), 0 14px 34px rgba(16, 36, 58, .055);
   --gdp-shadow-tight: 0 1px 2px rgba(16, 36, 58, .04), 0 6px 18px rgba(16, 36, 58, .045);
-}
 
-.gdp-app[data-theme="dark"] {
-  --gdp-bg: #081522;
-  --gdp-panel: #0e1c2c;
-  --gdp-panel-alt: #13243a;
-  --gdp-line: #223a54;
-  --gdp-line-strong: #385b79;
-  --gdp-ink: #e8f1fb;
-  --gdp-muted: #a9b9c9;
-  --gdp-soft: #7f95aa;
-  --gdp-shadow: 0 1px 0 rgba(255, 255, 255, .035), 0 22px 58px rgba(0, 0, 0, .30);
-  --gdp-shadow-tight: 0 1px 0 rgba(255, 255, 255, .035), 0 12px 28px rgba(0, 0, 0, .24);
-  /* choropleth — 다크 모드에서 약간 더 진하게 */
-  --gdp-choro-1: #a8d8f0;
-  --gdp-choro-2: #4ea8d8;
-  --gdp-choro-3: #0a7fb8;
-  --gdp-choro-4: #0a6ea0;
-  --gdp-choro-5: #073660;
-}
-
-.gdp-app {
-  /* choropleth 5단계 파랑 팔레트 (연→진) */
+  /* ── choropleth 5단계 파랑 팔레트 (기존 유지) ── */
   --gdp-choro-1: #c5e8f7;
   --gdp-choro-2: #63bde3;
   --gdp-choro-3: #0d93cf;
   --gdp-choro-4: #0c7fb8;
   --gdp-choro-5: #0a4570;
+
+  /* ═══════════════════════════════════════════════════
+     아래부터 신규 토큰 (Phase 1 추가)
+     기존 gdp- 변수는 모두 alias로 참조
+  ═══════════════════════════════════════════════════ */
+
+  /* ── 액션 시맨틱 ── */
+  --gdp-action:       var(--gdp-cobalt);
+  --gdp-action-hover: #2548c4;
+  --gdp-action-fg:    #ffffff;
+  --gdp-action-subtle:rgba(49, 89, 216, .10);
+
+  /* ── 상태 색 시맨틱 ── */
+  --gdp-success:  var(--gdp-mint);
+  --gdp-warning:  var(--gdp-amber);
+  --gdp-danger:   var(--gdp-coral);
+  --gdp-info:     var(--gdp-cobalt);
+
+  /* ── 중립 회색 스케일 ── */
+  --gdp-gray-50:  #f8fafc;
+  --gdp-gray-100: #f1f5f9;
+  --gdp-gray-200: #e2eaf2;
+  --gdp-gray-300: #c8d6e4;
+  --gdp-gray-400: #9aaec0;
+  --gdp-gray-500: #607487;   /* = --gdp-muted */
+  --gdp-gray-600: #4d5f6f;
+  --gdp-gray-700: #384c5e;
+  --gdp-gray-800: #253647;
+  --gdp-gray-900: #10243a;   /* = --gdp-ink */
+
+  /* ── 간격 (4px 베이스, 8pt 그리드) ── */
+  --gdp-space-px:  1px;
+  --gdp-space-0-5: 0.125rem;  /*  2px */
+  --gdp-space-1:   0.25rem;   /*  4px */
+  --gdp-space-2:   0.5rem;    /*  8px */
+  --gdp-space-3:   0.75rem;   /* 12px */
+  --gdp-space-4:   1rem;      /* 16px */
+  --gdp-space-5:   1.25rem;   /* 20px */
+  --gdp-space-6:   1.5rem;    /* 24px */
+  --gdp-space-7:   1.75rem;   /* 28px */
+  --gdp-space-8:   2rem;      /* 32px */
+  --gdp-space-10:  2.5rem;    /* 40px */
+  --gdp-space-12:  3rem;      /* 48px */
+  --gdp-space-16:  4rem;      /* 64px */
+  --gdp-space-20:  5rem;      /* 80px */
+
+  /* ── 타이포그래피 스케일 (1.25 모듈러) ── */
+  --gdp-text-xs:   0.6875rem; /* 11px */
+  --gdp-text-sm:   0.8125rem; /* 13px */
+  --gdp-text-base: 0.9375rem; /* 15px — 본문 */
+  --gdp-text-md:   1rem;      /* 16px */
+  --gdp-text-lg:   1.125rem;  /* 18px */
+  --gdp-text-xl:   1.375rem;  /* 22px */
+  --gdp-text-2xl:  1.625rem;  /* 26px */
+  --gdp-text-3xl:  clamp(1.75rem, 1.25rem + 1.5vw, 2.25rem); /* 28–36px */
+  --gdp-text-4xl:  clamp(2rem,   1.5rem  + 2vw,   3rem);     /* 32–48px */
+
+  /* 라인 하이트 */
+  --gdp-leading-tight:  1.2;  /* 헤딩 */
+  --gdp-leading-snug:   1.4;  /* 데이터 수치 */
+  --gdp-leading-normal: 1.6;  /* 본문 */
+  --gdp-leading-relaxed:1.8;  /* 긴 설명 */
+
+  /* 폰트 웨이트 */
+  --gdp-weight-regular: 400;
+  --gdp-weight-medium:  500;
+  --gdp-weight-semibold:600;
+  --gdp-weight-bold:    700;
+  --gdp-weight-heavy:   850;
+
+  /* 자간 */
+  --gdp-tracking-tight:  -0.02em;
+  --gdp-tracking-normal:  0;
+  --gdp-tracking-wide:    0.04em;
+  --gdp-tracking-caps:    0.08em;
+
+  /* ── 반경 확장 ── */
+  --gdp-radius-xs:  4px;
+  --gdp-radius-md:  12px;
+  --gdp-radius-lg:  var(--gdp-radius);   /* 16px alias */
+  --gdp-radius-xl:  20px;
+  --gdp-radius-pill:9999px;
+
+  /* ── 고도(elevation) 5단계 ── */
+  --gdp-elev-0: none;
+  --gdp-elev-1: 0 1px 3px rgba(16, 36, 58, .06), 0 2px 6px rgba(16, 36, 58, .04);
+  --gdp-elev-2: var(--gdp-shadow-tight); /* 기존 alias */
+  --gdp-elev-3: var(--gdp-shadow);       /* 기존 alias */
+  --gdp-elev-4: 0 2px 4px rgba(16, 36, 58, .04), 0 24px 56px rgba(16, 36, 58, .12);
+
+  /* ── 모션 ── */
+  --gdp-ease-standard:   cubic-bezier(.2, 0, 0, 1);
+  --gdp-ease-decelerate: cubic-bezier(0, 0, .2, 1);
+  --gdp-ease-accelerate: cubic-bezier(.4, 0, 1, 1);
+  --gdp-ease-spring:     cubic-bezier(.34, 1.56, .64, 1);
+  --gdp-dur-1: 120ms;  /* 마이크로 (아이콘 회전 등) */
+  --gdp-dur-2: 200ms;  /* 짧은 전환 (호버 등) */
+  --gdp-dur-3: 280ms;  /* 중간 전환 (패널 등) */
+  --gdp-dur-4: 400ms;  /* 긴 전환 (오버레이·드로어) */
+
+  /* ── z-인덱스 ── */
+  --gdp-z-base:    0;
+  --gdp-z-raised:  10;
+  --gdp-z-sticky:  50;
+  --gdp-z-dropdown:100;
+  --gdp-z-header:  200;
+  --gdp-z-overlay: 500;
+  --gdp-z-modal:   800;
+  --gdp-z-toast:   1000;
+  --gdp-z-skip:    1200;
+
+  /* ── 차트·시각화 색 ── */
+  /* 시리즈 (카테고리 데이터, 최대 6종) */
+  --gdp-series-1: #3159d8;  /* cobalt */
+  --gdp-series-2: #00a88f;  /* mint */
+  --gdp-series-3: #ef6b5b;  /* coral */
+  --gdp-series-4: #d49324;  /* amber */
+  --gdp-series-5: #7c56d4;  /* violet */
+  --gdp-series-6: #0891b2;  /* teal */
+
+  /* 차트 구조 */
+  --gdp-axis-line:  #dbe4ee;  /* = --gdp-line */
+  --gdp-axis-label: #607487;  /* = --gdp-muted */
+  --gdp-grid-line:  rgba(219, 228, 238, .60);
+  --gdp-chart-bg:   transparent;
+  --gdp-tooltip-bg: #10243a;
+  --gdp-tooltip-fg: #e8f1fb;
+}
+
+/* ─── 다크 모드 ──────────────────────────────────────────── */
+.gdp-app[data-theme="dark"] {
+
+  /* ── 배경·패널·선 (기존 변수 유지) ── */
+  --gdp-bg:         #081522;
+  --gdp-panel:      #0e1c2c;
+  --gdp-panel-alt:  #13243a;
+  --gdp-line:       #223a54;
+  --gdp-line-strong:#385b79;
+
+  /* ── 텍스트 (기존 변수 유지) ── */
+  --gdp-ink:   #e8f1fb;
+  --gdp-muted: #a9b9c9;
+  --gdp-soft:  #7f95aa;
+
+  /* ── 그림자 다크 오버라이드 (기존 유지) ── */
+  --gdp-shadow:       0 1px 0 rgba(255, 255, 255, .035), 0 22px 58px rgba(0, 0, 0, .30);
+  --gdp-shadow-tight: 0 1px 0 rgba(255, 255, 255, .035), 0 12px 28px rgba(0, 0, 0, .24);
+
+  /* ── choropleth 다크 오버라이드 (기존 유지) ── */
+  --gdp-choro-1: #a8d8f0;
+  --gdp-choro-2: #4ea8d8;
+  --gdp-choro-3: #0a7fb8;
+  --gdp-choro-4: #0a6ea0;
+  --gdp-choro-5: #073660;
+
+  /* ── 신규 토큰 다크 오버라이드 ── */
+
+  /* 액션 시맨틱 */
+  --gdp-action:        #4f7ae8;
+  --gdp-action-hover:  #6690f0;
+  --gdp-action-subtle: rgba(79, 122, 232, .15);
+
+  /* 중립 회색 스케일 (반전) */
+  --gdp-gray-50:  #0e1c2c;
+  --gdp-gray-100: #13243a;
+  --gdp-gray-200: #1c3148;
+  --gdp-gray-300: #264056;
+  --gdp-gray-400: #385b79;
+  --gdp-gray-500: #7f95aa;   /* = --gdp-soft */
+  --gdp-gray-600: #a9b9c9;   /* = --gdp-muted */
+  --gdp-gray-700: #c8d6e3;
+  --gdp-gray-800: #dde7f0;
+  --gdp-gray-900: #e8f1fb;   /* = --gdp-ink */
+
+  /* 고도 다크 오버라이드 */
+  --gdp-elev-1: 0 1px 3px rgba(0, 0, 0, .20), 0 2px 6px rgba(0, 0, 0, .16);
+  --gdp-elev-4: 0 2px 4px rgba(0, 0, 0, .20), 0 24px 56px rgba(0, 0, 0, .36);
+
+  /* 차트 구조 다크 오버라이드 */
+  --gdp-series-1: #4f7ae8;
+  --gdp-series-2: #1bbfa6;
+  --gdp-series-3: #f4806f;
+  --gdp-series-4: #e4a93a;
+  --gdp-series-5: #9472e0;
+  --gdp-series-6: #22b0cc;
+
+  --gdp-axis-line:  #223a54;
+  --gdp-axis-label: #a9b9c9;
+  --gdp-grid-line:  rgba(34, 58, 84, .70);
+  --gdp-tooltip-bg: #e8f1fb;
+  --gdp-tooltip-fg: #10243a;
 }

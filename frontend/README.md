@@ -1,6 +1,6 @@
-# 금천 데이터플랫폼 React/Vite PoC
+# 금천 데이터플랫폼 프론트엔드
 
-이 디렉터리는 기존 `frontend-static`을 대체하지 않는다. `종합 현황` 1개 화면만 React/Vite로 병행 구현해 품질, 성능, 접근성, 포털 탑재성을 비교하기 위한 PoC다.
+React 19+Vite+TypeScript 정식 메인 프론트엔드. 공개 화면 16개 + 관리자 콘솔(별도 엔트리 admin.html)로 구성된다.
 
 ## 전제
 

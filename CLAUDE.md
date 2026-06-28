@@ -42,19 +42,15 @@ $mvn = (Get-ChildItem "$env:USERPROFILE\Downloads" -Recurse -Filter mvn.cmd | Se
 & $mvn -f backend-egovframe-skeleton/pom.xml test -Dtest=PublicDataCollectorServiceTest
 ```
 
-**프론트엔드** (Node `>=22 <23`. 문법 체크 → Vitest 단위 → Playwright E2E 순서)
+**프론트엔드** (Node `>=22 <23`. Playwright E2E + 타입체크)
 
 ```powershell
-cd frontend-static
-npm test                       # check:syntax + test:unit + test:e2e 전체
-npm run test:unit              # Vitest 단위 테스트만 (vitest.config.mjs)
-npm run test:unit -- api       # 특정 단위 테스트 파일만
-npm run test:e2e               # Playwright E2E (playwright.config.mjs)
+cd frontend
+npm run test:e2e               # Playwright E2E 전체
 npm run test:e2e:headed        # 브라우저 표시하며 E2E 실행
-npm run check:syntax           # JS 문법만 빠르게 검증
 ```
 
-E2E에는 시각 회귀(`visual.spec.mjs`, `-snapshots` 디렉터리)와 접근성(`accessibility.spec.mjs`, axe-core)이 포함된다. 페이지 로직 변경 시 단위 테스트만으로 끝내지 말고 E2E도 돌린다. 프론트엔드 런타임은 빌드 없이 브라우저 새로고침으로 반영된다.
+E2E에는 시각 회귀(`visual.spec.mjs`, `-snapshots` 디렉터리)와 접근성(`accessibility.spec.mjs`, axe-core)이 포함된다. 페이지 로직 변경 시 E2E도 함께 돌린다.
 
 ## 환경 변수
 

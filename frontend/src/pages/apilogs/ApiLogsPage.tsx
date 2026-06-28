@@ -1,5 +1,6 @@
 // API 수집 로그 화면 — 수집 실행 내역을 상태·소스별로 필터링하고 수동 재수집을 지원합니다
 import { useState } from "react";
+import { Button, Card, Grid, KPICard } from "../../components/ui";
 
 const FILTER_OPTIONS = ["전체", "성공", "실패", "대기", "수동"] as const;
 type FilterOption = (typeof FILTER_OPTIONS)[number];
@@ -172,22 +173,12 @@ export function ApiLogsPage() {
       </div>
 
       <div className="gdp-api-kpi-row" aria-live="polite">
-        <article className="gdp-api-kpi gdp-api-kpi--green">
-          <span>성공</span>
-          <strong>{counts.success ?? 0}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--amber">
-          <span>실패</span>
-          <strong>{counts.fail ?? 0}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--blue">
-          <span>대기</span>
-          <strong>{counts.queued ?? 0}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--muted">
-          <span>수동</span>
-          <strong>{counts.manual ?? 0}</strong>
-        </article>
+        <Grid cols={4}>
+          <KPICard className="gdp-api-kpi" label="성공" value={counts.success ?? 0} accent="mint" />
+          <KPICard className="gdp-api-kpi" label="실패" value={counts.fail ?? 0} accent="coral" />
+          <KPICard className="gdp-api-kpi" label="대기" value={counts.queued ?? 0} accent="cobalt" />
+          <KPICard className="gdp-api-kpi" label="수동" value={counts.manual ?? 0} accent="amber" />
+        </Grid>
       </div>
 
       <div className="gdp-api-filter-bar" role="group" aria-label="로그 필터">
@@ -219,7 +210,7 @@ export function ApiLogsPage() {
           filtered.map((log) => {
             const canRetry = log.status === "fail" || log.status === "queued" || log.status === "manual";
             return (
-              <article key={log.id} className={`gdp-api-log-card ${apiLogStatusClass(log.status)}`}>
+              <Card key={log.id} className={`gdp-api-log-card ${apiLogStatusClass(log.status)}`}>
                 <div className="gdp-api-log-head">
                   <div>
                     <p>{log.domain}</p>
@@ -256,12 +247,12 @@ export function ApiLogsPage() {
                 {log.note ? <p className="gdp-api-log-note">{log.note}</p> : null}
                 {canRetry ? (
                   <div className="gdp-api-log-actions">
-                    <button type="button" className="gdp-api-retry-btn" onClick={() => handleRetry(log.id)}>
+                    <Button className="gdp-api-retry-btn" variant="subtle" size="sm" onClick={() => handleRetry(log.id)}>
                       재수집
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
-              </article>
+              </Card>
             );
           })
         )}

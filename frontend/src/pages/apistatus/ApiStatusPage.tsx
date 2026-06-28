@@ -1,6 +1,7 @@
 // API 수집 현황 화면 — 공공데이터 API 연동 상태를 소스별로 필터링해 카드로 보여줍니다
 import { useMemo, useState } from "react";
 import { usePublicData } from "../../data/PublicDataContext";
+import { Card, Grid, KPICard } from "../../components/ui";
 
 const FILTER_OPTIONS = ["전체", "준비됨", "Mock", "키 필요", "확인 필요"] as const;
 type FilterOption = (typeof FILTER_OPTIONS)[number];
@@ -165,22 +166,12 @@ export function ApiStatusPage() {
       </div>
 
       <div className="gdp-api-kpi-row" aria-live="polite">
-        <article className="gdp-api-kpi gdp-api-kpi--green">
-          <span>준비됨</span>
-          <strong>{readyCount}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--blue">
-          <span>Mock</span>
-          <strong>{mockCount}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--amber">
-          <span>키 필요</span>
-          <strong>{keyCount}</strong>
-        </article>
-        <article className="gdp-api-kpi gdp-api-kpi--muted">
-          <span>확인 필요</span>
-          <strong>{checkCount}</strong>
-        </article>
+        <Grid cols={4}>
+          <KPICard className="gdp-api-kpi" label="준비됨" value={readyCount} accent="mint" />
+          <KPICard className="gdp-api-kpi" label="Mock" value={mockCount} accent="cobalt" />
+          <KPICard className="gdp-api-kpi" label="키 필요" value={keyCount} accent="amber" />
+          <KPICard className="gdp-api-kpi" label="확인 필요" value={checkCount} />
+        </Grid>
       </div>
 
       <div className="gdp-api-filter-bar" role="group" aria-label="상태 필터">
@@ -202,7 +193,7 @@ export function ApiStatusPage() {
           <div className="gdp-api-grid-empty">해당 조건의 API 소스가 없습니다.</div>
         ) : (
           filtered.map((source, i) => (
-            <article
+            <Card
               key={source.datasetKey ?? source.name ?? i}
               className={`gdp-api-source-card ${apiStatusClass(source.status)}`}
             >
@@ -232,7 +223,7 @@ export function ApiStatusPage() {
                 </div>
               </dl>
               {source.note ? <p className="gdp-api-source-note">{source.note}</p> : null}
-            </article>
+            </Card>
           ))
         )}
       </div>

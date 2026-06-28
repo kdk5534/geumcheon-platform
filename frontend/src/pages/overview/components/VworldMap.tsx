@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { BACKEND_API_BASE } from "../../../data/env";
 import type { FacilitySummary } from "../overviewTypes";
 import { normalizeDongName } from "../../../data/dongName";
@@ -26,14 +29,13 @@ const GEUMCHEON_BOUNDS: L.LatLngBoundsExpression = [
   [37.405, 126.82],
   [37.515, 126.96],
 ];
-const MAX_VISIBLE_MARKERS = 500;
 const DONG_GEOJSON_URL = "./assets/data/geumcheon-dong.geojson";
 
 export function VworldMap({ facilities, onUnavailable, onSelectFacility, selectedFacilityId, choropleth }: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<L.Map | null>(null);
-  const markerLayerRef = useRef<L.LayerGroup | null>(null);
-  const markerRefs = useRef<Map<string, L.CircleMarker>>(new Map());
+  const markerLayerRef = useRef<L.MarkerClusterGroup | null>(null);
+  const markerRefs = useRef<Map<string, L.Marker>>(new Map());
   const boundaryLayerRef = useRef<L.GeoJSON | null>(null);
   const [status, setStatus] = useState<"ready" | "checking" | "not-configured" | "no-backend" | "tile-error">(
     BACKEND_API_BASE ? "ready" : "no-backend",
@@ -93,7 +95,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     });
     tileLayer.addTo(map);
 
-    const markerLayer = L.layerGroup().addTo(map);
+    const markerLayer = L.markerClusterGroup({ chunkedLoading: true }).addTo(map);
     markerLayerRef.current = markerLayer;
     addBoundaryLayer(map, choropleth).then((layer) => {
       if (!disposed) boundaryLayerRef.current = layer;
@@ -132,22 +134,19 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     markerRefs.current.clear();
     facilities
       .filter((facility) => facility.lat && facility.lng)
-      .slice(0, MAX_VISIBLE_MARKERS)
       .forEach((facility) => {
-        const tone = markerTone(facility.category);
         const selected = selectedFacilityId === facility.id;
-        const marker = L.circleMarker([facility.lat!, facility.lng!], {
-          radius: selected ? 9 : 6,
-          color: "#ffffff",
-          weight: selected ? 3 : 2,
-          fillColor: tone,
-          fillOpacity: 0.92,
+        const marker = L.marker([facility.lat!, facility.lng!], {
+          icon: facilityDivIcon(facility.category, selected),
         });
+        const ariaLabel = `${facility.name} (${facility.category})`;
         marker
           .bindPopup(
             `<strong>${escapeHtml(facility.name)}</strong><br><small>${escapeHtml(facility.address)}</small><br><em>${facility.coordinateSource === "estimated" ? "원천 좌표 없음 · 지도 표시용 위치" : "원천 좌표"}</em>`,
           )
           .on("click", () => onSelectFacility?.(facility))
+          // Leaflet이 leaflet-interactive 마커에 role="button"을 자동 부여 → aria-label 필수
+          .on("add", () => { marker.getElement()?.setAttribute("aria-label", ariaLabel); })
           .addTo(markerLayer);
         markerRefs.current.set(facility.id, marker);
       });
@@ -167,10 +166,10 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
     <div className="gdp-vworld-shell">
       <div ref={mapRef} className="gdp-vworld-map" role="region" aria-label="VWorld 금천구 지도" />
       <div className="gdp-map-legend" aria-label="지도 범례">
-        <span><i className="is-life" />생활·교통</span>
-        <span><i className="is-welfare" />복지·건강</span>
-        <span><i className="is-safety" />안전·환경</span>
-        <span><i className="is-other" />기타</span>
+        <span><i className="is-life" aria-hidden="true" />생활·교통</span>
+        <span><i className="is-welfare" aria-hidden="true" />복지·건강</span>
+        <span><i className="is-safety" aria-hidden="true" />안전·환경</span>
+        <span><i className="is-other" aria-hidden="true" />기타</span>
       </div>
       {choropleth && <ChoroplethLegend choropleth={choropleth} />}
       {status !== "ready" ? (
@@ -310,4 +309,54 @@ function markerTone(category: string) {
     return "#3159d8";
   }
   return "#ef6b5b";
+}
+
+/** 카테고리별 마커 도형 — 색맹 이중 인코딩용 */
+type MarkerShape = "triangle" | "circle" | "square" | "diamond";
+
+function markerShape(category: string): MarkerShape {
+  const normalized = category.toLocaleLowerCase("ko-KR");
+  if (normalized.includes("cctv") || normalized.includes("안전") || normalized.includes("쉼터") || normalized.includes("대피")) {
+    return "triangle";
+  }
+  if (normalized.includes("복지") || normalized.includes("의료") || normalized.includes("병원") || normalized.includes("약국")) {
+    return "circle";
+  }
+  if (normalized.includes("주차") || normalized.includes("전기차") || normalized.includes("자전거") || normalized.includes("wi-fi")) {
+    return "square";
+  }
+  return "diamond";
+}
+
+/** 색+도형 SVG 문자열 생성 — aria-hidden으로 스크린리더 노출 방지 */
+function buildMarkerSvg(color: string, shape: MarkerShape, size: number, selected: boolean): string {
+  const sw = selected ? 3 : 2;
+  const half = size / 2;
+  const r = half - sw - 1;
+  const base = `width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"`;
+  switch (shape) {
+    case "triangle":
+      return `<svg ${base}><polygon points="${half},${sw} ${size - sw},${size - sw} ${sw},${size - sw}" fill="${color}" stroke="#fff" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
+    case "circle":
+      return `<svg ${base}><circle cx="${half}" cy="${half}" r="${r}" fill="${color}" stroke="#fff" stroke-width="${sw}"/></svg>`;
+    case "square":
+      return `<svg ${base}><rect x="${sw}" y="${sw}" width="${size - sw * 2}" height="${size - sw * 2}" rx="3" fill="${color}" stroke="#fff" stroke-width="${sw}"/></svg>`;
+    case "diamond":
+    default:
+      return `<svg ${base}><polygon points="${half},${sw} ${size - sw},${half} ${half},${size - sw} ${sw},${half}" fill="${color}" stroke="#fff" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
+  }
+}
+
+/** L.divIcon 생성 — 선택 여부에 따라 크기 조정 */
+function facilityDivIcon(category: string, selected: boolean): L.DivIcon {
+  const color = markerTone(category);
+  const shape = markerShape(category);
+  const size = selected ? 28 : 22;
+  return L.divIcon({
+    html: buildMarkerSvg(color, shape, size, selected),
+    className: "gdp-facility-marker",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -(size / 2 + 2)],
+  });
 }

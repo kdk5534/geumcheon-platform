@@ -3600,17 +3600,74 @@ body {
 }
 
 .gdp-map-legend i {
-  width: 9px;
-  height: 9px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px rgba(15, 34, 54, .12);
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
-.gdp-map-legend i.is-life { background: var(--gdp-cobalt); }
-.gdp-map-legend i.is-welfare { background: var(--gdp-mint); }
-.gdp-map-legend i.is-safety { background: var(--gdp-amber); }
-.gdp-map-legend i.is-other { background: var(--gdp-coral); }
+/* 색맹 이중 인코딩 — 색 + 도형 */
+.gdp-map-legend i.is-life {
+  background: var(--gdp-cobalt);
+  border: 2px solid #fff;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(15, 34, 54, .12);
+}
+.gdp-map-legend i.is-welfare {
+  background: var(--gdp-mint);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(15, 34, 54, .12);
+}
+.gdp-map-legend i.is-safety {
+  background: var(--gdp-amber);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+.gdp-map-legend i.is-other {
+  background: var(--gdp-coral);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* ─── 시설 divIcon 마커 — 클러스터링 기반 ──────────────────────────────── */
+.gdp-app .gdp-facility-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* leaflet.markercluster 버블 — gdp 테마 오버라이드 */
+.gdp-app .leaflet-marker-icon.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}
+
+.gdp-app .marker-cluster {
+  background: rgba(49, 89, 216, .15);
+  border-radius: 50%;
+}
+.gdp-app .marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin: 5px;
+  border-radius: 50%;
+  background: rgba(49, 89, 216, .78);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gdp-app .marker-cluster-small { background: rgba(0, 168, 143, .15); }
+.gdp-app .marker-cluster-small div { background: rgba(0, 168, 143, .78); }
+.gdp-app .marker-cluster-medium { background: rgba(49, 89, 216, .15); }
+.gdp-app .marker-cluster-medium div { background: rgba(49, 89, 216, .78); }
+.gdp-app .marker-cluster-large { background: rgba(239, 107, 91, .15); }
+.gdp-app .marker-cluster-large div { background: rgba(239, 107, 91, .78); }
+
+.gdp-app[data-theme="dark"] .marker-cluster-small div { background: rgba(0, 168, 143, .9); }
+.gdp-app[data-theme="dark"] .marker-cluster-medium div { background: rgba(49, 89, 216, .9); }
+.gdp-app[data-theme="dark"] .marker-cluster-large div { background: rgba(239, 107, 91, .9); }
 
 /* ─── choropleth 단계구분도 범례 ─────────────────────────────────────────── */
 .gdp-choropleth-legend {

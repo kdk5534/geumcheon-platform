@@ -4,6 +4,7 @@ import { usePublicData } from "../../data/PublicDataContext";
 import type { FacilitySummary, OverviewTopic } from "../overview/overviewTypes";
 import { LinkedChart } from "../overview/components/LinkedChart";
 import { VworldMap } from "../overview/components/VworldMap";
+import { EmptyState, FacilityItemBody, FacilityStack } from "./AnalysisFacilityList";
 
 interface Props {
   topic: OverviewTopic;
@@ -216,6 +217,10 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
   const handleSelectFacility = useCallback((facility: FacilitySummary) => {
     setSelectedFacilityId(facility.id);
   }, []);
+  const handleToggleFacility = useCallback(
+    (id: string) => setSelectedFacilityId((prev) => (prev === id ? "" : id)),
+    [],
+  );
 
   useEffect(() => {
     setSelectedFacilityId("");
@@ -365,52 +370,25 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
                 </div>
               </section>
               {relatedFacilities.length ? (
-                <div className="gdp-analysis-facility-stack">
-                  {showMap && linkedCoordinateCount ? (
-                    <div className="gdp-analysis-mini-map">
-                      <VworldMap
-                        facilities={relatedFacilities}
-                        selectedFacilityId={selectedFacilityId}
-                        onSelectFacility={handleSelectFacility}
-                        onUnavailable={handleMapUnavailable}
-                      />
-                    </div>
-                  ) : (
-                    <div className="gdp-analysis-map-fallback" role="status">
-                      <strong>목록 기준으로 확인</strong>
-                      <span>좌표 또는 지도 연결 상태가 충분하지 않아 같은 데이터를 목록으로 제공합니다.</span>
-                    </div>
-                  )}
-                  <div className="gdp-analysis-facility-list" aria-label="복지·건강 시설 목록">
-                    {relatedFacilities.map((facility) => (
-                      <button
-                        key={facility.id}
-                        className={selectedFacilityId === facility.id ? "is-selected" : ""}
-                        type="button"
-                        aria-pressed={selectedFacilityId === facility.id}
-                        onClick={() => setSelectedFacilityId(selectedFacilityId === facility.id ? "" : facility.id)}
-                      >
-                        <span>{facility.category}</span>
-                        <strong>{facility.name}</strong>
-                        <small>{facility.address}</small>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <FacilityStack
+                  facilities={relatedFacilities}
+                  showMap={showMap}
+                  linkedCoordinateCount={linkedCoordinateCount}
+                  selectedFacilityId={selectedFacilityId}
+                  onToggleFacility={handleToggleFacility}
+                  onSelectFacility={handleSelectFacility}
+                  onMapUnavailable={handleMapUnavailable}
+                  listAriaLabel="복지·건강 시설 목록"
+                />
               ) : (
-                <div className="gdp-analysis-empty">
-                  <span>NO MATCHED RECORDS</span>
-                  <strong>{selectedNeedConfig?.label || "복지·건강"} · {selectedContext}</strong>
-                  <p>현재 도움 유형과 조건에 맞는 시설이 없습니다. 다른 시설로 대체하지 않고 수집 상태와 카탈로그 확인 경로를 제공합니다.</p>
-                  <div>
-                    <small>확인할 것</small>
-                    <small>도움 유형, 시설 분류, 좌표 보유 여부, 공개 가능 상태</small>
-                  </div>
-                  <Link to={withQuery("/datasets", { q: selectedNeedConfig?.catalogQuery || "복지" })}>
-                    데이터 상태 확인
-                  </Link>
-                  <small>{config.emptyAction.note}</small>
-                </div>
+                <EmptyState
+                  title={<>{selectedNeedConfig?.label || "복지·건강"} · {selectedContext}</>}
+                  description="현재 도움 유형과 조건에 맞는 시설이 없습니다. 다른 시설로 대체하지 않고 수집 상태와 카탈로그 확인 경로를 제공합니다."
+                  checkItems="도움 유형, 시설 분류, 좌표 보유 여부, 공개 가능 상태"
+                  linkTo={withQuery("/datasets", { q: selectedNeedConfig?.catalogQuery || "복지" })}
+                  linkLabel="데이터 상태 확인"
+                  note={config.emptyAction.note}
+                />
               )}
               <div className="gdp-welfare-actions">
                 <Link to={withQuery("/nearby", { category: "복지", district, q: selectedNeedConfig?.label || "" })}>
@@ -462,52 +440,25 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
                 </div>
               </section>
               {relatedFacilities.length ? (
-                <div className="gdp-analysis-facility-stack">
-                  {showMap && linkedCoordinateCount ? (
-                    <div className="gdp-analysis-mini-map">
-                      <VworldMap
-                        facilities={relatedFacilities}
-                        selectedFacilityId={selectedFacilityId}
-                        onSelectFacility={handleSelectFacility}
-                        onUnavailable={handleMapUnavailable}
-                      />
-                    </div>
-                  ) : (
-                    <div className="gdp-analysis-map-fallback" role="status">
-                      <strong>목록 기준으로 확인</strong>
-                      <span>좌표 또는 지도 연결 상태가 충분하지 않아 같은 데이터를 목록으로 제공합니다.</span>
-                    </div>
-                  )}
-                  <div className="gdp-analysis-facility-list" aria-label="안전·환경 시설 목록">
-                    {relatedFacilities.map((facility) => (
-                      <button
-                        key={facility.id}
-                        className={selectedFacilityId === facility.id ? "is-selected" : ""}
-                        type="button"
-                        aria-pressed={selectedFacilityId === facility.id}
-                        onClick={() => setSelectedFacilityId(selectedFacilityId === facility.id ? "" : facility.id)}
-                      >
-                        <span>{facility.category}</span>
-                        <strong>{facility.name}</strong>
-                        <small>{facility.address}</small>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <FacilityStack
+                  facilities={relatedFacilities}
+                  showMap={showMap}
+                  linkedCoordinateCount={linkedCoordinateCount}
+                  selectedFacilityId={selectedFacilityId}
+                  onToggleFacility={handleToggleFacility}
+                  onSelectFacility={handleSelectFacility}
+                  onMapUnavailable={handleMapUnavailable}
+                  listAriaLabel="안전·환경 시설 목록"
+                />
               ) : (
-                <div className="gdp-analysis-empty">
-                  <span>NO MATCHED RECORDS</span>
-                  <strong>{selectedSafetyConfig?.label || "안전·환경"} · {selectedContext}</strong>
-                  <p>현재 레이어와 조건에 맞는 시설이 없습니다. 위험도 판단으로 해석하지 않고 수집 상태와 원천 확인 경로를 제공합니다.</p>
-                  <div>
-                    <small>확인할 것</small>
-                    <small>레이어 분류, 좌표 보유 여부, 지도 프록시, 공개 가능 상태</small>
-                  </div>
-                  <Link to={withQuery("/datasets", { q: selectedSafetyConfig?.catalogQuery || "안전 환경" })}>
-                    데이터 상태 확인
-                  </Link>
-                  <small>{config.emptyAction.note}</small>
-                </div>
+                <EmptyState
+                  title={<>{selectedSafetyConfig?.label || "안전·환경"} · {selectedContext}</>}
+                  description="현재 레이어와 조건에 맞는 시설이 없습니다. 위험도 판단으로 해석하지 않고 수집 상태와 원천 확인 경로를 제공합니다."
+                  checkItems="레이어 분류, 좌표 보유 여부, 지도 프록시, 공개 가능 상태"
+                  linkTo={withQuery("/datasets", { q: selectedSafetyConfig?.catalogQuery || "안전 환경" })}
+                  linkLabel="데이터 상태 확인"
+                  note={config.emptyAction.note}
+                />
               )}
               <div className="gdp-safety-actions">
                 <Link to={withQuery("/nearby", { category: selectedSafetyConfig?.label || "안전", district })}>
@@ -519,63 +470,36 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
               </div>
             </div>
           ) : showFacilityMap && relatedFacilities.length ? (
-            <div className="gdp-analysis-facility-stack">
-              {showMap && linkedCoordinateCount ? (
-                <div className="gdp-analysis-mini-map">
-                  <VworldMap
-                    facilities={relatedFacilities}
-                    selectedFacilityId={selectedFacilityId}
-                    onSelectFacility={handleSelectFacility}
-                    onUnavailable={handleMapUnavailable}
-                  />
-                </div>
-              ) : (
-                <div className="gdp-analysis-map-fallback" role="status">
-                  <strong>목록 기준으로 확인</strong>
-                  <span>좌표 또는 지도 연결 상태가 충분하지 않아 같은 데이터를 목록으로 제공합니다.</span>
-                </div>
-              )}
-              <div className="gdp-analysis-facility-list" aria-label="관련 시설 목록">
-                {relatedFacilities.map((facility) => (
-                  <button
-                    key={facility.id}
-                    className={selectedFacilityId === facility.id ? "is-selected" : ""}
-                    type="button"
-                    aria-pressed={selectedFacilityId === facility.id}
-                    onClick={() => setSelectedFacilityId(selectedFacilityId === facility.id ? "" : facility.id)}
-                  >
-                    <span>{facility.category}</span>
-                    <strong>{facility.name}</strong>
-                    <small>{facility.address}</small>
-                  </button>
-                ))}
-              </div>
-              <Link className="gdp-analysis-more-link" to={withQuery(config.route, { map: "list", district })}>
-                전체 목록에서 계속 보기
-              </Link>
-            </div>
+            <FacilityStack
+              facilities={relatedFacilities}
+              showMap={showMap}
+              linkedCoordinateCount={linkedCoordinateCount}
+              selectedFacilityId={selectedFacilityId}
+              onToggleFacility={handleToggleFacility}
+              onSelectFacility={handleSelectFacility}
+              onMapUnavailable={handleMapUnavailable}
+              listAriaLabel="관련 시설 목록"
+              footer={
+                <Link className="gdp-analysis-more-link" to={withQuery(config.route, { map: "list", district })}>
+                  전체 목록에서 계속 보기
+                </Link>
+              }
+            />
           ) : relatedFacilities.length ? (
             relatedFacilities.map((facility) => (
               <Link key={facility.id} to={withQuery(config.route, { map: "list", district })}>
-                <span>{facility.category}</span>
-                <strong>{facility.name}</strong>
-                <small>{facility.address}</small>
+                <FacilityItemBody facility={facility} />
               </Link>
             ))
           ) : (
-            <div className="gdp-analysis-empty">
-              <span>NO MATCHED RECORDS</span>
-              <strong>
-                {selectedContext} · {query || "현재 주제"}
-              </strong>
-              <p>현재 조건에 맞는 시설이 없습니다. 신뢰 가능한 원천 데이터가 없는 경우 다른 주제의 시설로 대체하지 않습니다.</p>
-              <div>
-                <small>확인할 것</small>
-                <small>카테고리 수집 상태, 좌표 보유 여부, 검색어·행정동 필터</small>
-              </div>
-              <Link to={config.emptyAction.to}>{config.emptyAction.label}</Link>
-              <small>{config.emptyAction.note}</small>
-            </div>
+            <EmptyState
+              title={<>{selectedContext} · {query || "현재 주제"}</>}
+              description="현재 조건에 맞는 시설이 없습니다. 신뢰 가능한 원천 데이터가 없는 경우 다른 주제의 시설로 대체하지 않습니다."
+              checkItems="카테고리 수집 상태, 좌표 보유 여부, 검색어·행정동 필터"
+              linkTo={config.emptyAction.to}
+              linkLabel={config.emptyAction.label}
+              note={config.emptyAction.note}
+            />
           )}
         </aside>
       </div>

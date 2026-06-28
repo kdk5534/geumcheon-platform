@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend-static
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,13 +38,16 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: frontend-static/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Run syntax and unit tests
-        run: npm run check:syntax && npm run test:unit
+      - name: Install Playwright browser
+        run: npx playwright install chrome
 
-      - name: Run browser regression tests
-        run: npx playwright test
+      - name: Run type check
+        run: npx tsc -b --noEmit
+
+      - name: Run E2E tests
+        run: npm run test:e2e

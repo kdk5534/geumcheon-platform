@@ -3733,38 +3733,9 @@ body {
   flex-wrap: wrap;
 }
 
-.gdp-choropleth-toggle {
+/* choropleth 지표 선택 세그먼트 (끄기 / 인구 / 시설 수) */
+.gdp-choropleth-segment {
   font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1.5px solid var(--gdp-cobalt);
-  background: transparent;
-  color: var(--gdp-cobalt);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-
-.gdp-choropleth-toggle:hover {
-  background: var(--gdp-cobalt);
-  color: #fff;
-}
-
-.gdp-choropleth-toggle.is-active {
-  background: var(--gdp-cobalt);
-  color: #fff;
-}
-
-.gdp-app[data-theme="dark"] .gdp-choropleth-toggle {
-  border-color: var(--gdp-choro-2);
-  color: var(--gdp-choro-2);
-}
-
-.gdp-app[data-theme="dark"] .gdp-choropleth-toggle:hover,
-.gdp-app[data-theme="dark"] .gdp-choropleth-toggle.is-active {
-  background: var(--gdp-choro-2);
-  color: #081522;
 }
 
 @media (max-width: 640px) {
@@ -3773,11 +3744,6 @@ body {
     bottom: 10px;
     max-width: calc(50% - 10px);
     font-size: 10px;
-  }
-
-  .gdp-choropleth-toggle {
-    font-size: 11px;
-    padding: 3px 8px;
   }
 }
 

@@ -5,6 +5,8 @@ import { VworldMap } from "./VworldMap";
 import type { ChoroplethProps } from "./VworldMap";
 import { FacilityDetailDrawer } from "./FacilityDetailDrawer";
 import { normalizeDongName } from "../../../data/dongName";
+import { useDongBoundaries } from "../../../data/dongBoundaries";
+import { aggregateByDong } from "../../../data/aggregateByDong";
 
 interface Props {
   model: OverviewModel;
@@ -38,7 +40,10 @@ const topicFacilityAliases: Record<OverviewTopic, string[]> = {
 
 export function OverviewMapPanel({ model, topic, district, mapMode, selectedBreakdown, onMapModeChange }: Props) {
   const [selectedFacility, setSelectedFacility] = useState<FacilitySummary | null>(null);
-  const [choroplethOn, setChoroplethOn] = useState(false);
+  // choropleth 지표 선택: off / population / facility
+  const [choroplethMetric, setChoroplethMetric] = useState<"off" | "population" | "facility">("off");
+
+  const dongFC = useDongBoundaries();
 
   // 인구 행정동별 값 맵 — populationSeries에서 정규화 키로 구성
   const populationMap = useMemo(() => {
@@ -49,10 +54,27 @@ export function OverviewMapPanel({ model, topic, district, mapMode, selectedBrea
     return map;
   }, [model.populationSeries]);
 
-  const choroplethProp: ChoroplethProps | undefined =
-    choroplethOn && populationMap.size > 0
-      ? { valuesByDong: populationMap, metricLabel: "행정동별 인구(명)" }
-      : undefined;
+  // 시설 동별 집계 맵 — 현재 주제 필터 적용 후 행정동 경계 PIP로 집계
+  // 지역·세분화 필터는 제외: 동 분포 choropleth은 주제 전체 시설을 보여주는 것이 직관적
+  const facilityMap = useMemo(() => {
+    if (!dongFC) return new Map<string, number>();
+    const topicFiltered = model.facilities.filter((f) => {
+      const haystack = `${f.name} ${f.category} ${f.address}`.toLocaleLowerCase("ko-KR");
+      return topicFacilityAliases[topic].some((alias) => haystack.includes(alias.toLocaleLowerCase("ko-KR")));
+    });
+    const facs = topicFiltered.length ? topicFiltered : model.facilities;
+    return aggregateByDong(facs, dongFC);
+  }, [dongFC, model.facilities, topic]);
+
+  const choroplethProp: ChoroplethProps | undefined = (() => {
+    if (choroplethMetric === "population" && populationMap.size > 0) {
+      return { valuesByDong: populationMap, metricLabel: "행정동별 인구(명)" };
+    }
+    if (choroplethMetric === "facility" && facilityMap.size > 0) {
+      return { valuesByDong: facilityMap, metricLabel: "행정동별 시설 수(개)" };
+    }
+    return undefined;
+  })();
   const topicFilteredFacilities = model.facilities.filter((facility) => {
     const haystack = `${facility.name} ${facility.category} ${facility.address}`.toLocaleLowerCase("ko-KR");
     return topicFacilityAliases[topic].some((alias) => haystack.includes(alias.toLocaleLowerCase("ko-KR")));
@@ -87,16 +109,32 @@ export function OverviewMapPanel({ model, topic, district, mapMode, selectedBrea
           <p>VWorld 지도와 동일 조건의 대체 목록을 함께 제공합니다.</p>
         </div>
         <div className="gdp-map-panel-controls">
-          {mapMode === "map" && populationMap.size > 0 && (
-            <button
-              className={`gdp-choropleth-toggle${choroplethOn ? " is-active" : ""}`}
-              type="button"
-              aria-pressed={choroplethOn}
-              onClick={() => setChoroplethOn((v) => !v)}
-              title="행정동별 인구를 색으로 표시합니다"
+          {mapMode === "map" && (populationMap.size > 0 || facilityMap.size > 0) && (
+            <div
+              className="gdp-segmented gdp-choropleth-segment"
+              role="group"
+              aria-label="동별 색칠 지표"
             >
-              {choroplethOn ? "인구 색칠 끄기" : "인구 색칠 켜기"}
-            </button>
+              <button
+                className={choroplethMetric === "off" ? "is-active" : ""}
+                type="button"
+                onClick={() => setChoroplethMetric("off")}
+              >끄기</button>
+              {populationMap.size > 0 && (
+                <button
+                  className={choroplethMetric === "population" ? "is-active" : ""}
+                  type="button"
+                  onClick={() => setChoroplethMetric("population")}
+                >인구</button>
+              )}
+              {facilityMap.size > 0 && (
+                <button
+                  className={choroplethMetric === "facility" ? "is-active" : ""}
+                  type="button"
+                  onClick={() => setChoroplethMetric("facility")}
+                >시설 수</button>
+              )}
+            </div>
           )}
           <div className="gdp-segmented" role="group" aria-label="지도 보기 방식">
             <button

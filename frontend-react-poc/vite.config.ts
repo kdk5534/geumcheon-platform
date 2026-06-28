@@ -28,4 +28,12 @@ export default defineConfig(({ mode }) => ({
   define: {
     __GDP_BUILD_MODE__: JSON.stringify(mode),
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        admin: "admin.html",
+      },
+    },
+  },
 }));

@@ -54,7 +54,7 @@ geumcheon:
     cron: ${COLLECTOR_CRON:0 0 4 * * *}
   security:
     cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3100,http://127.0.0.1:3100}
   upload:
     base-path: ${UPLOAD_BASE_PATH:./uploads}
     staging-retention-days: ${UPLOAD_STAGING_RETENTION_DAYS:30}

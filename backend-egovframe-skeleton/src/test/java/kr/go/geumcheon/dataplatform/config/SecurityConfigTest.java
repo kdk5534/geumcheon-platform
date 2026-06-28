@@ -42,7 +42,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @WebMvcTest(controllers = {AdminUploadController.class, AdminSessionController.class, PublicDataController.class})
 @Import({SecurityConfig.class, DatasetRegistry.class, SecurityConfigTest.TestSecurityBeans.class})
-@TestPropertySource(properties = "geumcheon.security.cors.allowed-origins=http://localhost:3000")
+@TestPropertySource(properties = "geumcheon.security.cors.allowed-origins=http://localhost:3100")
 class SecurityConfigTest {
 
     @Autowired

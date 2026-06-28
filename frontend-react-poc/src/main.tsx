@@ -26,6 +26,12 @@ const DistrictComparePage = React.lazy(() =>
 const TopicsPage = React.lazy(() => import("./pages/topics/TopicsPage").then((module) => ({ default: module.TopicsPage })));
 const AboutPage = React.lazy(() => import("./pages/about/AboutPage").then((module) => ({ default: module.AboutPage })));
 const GeoPage = React.lazy(() => import("./pages/geo/GeoPage").then((module) => ({ default: module.GeoPage })));
+const ApiStatusPage = React.lazy(() =>
+  import("./pages/apistatus/ApiStatusPage").then((module) => ({ default: module.ApiStatusPage })),
+);
+const ApiLogsPage = React.lazy(() =>
+  import("./pages/apilogs/ApiLogsPage").then((module) => ({ default: module.ApiLogsPage })),
+);
 
 function RouteFallback() {
   return (
@@ -128,6 +134,10 @@ createRoot(root).render(
               {/* 레거시 별칭 — #/catalog → /datasets */}
               <Route path="/catalog" element={<Navigate to="/datasets" replace />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/api-status" element={<ApiStatusPage />} />
+              <Route path="/api-logs" element={<ApiLogsPage />} />
+              {/* 레거시 별칭 — #/api → /api-status */}
+              <Route path="/api" element={<Navigate to="/api-status" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Route>
           </Routes>

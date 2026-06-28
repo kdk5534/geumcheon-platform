@@ -65,6 +65,8 @@ export const sectionConfig: Record<SectionKey, SectionConfig> = {
     items: [
       { label: "데이터셋 검색", to: "/datasets", pages: ["datasets"] },
       { label: "데이터 이용안내", to: "/about", pages: ["about"] },
+      { label: "API 수집 현황", to: "/api-status", pages: ["api-status"] },
+      { label: "수집 로그", to: "/api-logs", pages: ["api-logs"] },
     ],
   },
 };
@@ -78,7 +80,7 @@ export function routeToSection(pathname: string, search: string): SectionKey | "
   if (path === "commercial" || path === "dong") return "commercial";
   if (path === "welfare") return "welfare";
   if (path === "safety") return "safety";
-  if (path === "datasets" || path === "about") return "catalog";
+  if (path === "datasets" || path === "about" || path === "api-status" || path === "api-logs") return "catalog";
   if (path === "nearby" || path === "map") {
     const explicit = params.get("nav") || params.get("section");
     if (explicit === "welfare" || explicit === "safety" || explicit === "commercial" || explicit === "population") {

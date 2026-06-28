@@ -5265,3 +5265,492 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================================
+   API 수집 현황 / 수집 로그 페이지 (.gdp-api-*)
+   api-status.js + api-logs.js → React 이식
+===================================================== */
+
+.gdp-api-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* ─── 배너 ─────────────────────────────────────── */
+.gdp-api-banner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, #1f3a5f 0%, #245b9e 100%);
+  border-radius: 16px;
+  color: #fff;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .12), 0 0 0 1px rgba(255, 255, 255, .06) inset;
+  flex-wrap: wrap;
+}
+
+.gdp-api-banner--logs {
+  background: linear-gradient(135deg, #0d2a45 0%, #0c7fb8 100%);
+}
+
+.gdp-api-banner-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.gdp-api-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, .65);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 0 0 4px;
+}
+
+.gdp-api-banner-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 4px;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+
+.gdp-api-banner-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, .7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.gdp-api-banner-stats {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.gdp-api-banner-stat {
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 10px;
+  min-width: 72px;
+}
+
+.gdp-api-banner-stat-val {
+  display: block;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.gdp-api-banner-stat-label {
+  display: block;
+  font-size: 10px;
+  color: rgba(255, 255, 255, .65);
+  font-weight: 700;
+  margin-top: 3px;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+/* ─── KPI 요약 행 ──────────────────────────────── */
+.gdp-api-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.gdp-api-kpi {
+  padding: 16px 20px;
+  background: var(--gdp-surface, #fff);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-top: 3px solid var(--gdp-line-strong, #c8ccd8);
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: box-shadow .15s;
+}
+
+.gdp-api-kpi:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
+}
+
+.gdp-api-kpi--green { border-top-color: #14a877; }
+.gdp-api-kpi--blue  { border-top-color: #3159d8; }
+.gdp-api-kpi--amber { border-top-color: #d97706; }
+.gdp-api-kpi--muted { border-top-color: var(--gdp-line-strong, #c8ccd8); }
+
+.gdp-api-kpi span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-api-kpi strong {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--gdp-ink, #1a1e2e);
+  letter-spacing: -.02em;
+}
+
+/* ─── 필터 바 ─────────────────────────────────── */
+.gdp-api-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.gdp-api-filter-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: 999px;
+  background: var(--gdp-wash, #f4f7fb);
+  color: var(--gdp-soft, #8a90a8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.gdp-api-filter-btn:hover {
+  background: color-mix(in srgb, #14a877 8%, transparent);
+  color: var(--gdp-ink, #1a1e2e);
+  border-color: rgba(20, 168, 119, .4);
+}
+
+.gdp-api-filter-btn.is-active {
+  background: #14a877;
+  color: #fff;
+  border-color: #14a877;
+  font-weight: 700;
+}
+
+.gdp-api-filter-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(49, 89, 216, .25);
+}
+
+/* ─── 검색 입력 ────────────────────────────────── */
+.gdp-api-search-input {
+  padding: 6px 16px;
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: 999px;
+  background: var(--gdp-surface, #fff);
+  color: var(--gdp-ink, #1a1e2e);
+  font-size: 13px;
+  font-family: inherit;
+  width: 260px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.gdp-api-search-input::placeholder {
+  color: var(--gdp-soft, #8a90a8);
+}
+
+.gdp-api-search-input:focus {
+  border-color: #14a877;
+  box-shadow: 0 0 0 3px rgba(20, 168, 119, .18);
+  outline: none;
+}
+
+/* ─── 카드 그리드 ─────────────────────────────── */
+.gdp-api-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.gdp-api-grid-empty {
+  grid-column: 1 / -1;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--gdp-soft, #8a90a8);
+  font-size: 14px;
+  background: var(--gdp-surface, #fff);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: 14px;
+}
+
+/* ─── API 소스 카드 ────────────────────────────── */
+.gdp-api-source-card {
+  background: var(--gdp-surface, #fff);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-top: 3px solid var(--gdp-line-strong, #c8ccd8);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow .15s;
+}
+
+.gdp-api-source-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
+}
+
+.gdp-api-source-card.is-ready { border-top-color: #14a877; }
+.gdp-api-source-card.is-mock  { border-top-color: #3159d8; }
+.gdp-api-source-card.is-key   { border-top-color: #d97706; }
+.gdp-api-source-card.is-check { border-top-color: #dc2626; }
+
+.gdp-api-source-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gdp-api-source-head p {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-api-source-head strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gdp-ink, #1a1e2e);
+}
+
+.gdp-api-source-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gdp-api-source-card.is-ready .gdp-api-source-status { background: rgba(20, 168, 119, .12); color: #14a877; }
+.gdp-api-source-card.is-mock  .gdp-api-source-status { background: rgba(49, 89, 216, .10);  color: #3159d8; }
+.gdp-api-source-card.is-key   .gdp-api-source-status { background: rgba(217, 119, 6, .10);  color: #d97706; }
+.gdp-api-source-card.is-check .gdp-api-source-status { background: rgba(220, 38, 38, .08);  color: #dc2626; }
+
+.gdp-api-source-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.gdp-api-source-card dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gdp-api-source-card dt {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.gdp-api-source-card dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gdp-ink, #1a1e2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.gdp-api-source-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gdp-soft, #8a90a8);
+  line-height: 1.5;
+  padding-top: 10px;
+  border-top: 1px solid var(--gdp-line, #e5e8f0);
+}
+
+/* ─── 로그 카드 ────────────────────────────────── */
+.gdp-api-log-card {
+  background: var(--gdp-surface, #fff);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-left: 4px solid var(--gdp-line-strong, #c8ccd8);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow .15s;
+}
+
+.gdp-api-log-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
+}
+
+.gdp-api-log-card.is-success { border-left-color: #14a877; }
+.gdp-api-log-card.is-failed  { border-left-color: #dc2626; }
+.gdp-api-log-card.is-queued  { border-left-color: #3159d8; }
+.gdp-api-log-card.is-manual  { border-left-color: #d97706; }
+
+.gdp-api-log-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gdp-api-log-head p {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-api-log-head strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gdp-ink, #1a1e2e);
+}
+
+.gdp-api-log-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gdp-api-log-card.is-success .gdp-api-log-status { background: rgba(20, 168, 119, .12); color: #14a877; }
+.gdp-api-log-card.is-failed  .gdp-api-log-status { background: rgba(220, 38, 38, .08);  color: #dc2626; }
+.gdp-api-log-card.is-queued  .gdp-api-log-status { background: rgba(49, 89, 216, .10);  color: #3159d8; }
+.gdp-api-log-card.is-manual  .gdp-api-log-status { background: rgba(217, 119, 6, .10);  color: #d97706; }
+
+.gdp-api-log-kpis {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.gdp-api-log-kpis div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gdp-api-log-kpis dt {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.gdp-api-log-kpis dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gdp-ink, #1a1e2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.gdp-api-log-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--gdp-soft, #8a90a8);
+  line-height: 1.5;
+  padding-top: 10px;
+  border-top: 1px solid var(--gdp-line, #e5e8f0);
+}
+
+.gdp-api-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.gdp-api-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: var(--gdp-wash, #f4f7fb);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: 999px;
+  color: #14a877;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.gdp-api-retry-btn:hover {
+  background: rgba(20, 168, 119, .08);
+  border-color: rgba(20, 168, 119, .4);
+}
+
+.gdp-api-retry-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(20, 168, 119, .25);
+}
+
+/* ─── 반응형 ───────────────────────────────────── */
+@media (max-width: 900px) {
+  .gdp-api-page {
+    padding: 20px 16px 40px;
+  }
+
+  .gdp-api-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .gdp-api-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .gdp-api-banner-stats {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .gdp-api-banner-stat {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .gdp-api-kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gdp-api-search-input {
+    width: 100%;
+  }
+}

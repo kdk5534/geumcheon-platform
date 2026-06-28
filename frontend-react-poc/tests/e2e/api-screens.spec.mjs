@@ -1,4 +1,4 @@
-import { expect, test } from "../../../frontend-static/node_modules/@playwright/test/index.mjs";
+import { expect, test } from "@playwright/test";
 
 // ─── API 수집 현황 페이지 ────────────────────────────────────────
 

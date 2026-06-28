@@ -1,4 +1,4 @@
-import { expect, test } from "../../../frontend-static/node_modules/@playwright/test/index.mjs";
+import { expect, test } from "@playwright/test";
 
 test("overview renders data, filter state, and fallback-safe map panel", async ({ page }) => {
   await page.goto("/#/home");

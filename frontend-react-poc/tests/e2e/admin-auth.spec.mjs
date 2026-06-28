@@ -1,5 +1,5 @@
 // 관리자 콘솔 인증 게이트 E2E 테스트 — 백엔드 없이 검증 가능한 범위
-import { expect, test } from "../../../frontend-static/node_modules/@playwright/test/index.mjs";
+import { expect, test } from "@playwright/test";
 
 // admin.html 진입점으로 이동하는 헬퍼
 async function gotoAdmin(page) {

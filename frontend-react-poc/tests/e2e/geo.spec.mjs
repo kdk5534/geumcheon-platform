@@ -1,4 +1,4 @@
-import { expect, test } from "../../../frontend-static/node_modules/@playwright/test/index.mjs";
+import { expect, test } from "@playwright/test";
 
 test("geo 페이지가 마운트되고 기본 권역 KPI를 렌더한다", async ({ page }) => {
   await page.goto("/#/geo");

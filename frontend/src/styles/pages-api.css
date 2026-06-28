@@ -1,0 +1,401 @@
+/* API 현황·수집 로그 페이지 스타일 */
+/* =====================================================
+   API 수집 현황 / 수집 로그 페이지 (.gdp-api-*)
+   api-status.js + api-logs.js → React 이식
+===================================================== */
+
+.gdp-api-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--gdp-space-8) var(--gdp-space-6) var(--gdp-space-12);
+}
+
+/* ─── 배너 ─────────────────────────────────────── */
+.gdp-api-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--gdp-space-6);
+  padding: var(--gdp-space-6) var(--gdp-space-8);
+  background: linear-gradient(135deg, #1f3a5f 0%, #245b9e 100%);
+  border-radius: var(--gdp-radius-xl);
+  color: #fff;
+  margin-bottom: var(--gdp-space-5);
+  box-shadow: 0 4px 16px color-mix(in srgb, #000 12%, transparent),
+              0 0 0 1px color-mix(in srgb, #fff 6%, transparent) inset;
+  flex-wrap: wrap;
+}
+
+.gdp-api-banner--logs {
+  background: linear-gradient(135deg, #0d2a45 0%, #0c7fb8 100%);
+}
+
+.gdp-api-banner-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.gdp-api-banner-eyebrow {
+  font-size: var(--gdp-text-xs);
+  font-weight: 800;
+  color: color-mix(in srgb, #fff 65%, transparent);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 0 0 var(--gdp-space-1);
+}
+
+.gdp-api-banner-title {
+  font-size: var(--gdp-text-xl);
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 var(--gdp-space-1);
+  letter-spacing: -.02em;
+  line-height: var(--gdp-leading-tight);
+}
+
+.gdp-api-banner-desc {
+  font-size: var(--gdp-text-sm);
+  color: color-mix(in srgb, #fff 70%, transparent);
+  margin: 0;
+  line-height: var(--gdp-leading-snug);
+}
+
+.gdp-api-banner-stats {
+  display: flex;
+  gap: var(--gdp-space-3);
+  flex-shrink: 0;
+}
+
+.gdp-api-banner-stat {
+  text-align: center;
+  padding: var(--gdp-space-2) var(--gdp-space-4);
+  background: color-mix(in srgb, #fff 10%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 16%, transparent);
+  border-radius: var(--gdp-radius-sm);
+  min-width: 4.5rem;
+}
+
+.gdp-api-banner-stat-val {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.gdp-api-banner-stat-label {
+  display: block;
+  font-size: var(--gdp-text-xs);
+  color: color-mix(in srgb, #fff 65%, transparent);
+  font-weight: 700;
+  margin-top: var(--gdp-space-1);
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+/* ─── KPI 요약 행 ──────────────────────────────── */
+/* .gdp-api-kpi — E2E 셀렉터 유지용 클래스명 (KPICard className prop으로 주입, 스타일은 gdp-ui-kpi 담당) */
+.gdp-api-kpi-row {
+  margin-bottom: var(--gdp-space-5);
+}
+
+/* ─── 필터 바 ─────────────────────────────────── */
+.gdp-api-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gdp-space-2);
+  margin-bottom: var(--gdp-space-5);
+  flex-wrap: wrap;
+}
+
+.gdp-api-filter-btn {
+  padding: var(--gdp-space-1) var(--gdp-space-4);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: var(--gdp-radius-pill);
+  background: var(--gdp-wash, #f4f7fb);
+  color: var(--gdp-soft, #8a90a8);
+  font-size: var(--gdp-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--gdp-dur-1) ease, color var(--gdp-dur-1) ease, border-color var(--gdp-dur-1) ease;
+}
+
+.gdp-api-filter-btn:hover {
+  background: color-mix(in srgb, var(--gdp-mint) 8%, transparent);
+  color: var(--gdp-ink, #1a1e2e);
+  border-color: color-mix(in srgb, var(--gdp-mint) 40%, transparent);
+}
+
+.gdp-api-filter-btn.is-active {
+  background: var(--gdp-mint);
+  color: #fff;
+  border-color: var(--gdp-mint);
+  font-weight: 700;
+}
+
+.gdp-api-filter-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gdp-action) 25%, transparent);
+}
+
+/* ─── 검색 입력 ────────────────────────────────── */
+.gdp-api-search-input {
+  padding: var(--gdp-space-1) var(--gdp-space-4);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: var(--gdp-radius-pill);
+  background: var(--gdp-surface, #fff);
+  color: var(--gdp-ink, #1a1e2e);
+  font-size: var(--gdp-text-sm);
+  font-family: inherit;
+  width: 16.25rem;
+  transition: border-color var(--gdp-dur-1) ease, box-shadow var(--gdp-dur-1) ease;
+}
+
+.gdp-api-search-input::placeholder {
+  color: var(--gdp-soft, #8a90a8);
+}
+
+.gdp-api-search-input:focus {
+  border-color: var(--gdp-mint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gdp-mint) 18%, transparent);
+  outline: none;
+}
+
+/* ─── 카드 그리드 ─────────────────────────────── */
+.gdp-api-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18.75rem, 1fr));
+  gap: var(--gdp-space-4);
+}
+
+.gdp-api-grid-empty {
+  grid-column: 1 / -1;
+  padding: var(--gdp-space-12) var(--gdp-space-6);
+  text-align: center;
+  color: var(--gdp-soft, #8a90a8);
+  font-size: var(--gdp-text-sm);
+  background: var(--gdp-surface, #fff);
+  border: 1px solid var(--gdp-line, #e5e8f0);
+  border-radius: var(--gdp-radius-md);
+}
+
+/* ─── API 소스 카드 (Card 래핑 — 박스는 gdp-ui-card 담당) ── */
+.gdp-api-source-card.gdp-ui-card {
+  padding: var(--gdp-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-3);
+  border-top: 3px solid var(--gdp-line-strong, #c8ccd8);
+}
+
+.gdp-api-source-card.is-ready { border-top-color: var(--gdp-mint); }
+.gdp-api-source-card.is-mock  { border-top-color: var(--gdp-action); }
+.gdp-api-source-card.is-key   { border-top-color: var(--gdp-amber); }
+.gdp-api-source-card.is-check { border-top-color: var(--gdp-coral); }
+
+.gdp-api-source-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gdp-space-3);
+}
+
+.gdp-api-source-head p {
+  margin: 0 0 var(--gdp-space-1);
+  font-size: var(--gdp-text-xs);
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-api-source-head strong {
+  display: block;
+  font-size: var(--gdp-text-base);
+  font-weight: 700;
+  color: var(--gdp-ink, #1a1e2e);
+}
+
+.gdp-api-source-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--gdp-space-1) var(--gdp-space-2);
+  border-radius: var(--gdp-radius-pill);
+  font-size: var(--gdp-text-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gdp-api-source-card.is-ready .gdp-api-source-status { background: color-mix(in srgb, var(--gdp-mint)   12%, transparent); color: var(--gdp-mint); }
+.gdp-api-source-card.is-mock  .gdp-api-source-status { background: color-mix(in srgb, var(--gdp-action) 10%, transparent); color: var(--gdp-action); }
+.gdp-api-source-card.is-key   .gdp-api-source-status { background: color-mix(in srgb, var(--gdp-amber)  10%, transparent); color: var(--gdp-amber); }
+.gdp-api-source-card.is-check .gdp-api-source-status { background: color-mix(in srgb, var(--gdp-coral)  8%,  transparent); color: var(--gdp-coral); }
+
+.gdp-api-source-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gdp-space-2) var(--gdp-space-3);
+}
+
+.gdp-api-source-card dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gdp-api-source-card dt {
+  font-size: var(--gdp-text-xs);
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.gdp-api-source-card dd {
+  margin: 0;
+  font-size: var(--gdp-text-sm);
+  font-weight: 600;
+  color: var(--gdp-ink, #1a1e2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.gdp-api-source-note {
+  margin: 0;
+  font-size: .75rem;
+  color: var(--gdp-soft, #8a90a8);
+  line-height: var(--gdp-leading-snug);
+  padding-top: var(--gdp-space-2);
+  border-top: 1px solid var(--gdp-line, #e5e8f0);
+}
+
+/* ─── 로그 카드 (Card 래핑 — 박스는 gdp-ui-card 담당) ──── */
+.gdp-api-log-card.gdp-ui-card {
+  padding: var(--gdp-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-3);
+  border-left: 4px solid var(--gdp-line-strong, #c8ccd8);
+}
+
+.gdp-api-log-card.is-success { border-left-color: var(--gdp-mint); }
+.gdp-api-log-card.is-failed  { border-left-color: var(--gdp-coral); }
+.gdp-api-log-card.is-queued  { border-left-color: var(--gdp-action); }
+.gdp-api-log-card.is-manual  { border-left-color: var(--gdp-amber); }
+
+.gdp-api-log-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gdp-space-3);
+}
+
+.gdp-api-log-head p {
+  margin: 0 0 var(--gdp-space-1);
+  font-size: var(--gdp-text-xs);
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.gdp-api-log-head strong {
+  display: block;
+  font-size: var(--gdp-text-base);
+  font-weight: 700;
+  color: var(--gdp-ink, #1a1e2e);
+}
+
+.gdp-api-log-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--gdp-space-1) var(--gdp-space-2);
+  border-radius: var(--gdp-radius-pill);
+  font-size: var(--gdp-text-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gdp-api-log-card.is-success .gdp-api-log-status { background: color-mix(in srgb, var(--gdp-mint)   12%, transparent); color: var(--gdp-mint); }
+.gdp-api-log-card.is-failed  .gdp-api-log-status { background: color-mix(in srgb, var(--gdp-coral)  8%,  transparent); color: var(--gdp-coral); }
+.gdp-api-log-card.is-queued  .gdp-api-log-status { background: color-mix(in srgb, var(--gdp-action) 10%, transparent); color: var(--gdp-action); }
+.gdp-api-log-card.is-manual  .gdp-api-log-status { background: color-mix(in srgb, var(--gdp-amber)  10%, transparent); color: var(--gdp-amber); }
+
+.gdp-api-log-kpis {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gdp-space-2) var(--gdp-space-3);
+}
+
+.gdp-api-log-kpis div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gdp-api-log-kpis dt {
+  font-size: var(--gdp-text-xs);
+  font-weight: 700;
+  color: var(--gdp-soft, #8a90a8);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.gdp-api-log-kpis dd {
+  margin: 0;
+  font-size: var(--gdp-text-sm);
+  font-weight: 600;
+  color: var(--gdp-ink, #1a1e2e);
+  font-variant-numeric: tabular-nums;
+}
+
+.gdp-api-log-note {
+  margin: 0;
+  font-size: .75rem;
+  color: var(--gdp-soft, #8a90a8);
+  line-height: var(--gdp-leading-snug);
+  padding-top: var(--gdp-space-2);
+  border-top: 1px solid var(--gdp-line, #e5e8f0);
+}
+
+.gdp-api-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--gdp-space-2);
+}
+
+/* .gdp-api-retry-btn — Button 컴포넌트(variant=subtle size=sm)로 대체, 박스 스타일 불필요 */
+
+/* ─── 반응형 ───────────────────────────────────── */
+@media (max-width: 900px) {
+  .gdp-api-page {
+    padding: var(--gdp-space-5) var(--gdp-space-4) var(--gdp-space-10);
+  }
+}
+
+@media (max-width: 639px) {
+  .gdp-api-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gdp-space-4);
+    padding: var(--gdp-space-5);
+  }
+
+  .gdp-api-banner-stats {
+    width: 100%;
+    gap: var(--gdp-space-2);
+  }
+
+  .gdp-api-banner-stat {
+    flex: 1;
+    min-width: 0;
+    padding: var(--gdp-space-2);
+  }
+
+  .gdp-api-search-input {
+    width: 100%;
+  }
+}

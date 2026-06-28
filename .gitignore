@@ -3,12 +3,17 @@ uploads/
 .tools/
 .tmp/
 backend-egovframe-skeleton/target/
-frontend-static/node_modules/
-frontend-static/dist/
-frontend-static/build/
+frontend/node_modules/
+frontend/dist/
 node_modules/
 target/
 *.log
+# 임시 UI 감사용 스크린샷
+tmp-*.png
+# TypeScript 증분 빌드 산출물
+*.tsbuildinfo
+# 디자인 검토용 참조 이미지 (대용량, 코드와 무관)
+참조/
 /geo_boundary_focus.png
 /geo_compare_check.png
 /geumcheon_dom.txt

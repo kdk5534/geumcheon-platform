@@ -4,14 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-금천구 도시·생활·상권 데이터 플랫폼. Spring Boot 백엔드 + Vanilla JS 정적 SPA 구성. Mock 모드(DB 없이 즉시 실행)와 PostgreSQL/PostGIS DB 모드를 모두 지원한다.
+금천구 도시·생활·상권 데이터 플랫폼. Spring Boot 백엔드 + React 19+Vite+TS 프론트엔드. Mock 모드(DB 없이 즉시 실행)와 PostgreSQL/PostGIS DB 모드를 모두 지원한다.
+
+`frontend/`가 정식 메인 프론트엔드(포트 3100). 상세는 `frontend/CLAUDE.md` 참조.
 
 ## 빠른 실행
 
 ```powershell
 # 프론트엔드 (PowerShell 창 1)
-cd frontend-static
-node serve-static.mjs        # http://localhost:3000
+cd frontend
+npm run dev                  # http://localhost:3100
 
 # 백엔드 Mock 모드 (PowerShell 창 2)
 .\scripts\run-backend-mock.ps1   # http://localhost:8080
@@ -22,11 +24,11 @@ node serve-static.mjs        # http://localhost:3000
 
 스크립트가 Maven/Java를 자동 탐색한다. 빌드 전 서버가 실행 중이면 반드시 먼저 종료해야 한다(JAR 잠금).
 
-DB 모드를 쓸 때는 스키마를 먼저 적용한다. `.\scripts\apply-db.ps1`이 `database/`의 `schema.sql`과 날짜별 `migration-*.sql`을 적용한다(`-Mode fresh` 전체 재생성 / `-Mode migrate` 증분). 새 마이그레이션은 `database/migration-<YYYYMMDD>-<설명>.sql` 규칙으로 추가한다.
+DB 모드를 쓸 때 **스키마는 Flyway가 자동 관리**한다. 백엔드 기동 시(`--spring.profiles.active=db`) `src/main/resources/db/migration/` 아래의 V1~V7 스크립트가 순서대로 적용된다(`application.yml` `flyway.baseline-on-migrate: true`). 수동 재생성이 필요할 때만 `.\scripts\apply-db.ps1`을 쓴다(`-Mode fresh` 전체 재생성 / `-Mode migrate` 증분). 단, **`apply-db.ps1`은 날짜별 SQL 4개만 포함해 최신 거버넌스·결재 마이그레이션을 빠뜨린 구식 상태**이므로, 날짜별 SQL을 단독으로 쓸 때는 `database/CLAUDE.md`의 Flyway 대응 표를 확인한다. 새 마이그레이션은 `database/migration-<YYYYMMDD>-<설명>.sql` + `backend-egovframe-skeleton/src/main/resources/db/migration/V<n>__<설명>.sql` 양쪽에 추가한다.
 
 ## 테스트
 
-**백엔드** (JUnit 5 + AssertJ, 31개 테스트 클래스)
+**백엔드** (JUnit 5 + AssertJ, 30개 테스트 클래스)
 
 ```powershell
 # 전체 테스트 (Maven 경로가 PATH에 있을 때)
@@ -134,11 +136,32 @@ $env:COLLECTOR_ENABLED = "true"
 
 ### 관리자 API 인증
 
-`/api/admin/**` 엔드포인트는 HTTP Basic 인증을 요구한다. Mock 모드 기본 자격증명: `admin` / `admin1234`. DB 모드에서는 `AdminCredentialGuard`가 환경 변수에서 자격증명을 읽는다.
+`/api/admin/**` 엔드포인트는 **세션 기반 로그인**을 요구한다. HTTP Basic 인증과 폼 로그인은 비활성화(`SecurityConfig.java`).
+
+- **로그인**: `POST /api/admin/auth/login` (CSRF 예외·permitAll). 성공 시 세션 쿠키 발급.
+- **CSRF**: `CookieCsrfTokenRepository`가 쿠키(`XSRF-TOKEN`)로 토큰을 발급한다. 사전에 `GET /api/admin/auth/csrf`로 토큰을 받아 후속 요청에 포함한다.
+- **기타 엔드포인트**: `GET /api/admin/auth/me`(현재 사용자 정보), `POST /api/admin/auth/logout`.
+- **brute-force 차단**: `LoginAttemptGuard`가 동일 loginId 5회 실패 시 15분 차단(인메모리, 재시작 시 초기화).
+- **역할**: `POST /api/admin/uploads/commit`은 `ROLE_ADMIN` 또는 `ROLE_REVIEWER`만 허용.
+
+Mock 모드 기본 자격증명: `admin` / `admin1234`. DB 모드에서는 `AdminCredentialGuard`가 **기동 시 검증기** 역할을 한다 — 기본 비밀번호(`change-me`, `admin1234`)나 공란이면 `IllegalStateException`으로 부팅을 차단한다.
 
 ### 백엔드 도메인 패키지
 
-`kr.go.geumcheon.dataplatform` 하위. 위에서 다룬 `publicdata`·`admin`·`dataset` 외에 `map`(`BoundaryController`·`VworldTileService` — 경계/타일), `search`(`UnifiedSearchController` — 통합 검색), `facility`(시설 요약), `config`(`SecurityConfig`·인증), `api`(`ApiResponse` 등 공통 응답)이 있다. 데이터 접근 계층은 인터페이스 + `Mock*`/`Jdbc*` 이중 구현 패턴을 일관되게 따른다(영속화는 MyBatis 사용).
+`kr.go.geumcheon.dataplatform` 하위.
+
+| 패키지 | 주요 클래스 |
+|--------|-------------|
+| `publicdata` | `PublicDataCollectorService`, `PublicDataController`, Mock/Jdbc 구현체 |
+| `admin` | CSV/Excel 업로드(`AdminUploadController`), 거버넌스·2인 결재(`GovernanceController`, `GovernanceStore`), staged 결재 워크플로(`StagedUploadApprovalService`, `StagedUploadStore`) |
+| `dataset` | `DatasetRegistry` (단일 카탈로그), `DatasetController` |
+| `map` | `BoundaryController`(GeoJSON 경계), `VworldTileController`(타일 프록시), `VworldTileService` |
+| `search` | `UnifiedSearchController`(화면+데이터 통합 검색, `/api/public/search`) |
+| `facility` | 시설 요약 |
+| `config` | `SecurityConfig`(세션 인증·CSRF), `AdminSessionController`(로그인·로그아웃·me·csrf), `LoginAttemptGuard`(brute-force 차단), `AdminCredentialGuard`(기동 시 비밀번호 검증) |
+| `api` | `ApiResponse` 등 공통 응답 레코드 |
+
+데이터 접근 계층은 인터페이스 + `Mock*`/`Jdbc*` 이중 구현 패턴을 일관되게 따른다(영속화는 MyBatis 사용).
 
 ### 릴레이 서브시스템
 
@@ -156,6 +179,6 @@ $env:COLLECTOR_ENABLED = "true"
 
 각 모듈에 세부 지침이 있다.
 
-- `backend-egovframe-skeleton/CLAUDE.md` — 패키지 구조, 테스트 위치, 수집 스크립트
-- `frontend-static/CLAUDE.md` — 페이지 모듈 목록, Mock 데이터 파일
-- `database/CLAUDE.md` — 스키마 적용, 마이그레이션 절차
+- `backend-egovframe-skeleton/CLAUDE.md` — 패키지 구조, 테스트 위치, Flyway 마이그레이션, 수집 스크립트
+- `frontend/CLAUDE.md` — React 프론트엔드 실행 명령어, 아키텍처, 테스트
+- `database/CLAUDE.md` — 스키마 적용, Flyway vs 날짜별 SQL 마이그레이션 경로

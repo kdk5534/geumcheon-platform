@@ -1,16 +1,16 @@
-# CLAUDE.md — frontend-react-poc
+# CLAUDE.md — frontend
 
-종합 현황 1화면을 React+Vite+TypeScript로 병행 구현한 비교·검증용 PoC.
+금천 데이터플랫폼 정식 메인 프론트엔드. React 19+Vite+TypeScript.
 
 ## 목적과 위치
 
-`frontend-static`(Vanilla JS 정본)을 대체하지 **않는다**. 품질·성능·접근성·포털 탑재성을 비교·검증하는 병행 구현이다. 포털 하위경로 배치를 전제로 전체 CSS에 `gdp-` 접두사 네임스페이스를 사용한다.
+정식 메인 프론트엔드다. 포털 하위경로 배치를 전제로 전체 CSS에 `gdp-` 접두사 네임스페이스를 사용한다.
 
 ## 실행·빌드·테스트
 
 ```powershell
 # 개발 서버 (http://127.0.0.1:3100)
-cd frontend-react-poc
+cd frontend
 npm run dev
 
 # 타입 검사
@@ -71,17 +71,7 @@ npx playwright test visual --update-snapshots
 
 `echarts/core`에서 필요한 컴포넌트만 `echarts.use()`로 트리셰이킹 등록. 차트 클릭이 부모 필터와 양방향 연동(차트↔필터 linked).
 
-## frontend-static과의 관계
-
-| 항목 | 공유 여부 |
-|------|-----------|
-| 백엔드 포트 `:8080` | 공유 |
-| `ApiResponse<T>` 계약 (`success`, `data[]`) | 공유 |
-| 백엔드 API 엔드포인트 경로 | 공유 |
-| 로컬 Mock fixture (`assets/data/mock-data.json`) | **각자 독립** (데이터 구조 다름) |
-| Playwright node_modules | react-poc 자체 설치(`@playwright/test 1.60.0`, `axe-core 4.11.1`) |
-
 ## 기타 주의사항
 
-- `tmp-*.png` 스크린샷 파일 다수가 git에 추적되고 있다(정리 대상).
-- Node `>=22 <23` — `frontend-static`과 동일한 버전 정책.
+- Playwright·axe-core 자체 설치(`@playwright/test 1.60.0`, `axe-core 4.11.1`).
+- Node `>=22 <23`.

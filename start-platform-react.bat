@@ -14,7 +14,7 @@ start "Geumcheon Backend DB" powershell -ExecutionPolicy Bypass -NoProfile -NoEx
 
 timeout /t 4 /nobreak >nul
 
-start "Geumcheon React Dashboard" cmd /k "cd /d ""%~dp0frontend-react-poc"" && npm.cmd run dev"
+start "Geumcheon React Dashboard" cmd /k "cd /d ""%~dp0frontend"" && npm.cmd run dev"
 
 echo.
 echo Two windows were opened.

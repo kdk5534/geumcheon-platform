@@ -47,6 +47,14 @@ export function AdminShell() {
           >
             업로드
           </NavLink>
+          <NavLink
+            to="/governance"
+            className={({ isActive }) =>
+              `gdp-admin-nav-link${isActive ? " is-active" : ""}`
+            }
+          >
+            거버넌스
+          </NavLink>
         </nav>
         <div className="gdp-admin-header-user">
           <span className="gdp-admin-header-loginid">{user?.loginId}</span>

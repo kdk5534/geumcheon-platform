@@ -695,6 +695,300 @@
   margin: 0.25rem 0 0;
 }
 
+/* ── 거버넌스 페이지 ──────────────────────────────────────── */
+.gdp-admin-gov-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.gdp-admin-gov-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gdp-admin-gov-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gdp-admin-gov-section-head .gdp-admin-section-title {
+  margin: 0;
+}
+
+/* ── 상태 필터 ────────────────────────────────────────────── */
+.gdp-admin-gov-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.gdp-admin-gov-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  background: #fff;
+  font-size: 0.8125rem;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.gdp-admin-gov-filter-btn:hover {
+  background: #f9fafb;
+}
+
+.gdp-admin-gov-filter-btn.is-active {
+  background: #1f3a5f;
+  border-color: #1f3a5f;
+  color: #fff;
+}
+
+.gdp-admin-gov-filter-count {
+  display: inline-block;
+  min-width: 1.25rem;
+  text-align: center;
+  background: rgba(0 0 0 / 0.08);
+  border-radius: 9999px;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gdp-admin-gov-filter-btn.is-active .gdp-admin-gov-filter-count {
+  background: rgba(255 255 255 / 0.2);
+}
+
+/* ── 변경요청 목록 ────────────────────────────────────────── */
+.gdp-admin-gov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gdp-admin-gov-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gdp-admin-gov-card.is-pending-review {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.gdp-admin-gov-card.is-approved {
+  border-color: #6ee7b7;
+  background: #f0fdf4;
+}
+
+.gdp-admin-gov-card.is-rejected {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.gdp-admin-gov-card.is-applied {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.gdp-admin-gov-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.gdp-admin-gov-card-title {
+  font-size: 0.9375rem;
+  color: #111827;
+}
+
+.gdp-admin-gov-status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.gdp-admin-gov-status-badge.is-draft {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.gdp-admin-gov-status-badge.is-pending-review {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.gdp-admin-gov-status-badge.is-approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.gdp-admin-gov-status-badge.is-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.gdp-admin-gov-status-badge.is-applied {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.gdp-admin-gov-status-badge.is-rolled-back {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.gdp-admin-gov-card-desc {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+}
+
+.gdp-admin-gov-card-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.gdp-admin-gov-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.gdp-admin-gov-btn {
+  padding: 0.4rem 0.875rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.gdp-admin-gov-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gdp-admin-gov-btn.is-primary {
+  background: #1f3a5f;
+  color: #fff;
+}
+
+.gdp-admin-gov-btn.is-primary:hover:not(:disabled) {
+  background: #245b9e;
+}
+
+.gdp-admin-gov-btn.is-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.gdp-admin-gov-btn.is-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.gdp-admin-gov-btn.is-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.gdp-admin-gov-btn.is-danger:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.gdp-admin-gov-error {
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.375rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+/* ── 감사 이벤트 목록 ─────────────────────────────────────── */
+.gdp-admin-gov-audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.gdp-admin-gov-audit-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  font-size: 0.8125rem;
+}
+
+.gdp-admin-gov-audit-action {
+  color: #6b7280;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gdp-admin-gov-audit-target {
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdp-admin-gov-audit-meta {
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+/* ── 반응형 (거버넌스) ────────────────────────────────────── */
+@media (max-width: 639px) {
+  .gdp-admin-gov-audit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .gdp-admin-gov-audit-meta {
+    white-space: normal;
+  }
+
+  .gdp-admin-gov-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ── 라우트 폴백 ─────────────────────────────────────────── */
 .gdp-admin-route-fallback {
   display: flex;

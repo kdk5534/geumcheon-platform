@@ -161,6 +161,109 @@ export async function previewCsvOnBackend(
   return payload.data;
 }
 
+// ── 거버넌스 관련 타입 ────────────────────────────────────────
+
+/** 변경요청 요약 — GET /api/admin/change-requests 배열 항목 */
+export interface ChangeRequestSummary {
+  requestId: string;
+  requestType: string;
+  targetType: string;
+  targetKey: string;
+  title: string;
+  description: string | null;
+  impactSummary: Record<string, unknown> | null;
+  /** DRAFT | PENDING_REVIEW | APPROVED | REJECTED | APPLIED | ROLLED_BACK */
+  status: string;
+  requestedBy: string;
+  requestedAt: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewComment: string | null;
+  createdAt: string;
+}
+
+/** 감사 이벤트 요약 — GET /api/admin/audit-events 배열 항목 */
+export interface AuditEventSummary {
+  eventId: string;
+  actorLoginId: string;
+  actionCode: string;
+  targetType: string;
+  targetKey: string;
+  requestId: string | null;
+  beforeValue: Record<string, unknown> | null;
+  afterValue: Record<string, unknown> | null;
+  resultCode: string;
+  occurredAt: string;
+}
+
+/** 거버넌스 승인/반려 요청 바디 */
+export interface ReviewRequest {
+  comment?: string;
+}
+
+// ── 거버넌스 API 함수 ─────────────────────────────────────────
+
+/** 변경요청 목록 조회 */
+export async function loadChangeRequests(
+  limit = 50,
+): Promise<ChangeRequestSummary[]> {
+  const payload = await fetchAdminJson<AdminApiPayload<ChangeRequestSummary[]>>(
+    `${BACKEND_API_BASE}/api/admin/change-requests?limit=${limit}`,
+  );
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+/** 감사 이벤트 목록 조회 — ROLE_ADMIN or ROLE_REVIEWER 필요 */
+export async function loadAuditEvents(limit = 20): Promise<AuditEventSummary[]> {
+  const payload = await fetchAdminJson<AdminApiPayload<AuditEventSummary[]>>(
+    `${BACKEND_API_BASE}/api/admin/audit-events?limit=${limit}`,
+  );
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+/** 변경요청을 검토 요청 상태로 제출 (DRAFT → PENDING_REVIEW) */
+export async function submitChangeRequest(
+  requestId: string,
+): Promise<ChangeRequestSummary> {
+  const payload = await fetchAdminJson<AdminApiPayload<ChangeRequestSummary>>(
+    `${BACKEND_API_BASE}/api/admin/change-requests/${encodeURIComponent(requestId)}/submit`,
+    { method: "POST" },
+  );
+  return payload.data;
+}
+
+/** 변경요청 승인 — ROLE_ADMIN or ROLE_REVIEWER, 본인 요청 불가 */
+export async function approveChangeRequest(
+  requestId: string,
+  comment = "검토 완료",
+): Promise<ChangeRequestSummary> {
+  const payload = await fetchAdminJson<AdminApiPayload<ChangeRequestSummary>>(
+    `${BACKEND_API_BASE}/api/admin/change-requests/${encodeURIComponent(requestId)}/approve`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comment } satisfies ReviewRequest),
+    },
+  );
+  return payload.data;
+}
+
+/** 변경요청 반려 — ROLE_ADMIN or ROLE_REVIEWER, 본인 요청 불가 */
+export async function rejectChangeRequest(
+  requestId: string,
+  comment = "보완 후 재요청",
+): Promise<ChangeRequestSummary> {
+  const payload = await fetchAdminJson<AdminApiPayload<ChangeRequestSummary>>(
+    `${BACKEND_API_BASE}/api/admin/change-requests/${encodeURIComponent(requestId)}/reject`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comment } satisfies ReviewRequest),
+    },
+  );
+  return payload.data;
+}
+
 /** 내부 fetch 핵심 — credentials:"include" + 타임아웃 + ApiResponse 검증 */
 async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const controller = new AbortController();

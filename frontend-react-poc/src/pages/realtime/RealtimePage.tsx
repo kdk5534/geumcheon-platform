@@ -1,24 +1,8 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
-import { overviewModel } from "../overview/overviewModel";
-import type { OverviewModel } from "../overview/overviewTypes";
+import { usePublicData } from "../../data/PublicDataContext";
 
 export function RealtimePage() {
-  const [model, setModel] = useState<OverviewModel>(overviewModel);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (!controller.signal.aborted) setModel(adaptOverviewModel(bundle));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setModel(overviewModel);
-      });
-    return () => controller.abort();
-  }, []);
+  const { model } = usePublicData();
 
   const air = model.metrics.find((metric) => metric.key === "air");
   const stores = model.metrics.find((metric) => metric.key === "commercial");

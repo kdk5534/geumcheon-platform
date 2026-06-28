@@ -1,10 +1,7 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CommandSearch } from "./CommandSearch";
-import { adaptOverviewModel } from "../data/overviewAdapter";
-import { loadPublicData } from "../data/publicApi";
-import { overviewModel } from "../pages/overview/overviewModel";
-import type { OverviewModel } from "../pages/overview/overviewTypes";
+import { usePublicData } from "../data/PublicDataContext";
 import { currentPageKey, routeToSection, sectionConfig } from "./sectionConfig";
 
 const navItems = [
@@ -41,12 +38,11 @@ function getInitialLanguage(): Language {
 
 export function AppShell() {
   const location = useLocation();
+  const { model: shellModel, loadState: dataState } = usePublicData();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [shellModel, setShellModel] = useState<OverviewModel>(overviewModel);
   const [healthOpen, setHealthOpen] = useState(false);
-  const [dataState, setDataState] = useState<"loading" | "ready" | "fallback" | "error">("loading");
 
   useEffect(() => {
     localStorage.setItem("gdp-theme", theme);
@@ -56,22 +52,6 @@ export function AppShell() {
     localStorage.setItem("gdp-language", language);
     document.documentElement.lang = language;
   }, [language]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (controller.signal.aborted) return;
-        setShellModel(adaptOverviewModel(bundle));
-        setDataState(bundle.source === "backend" ? "ready" : "fallback");
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setShellModel(overviewModel);
-        setDataState("error");
-      });
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

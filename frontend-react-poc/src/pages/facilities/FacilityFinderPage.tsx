@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
-import { overviewModel } from "../overview/overviewModel";
-import type { FacilitySummary, MapMode, OverviewModel } from "../overview/overviewTypes";
+import { usePublicData } from "../../data/PublicDataContext";
+import type { FacilitySummary, MapMode } from "../overview/overviewTypes";
 import { FacilityDetailDrawer } from "../overview/components/FacilityDetailDrawer";
 import { VworldMap } from "../overview/components/VworldMap";
 
@@ -24,7 +22,7 @@ function categoryMatches(facilityCategory: string, requestedCategory: string) {
 
 export function FacilityFinderPage() {
   const [params, setParams] = useSearchParams();
-  const [model, setModel] = useState<OverviewModel>(overviewModel);
+  const { model } = usePublicData();
   const [mapMode, setMapMode] = useState<MapMode>(params.get("map") === "list" ? "list" : "map");
   const [selectedFacility, setSelectedFacility] = useState<FacilitySummary | null>(null);
   const [query, setQuery] = useState("");
@@ -35,20 +33,6 @@ export function FacilityFinderPage() {
   const emptyDescription = category
     ? "신뢰 가능한 원천 데이터가 없는 항목은 다른 시설로 대체하지 않습니다. 검색어·행정동을 해제하거나 데이터 카탈로그에서 수집 상태를 확인해 주세요."
     : "검색어를 지우거나 카테고리를 전체로 바꾸면 지도를 다시 표시합니다.";
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (controller.signal.aborted) return;
-        setModel(adaptOverviewModel(bundle));
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setModel(overviewModel);
-      });
-    return () => controller.abort();
-  }, []);
 
   const categories = useMemo(
     () => [

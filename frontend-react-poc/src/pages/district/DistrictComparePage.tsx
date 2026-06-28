@@ -1,30 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
-import { overviewModel } from "../overview/overviewModel";
-import type { OverviewModel } from "../overview/overviewTypes";
+import { usePublicData } from "../../data/PublicDataContext";
 
 export function DistrictComparePage() {
-  const [model, setModel] = useState<OverviewModel>(overviewModel);
+  const { model } = usePublicData();
   const [left, setLeft] = useState("");
   const [right, setRight] = useState("");
 
+  // 행정동 데이터가 처음 로드되면 기본 선택값 초기화
   useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (!controller.signal.aborted) {
-          const next = adaptOverviewModel(bundle);
-          setModel(next);
-          setLeft((current) => current || next.districts[0] || "");
-          setRight((current) => current || next.districts[1] || next.districts[0] || "");
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setModel(overviewModel);
-      });
-    return () => controller.abort();
-  }, []);
+    if (model.districts.length > 0 && !left) {
+      setLeft(model.districts[0]);
+      setRight(model.districts[1] || model.districts[0]);
+    }
+  }, [model.districts, left]);
 
   const populationMap = useMemo(() => new Map(model.populationSeries.map((item) => [item.name, item.value])), [model.populationSeries]);
   const leftValue = populationMap.get(left) || 0;

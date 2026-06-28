@@ -1,23 +1,7 @@
-import { useEffect, useState } from "react";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
-import { overviewModel } from "../overview/overviewModel";
-import type { OverviewModel } from "../overview/overviewTypes";
+import { usePublicData } from "../../data/PublicDataContext";
 
 export function IndicatorsPage() {
-  const [model, setModel] = useState<OverviewModel>(overviewModel);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (!controller.signal.aborted) setModel(adaptOverviewModel(bundle));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setModel(overviewModel);
-      });
-    return () => controller.abort();
-  }, []);
+  const { model } = usePublicData();
 
   return (
     <section className="gdp-indicators-page" aria-labelledby="indicators-title">

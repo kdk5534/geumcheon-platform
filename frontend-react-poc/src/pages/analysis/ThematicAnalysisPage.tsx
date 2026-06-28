@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
-import { overviewModel } from "../overview/overviewModel";
-import type { FacilitySummary, OverviewModel, OverviewTopic } from "../overview/overviewTypes";
+import { usePublicData } from "../../data/PublicDataContext";
+import type { FacilitySummary, OverviewTopic } from "../overview/overviewTypes";
 import { LinkedChart } from "../overview/components/LinkedChart";
 import { VworldMap } from "../overview/components/VworldMap";
 
@@ -171,7 +169,7 @@ function withQuery(baseRoute: string, params: Record<string, string>) {
 }
 
 export function ThematicAnalysisPage({ topic, eyebrow, title, description, primaryQuestion }: Props) {
-  const [model, setModel] = useState<OverviewModel>(overviewModel);
+  const { model } = usePublicData();
   const [district, setDistrict] = useState("");
   const [query, setQuery] = useState("");
   const [selectedBreakdown, setSelectedBreakdown] = useState("");
@@ -180,19 +178,6 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
   const [selectedSafetyLayer, setSelectedSafetyLayer] = useState("");
   const [showMap, setShowMap] = useState(true);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (controller.signal.aborted) return;
-        setModel(adaptOverviewModel(bundle));
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setModel(overviewModel);
-      });
-    return () => controller.abort();
-  }, []);
 
   const config = topicCopy[topic];
   const selectedNeedConfig = config.serviceNeeds?.find((need) => need.label === selectedNeed) || null;

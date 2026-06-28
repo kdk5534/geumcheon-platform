@@ -28,6 +28,7 @@ export const sectionConfig: Record<SectionKey, SectionConfig> = {
     items: [
       { label: "인구 구조", to: "/population", pages: ["population"] },
       { label: "생활시설 지도", to: "/nearby", pages: ["nearby"] },
+      { label: "접근성·권역 지도", to: "/geo", pages: ["geo"] },
       { label: "분야별 생활 데이터", to: "/topics", pages: ["topics"] },
     ],
   },
@@ -73,7 +74,7 @@ export function routeToSection(pathname: string, search: string): SectionKey | "
   const params = new URLSearchParams(search);
 
   if (path === "home" || path === "realtime" || path === "indicators") return "home";
-  if (path === "population" || path === "topics") return "population";
+  if (path === "population" || path === "topics" || path === "geo") return "population";
   if (path === "commercial" || path === "dong") return "commercial";
   if (path === "welfare") return "welfare";
   if (path === "safety") return "safety";

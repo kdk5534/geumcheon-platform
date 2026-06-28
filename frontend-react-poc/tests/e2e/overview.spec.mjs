@@ -10,7 +10,7 @@ test("overview renders data, filter state, and fallback-safe map panel", async (
   await page.getByRole("button", { name: "목록" }).click();
   await expect(page.locator(".gdp-map-list")).toBeVisible();
   await page.locator(".gdp-map-list button").first().click();
-  await expect(page.locator(".gdp-facility-detail")).toBeVisible();
+  await expect(page.locator(".gdp-facility-drawer")).toBeVisible();
 
   await page.getByRole("button", { name: "상권" }).click();
   await expect.poll(() => decodeURIComponent(new URL(page.url()).hash)).toContain("topic=commercial");

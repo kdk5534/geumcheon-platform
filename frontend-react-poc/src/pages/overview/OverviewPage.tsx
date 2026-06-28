@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { adaptOverviewModel } from "../../data/overviewAdapter";
-import { loadPublicData } from "../../data/publicApi";
+import { usePublicData } from "../../data/PublicDataContext";
 import { copyShareUrl, downloadCsv } from "../../utils/export";
 import { OverviewBriefStrip } from "./components/OverviewBriefStrip";
 import { OverviewMapPanel } from "./components/OverviewMapPanel";
@@ -10,15 +9,13 @@ import { KpiGrid } from "./components/KpiGrid";
 import { ProvenancePanel } from "./components/ProvenancePanel";
 import { DataStatusBar } from "./components/DataStatusBar";
 import { InsightRail } from "./components/InsightRail";
-import { overviewModel } from "./overviewModel";
 import type { MapMode, OverviewTopic } from "./overviewTypes";
 
 const validTopics: OverviewTopic[] = ["population", "commercial", "welfare", "safety"];
 
 export function OverviewPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [model, setModel] = useState(overviewModel);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "fallback" | "error">("loading");
+  const { model, loadState } = usePublicData();
   const [actionMessage, setActionMessage] = useState("");
   const [dataStatusOpen, setDataStatusOpen] = useState(false);
   const topicParam = searchParams.get("topic") as OverviewTopic | null;
@@ -29,23 +26,6 @@ export function OverviewPage() {
 
   const topic = topicParam && validTopics.includes(topicParam) ? topicParam : "population";
   const district = model.districts.includes(districtParam) ? districtParam : "";
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoadState("loading");
-    loadPublicData(controller.signal)
-      .then((bundle) => {
-        if (controller.signal.aborted) return;
-        setModel(adaptOverviewModel(bundle));
-        setLoadState(bundle.source === "backend" ? "ready" : "fallback");
-      })
-      .catch(() => {
-        if (controller.signal.aborted) return;
-        setModel(overviewModel);
-        setLoadState("error");
-      });
-    return () => controller.abort();
-  }, []);
 
   const updateParams = (next: { topic?: OverviewTopic; district?: string; map?: MapMode; breakdown?: string }) => {
     const params = new URLSearchParams(searchParams);

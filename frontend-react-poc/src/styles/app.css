@@ -4965,3 +4965,303 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════
+   GEO PAGE — 접근성·권역 지도
+   ═══════════════════════════════════════════ */
+
+.gdp-geo-page {
+  display: grid;
+  gap: 20px;
+}
+
+.gdp-geo-notice {
+  padding: 14px 20px;
+  border: 1px solid var(--gdp-amber, #d49324);
+  border-radius: var(--gdp-radius);
+  background: color-mix(in srgb, var(--gdp-amber, #d49324) 8%, var(--gdp-panel));
+  color: var(--gdp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gdp-geo-notice strong {
+  color: var(--gdp-text);
+}
+
+.gdp-geo-controls {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+  padding: 20px 24px;
+}
+
+.gdp-geo-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.gdp-geo-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.gdp-geo-fieldset legend {
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: var(--gdp-soft);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.gdp-geo-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gdp-geo-button-group button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 16px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 8px;
+  background: var(--gdp-surface, var(--gdp-panel));
+  color: var(--gdp-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+}
+
+.gdp-geo-button-group button small {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gdp-soft);
+}
+
+.gdp-geo-button-group button.is-active,
+.gdp-geo-button-group button[aria-pressed="true"] {
+  border-color: var(--gdp-cobalt, #3159d8);
+  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 10%, var(--gdp-panel));
+  color: var(--gdp-cobalt, #3159d8);
+}
+
+.gdp-geo-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.gdp-geo-kpi-row article {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px;
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+}
+
+.gdp-geo-kpi-row article span {
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: var(--gdp-soft);
+  text-transform: uppercase;
+}
+
+.gdp-geo-kpi-row article strong {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  color: var(--gdp-text);
+  line-height: 1;
+}
+
+.gdp-geo-kpi-row article small {
+  font-size: 11px;
+  color: var(--gdp-muted);
+}
+
+.gdp-geo-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.gdp-geo-chart-card {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+  padding: 20px 20px 16px;
+}
+
+.gdp-geo-chart-title {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  color: var(--gdp-text);
+  margin: 0 0 12px;
+}
+
+.gdp-geo-detail {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+  padding: 24px;
+}
+
+.gdp-geo-detail h2 {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gdp-text);
+  margin: 0 0 8px;
+}
+
+.gdp-geo-detail-note {
+  color: var(--gdp-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.gdp-geo-score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.gdp-geo-score-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--gdp-line);
+  border-radius: 8px;
+  background: var(--gdp-surface, transparent);
+  transition: border-color .15s, background .15s;
+}
+
+.gdp-geo-score-card.is-active {
+  border-color: var(--gdp-cobalt, #3159d8);
+  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 8%, var(--gdp-panel));
+}
+
+.gdp-geo-score-card span {
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: var(--gdp-soft);
+  text-transform: uppercase;
+}
+
+.gdp-geo-score-card strong {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  color: var(--gdp-text);
+}
+
+.gdp-geo-score-card small {
+  font-size: 11px;
+  color: var(--gdp-muted);
+}
+
+.gdp-geo-table-section {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  background: var(--gdp-panel);
+  box-shadow: var(--gdp-shadow);
+  padding: 24px;
+}
+
+.gdp-geo-table-section h2 {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--gdp-text);
+  margin: 0 0 16px;
+}
+
+.gdp-geo-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gdp-geo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.gdp-geo-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  color: var(--gdp-soft);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--gdp-line);
+  white-space: nowrap;
+}
+
+.gdp-geo-table td {
+  padding: 10px 12px;
+  color: var(--gdp-text);
+  border-bottom: 1px solid var(--gdp-line);
+  white-space: nowrap;
+}
+
+.gdp-geo-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.gdp-geo-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 4%, transparent);
+}
+
+.gdp-geo-table tbody tr.is-selected td {
+  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 8%, transparent);
+}
+
+.gdp-geo-table td button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--gdp-cobalt, #3159d8);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gdp-geo-table-note {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--gdp-soft);
+}
+
+@media (max-width: 639px) {
+  .gdp-geo-control-row {
+    flex-direction: column;
+  }
+
+  .gdp-geo-kpi-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gdp-geo-charts {
+    grid-template-columns: 1fr;
+  }
+}

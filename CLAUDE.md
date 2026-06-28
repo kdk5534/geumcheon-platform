@@ -75,31 +75,24 @@ $env:COLLECTOR_ENABLED = "true"
 
 ## 아키텍처
 
-### 프론트엔드 부트 시퀀스
+### 프론트엔드 아키텍처
 
-`main.js`의 `bootData()`가 3단계로 실행된다.
+React 19 + Vite + TypeScript. 상세 구조·데이터 계층·지도·테스트는 **`frontend/CLAUDE.md`** 참조.
 
-1. **로컬 Mock 우선** — `assets/data/mock-data.json`을 즉시 읽어 `state.data`에 저장 → 홈 페이지 렌더.
-2. **API 소스/로그 로드** — `/api/public/api-sources`, `/api/public/api-logs` 병렬 호출.
-3. **백엔드 데이터 병합** — `/api/public/stores`, `/api/public/facilities` 등 1.5초 타임아웃 내 응답을 로컬 데이터에 병합. 실패하면 로컬 데이터 유지.
+핵심 흐름: `src/main.tsx`(HashRouter + React.lazy) → `AppShell` → 각 페이지. `PublicDataContext`가 `loadPublicData()`를 한 번 호출해 전체 모델을 공유(중복 요청 없음). 백엔드 미연결 시 `public/assets/data/mock-data.json` → empty 순으로 폴백.
 
-백엔드 연결 실패 시에도 Mock 데이터로 완전히 동작한다.
+**시각화 핵심 모듈 위치.**
 
-### 프론트엔드 모듈 구조
-
-해시 기반 SPA. `router.js`가 `#/<route>` 해시를 감지해 `pages/<page>.js`를 마운트·언마운트한다. 각 페이지 모듈은 `mount(container)` / `unmount()` 를 export한다.
-
-**`js/core/`** — 페이지 간 공유 모듈.
-
-| 파일 | 핵심 역할 |
-|------|-----------|
-| `state.js` | 전역 `state` 객체 + 앱 상수. `BACKEND_API_BASE = "http://localhost:8080"` 고정. 모든 페이지가 여기서 import한다. |
-| `api.js` | 백엔드 API 호출 + 폴백 로직. `state`에 직접 쓰지 않고 값을 반환만 한다. |
-| `choropleth.js` | Leaflet 단계구분도 레이어 생성·갱신·범례 렌더링. `map.js`와 `home.js` 공용. |
-| `assets.js` | `injectPageCss(id, href)` · `loadLeaflet()` — 중복 주입 방지 멱등 로더. |
-| `charts.js` | ECharts 래퍼. `loadECharts()` → `createChart()` → `disposeChart()` 패턴. |
-
-**`js/pages/`** — 라우트별 페이지 모듈. `home.js`의 HTML 템플릿 빌더는 `home-templates.js`로 분리되어 있다.
+| 파일 | 역할 |
+|------|------|
+| `src/data/dongBoundaries.ts` | `useDongBoundaries()` — 행정동 GeoJSON 모듈 캐시 로드 |
+| `src/data/aggregateByDong.ts` | `aggregateByDong()` — point-in-polygon 시설 동별 집계 |
+| `src/data/dongName.ts` | `normalizeDongName()` — 경계/인구 키 정규화 |
+| `src/data/datasetHealth.ts` | 신선도 타입·로더·모델 함수 (public API, 인증 불필요) |
+| `src/data/useDatasetHealth.ts` | `useDatasetHealth()` — status+contracts 병렬 로드 훅 |
+| `src/pages/overview/components/VworldMap.tsx` | Leaflet 지도 + markercluster + choropleth 채색 |
+| `src/pages/overview/components/OverviewMapPanel.tsx` | 끄기/인구/시설 수 3-way 세그먼트 choropleth 제어 |
+| `src/pages/geo/GeoPage.tsx` | 행정동별 인구·시설 비교 (실데이터, 가짜 점수 없음) |
 
 ### 백엔드 API 응답 형식
 

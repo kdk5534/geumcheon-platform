@@ -62,14 +62,30 @@ npx playwright test visual --update-snapshots
 - `env.ts` — `window.__ENV__?.BACKEND_API_BASE`를 정규화해 `BACKEND_API_BASE` 상수 생성. `API_TIMEOUT_MS = 2500`.
 - `publicApi.ts` — `loadPublicData()`가 population/facilities/stores/air-quality/api-sources를 `Promise.allSettled`로 병렬 호출. **3단계 폴백**: backend → `public/assets/data/mock-data.json`(로컬) → empty. 반환 번들에 `source: "backend"|"local"|"empty"` 포함.
 - `overviewAdapter.ts` — 원시 데이터를 화면용 `OverviewModel`로 변환. 좌표 없는 시설은 행정동 키워드+해시 오프셋으로 추정 좌표 생성(`coordinateSource: "estimated"`).
+- `dongName.ts` — `normalizeDongName(raw)`: `"서울특별시 금천구 가산동"` → `"가산동"`. 경계 GeoJSON 키와 인구/시설 키를 일치시키는 데 씀.
+- `dongBoundaries.ts` — `useDongBoundaries()` 훅. `public/assets/data/geumcheon-dong.geojson`을 모듈 레벨 Promise 캐시로 단일 로드. 실패 시 null.
+- `aggregateByDong.ts` — `aggregateByDong(facilities, fc)`. ray-casting point-in-polygon(Polygon·MultiPolygon·홀 지원)으로 시설 좌표를 행정동별 Map으로 집계.
+- `datasetHealth.ts` — 신선도·계약 타입(`DatasetOperationalStatus`, `DatasetContract`), 공개 API 로더(`loadDatasetStatuses`, `loadDatasetContracts`), 모델 함수(`summarizeHealth`, `mergeStatusContracts`, `relativeTime`, `freshnessLabel`). admin에서 승격, public 배지 클래스 `gdp-status-badge--*` 사용.
+- `useDatasetHealth.ts` — `useDatasetHealth()` 훅. status·contracts를 `Promise.allSettled`로 병렬 로드해 summary·merged를 반환. 실패 시 빈 배열 폴백.
 
 ### 지도 (`overview/components/VworldMap.tsx`)
 
 타일(`/api/public/map/tiles/base/{z}/{y}/{x}`), 경계(`/api/public/boundaries?type=DONG`), 가용성(`/api/public/map/status`)을 **모두 백엔드 프록시를 통해** 요청한다. 백엔드 연결 불가 시 지도 대신 목록 폴백(`onUnavailable` 콜백)으로 전환한다.
 
+**마커**: `leaflet.markercluster`(npm, `L.markerClusterGroup({ chunkedLoading: true })`)로 클러스터링. 마커는 `L.divIcon` + 인라인 SVG(색맹 이중 인코딩 — 안전/amber=△, 복지/mint=○, 생활·교통/cobalt=□, 기타/coral=◇).
+
+**choropleth prop**: `{ valuesByDong: Map<string,number>; metricLabel: string }` — `VworldMap`에 전달하면 행정동 경계를 5단계 분위 채색으로 표시. `OverviewMapPanel`에서 3-way 세그먼트(끄기/인구/시설 수)로 제어.
+
 ### 차트 (`overview/components/LinkedChart.tsx`)
 
 `echarts/core`에서 필요한 컴포넌트만 `echarts.use()`로 트리셰이킹 등록. 차트 클릭이 부모 필터와 양방향 연동(차트↔필터 linked).
+
+### 주요 페이지
+
+- **`/geo` (GeoPage)**: 행정동별 인구·시설 비교. `useDongBoundaries` + `aggregateByDong`으로 실데이터 집계. 인구/시설 수 세그먼트 → `VworldMap` choropleth + 막대 차트 + 현황표. 가짜 점수(생활/교통/안전) 없음.
+- **`/home` (OverviewPage → OverviewMapPanel)**: choropleth 세그먼트(끄기/인구/시설 수). 시설 동별 집계는 `aggregateByDong`으로 PIP 수행.
+- **ProvenancePanel**: `useDatasetHealth()`로 정상·갱신지연·만료 종수 + 마지막 수집 상대시각 공개 노출.
+- **CatalogPage `datasetStatusFor`**: STALE="갱신 지연"(attention) · EXPIRED="만료"(blocked) 분기 포함.
 
 ## 기타 주의사항
 

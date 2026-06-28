@@ -25,10 +25,13 @@ npm run build
 npm run preview          # http://127.0.0.1:4174
 
 # E2E 테스트 (Playwright)
-npm run test:e2e
-```
+npm run test:e2e           # 전체 E2E
+npm run test:e2e:headed   # 브라우저 표시하며 실행
+npm run test               # tsc -b + 전체 E2E
 
-> **주의.** Playwright를 자체 설치하지 않고 `../frontend-static/node_modules`를 빌려 쓴다. E2E 실행 전 `cd ../frontend-static && npm install`이 선행되어야 한다.
+# 시각회귀 스냅샷 갱신(React DOM 변경 시)
+npx playwright test visual --update-snapshots
+```
 
 > **주의.** lint 스크립트와 Vitest 단위 테스트가 없다. 타입 검사는 `npm run typecheck`(`tsc -b`)로만 수행한다.
 
@@ -76,7 +79,7 @@ npm run test:e2e
 | `ApiResponse<T>` 계약 (`success`, `data[]`) | 공유 |
 | 백엔드 API 엔드포인트 경로 | 공유 |
 | 로컬 Mock fixture (`assets/data/mock-data.json`) | **각자 독립** (데이터 구조 다름) |
-| Playwright node_modules | `../frontend-static/node_modules` 빌려 씀 |
+| Playwright node_modules | react-poc 자체 설치(`@playwright/test 1.60.0`, `axe-core 4.11.1`) |
 
 ## 기타 주의사항
 

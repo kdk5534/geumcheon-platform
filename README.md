@@ -16,8 +16,8 @@ docs/project-roadmap.md
 backend-egovframe-skeleton/
   eGovFrame/Spring 기반 백엔드 뼈대
 
-frontend-static/
-  별도 설치 없이 바로 실행 가능한 프론트 MVP
+frontend/
+  React 19+Vite+TypeScript 정식 메인 프론트엔드 (포트 3100)
 
 database/
   PostgreSQL + PostGIS 스키마 초안
@@ -33,17 +33,17 @@ PowerShell 창을 2개 열어 실행합니다.
 ### 1. Frontend
 
 ```powershell
-cd <repo-root>\frontend-static
-node serve-static.mjs
+cd <repo-root>\frontend
+npm run dev
 ```
 
 브라우저에서 아래 주소를 엽니다.
 
 ```text
-http://localhost:3000
+http://localhost:3100
 ```
 
-프론트는 `http://localhost:8080` 백엔드 mock API가 켜져 있으면 해당 API를 우선 사용하고, 꺼져 있으면 기존 로컬 Mock JSON으로 자동 전환됩니다.
+프론트는 `http://localhost:8080` 백엔드 mock API가 켜져 있으면 해당 API를 우선 사용하고, 꺼져 있으면 로컬 Mock JSON으로 자동 전환됩니다.
 
 ### 2. Backend Mock API
 
@@ -130,8 +130,8 @@ backend-egovframe-skeleton/pom.xml
 backend-egovframe-skeleton/src/main/resources/application-mock.yml
 backend-egovframe-skeleton/src/main/java/kr/go/geumcheon/dataplatform/admin
 backend-egovframe-skeleton/src/main/java/kr/go/geumcheon/dataplatform/publicdata
-frontend-static/index.html
-frontend-static/assets/data/sample-facilities.csv
+frontend/index.html
+scripts/fixtures/sample-facilities.csv
 scripts/run-backend-mock.ps1
 scripts/check-backend.ps1
 scripts/check-local-status.ps1

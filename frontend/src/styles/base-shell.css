@@ -1071,3 +1071,34 @@ body {
   line-height: 1.7;
 }
 
+/* 전역 모션 감소 — OS 설정 준수 (.gdp-command-panel 개별 블록은 위에 유지) */
+@media (prefers-reduced-motion: reduce) {
+  .gdp-app *,
+  .gdp-app *::before,
+  .gdp-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 고대비 모드 — OS 대비 설정(more) 준수 */
+@media (prefers-contrast: more) {
+  .gdp-app {
+    --gdp-line:       #9bafc7;
+    --gdp-line-strong:#5a7a9a;
+  }
+  .gdp-app[data-theme="dark"] {
+    --gdp-line:       #446688;
+    --gdp-line-strong:#6a9abf;
+  }
+  .gdp-app a:focus-visible,
+  .gdp-app button:focus-visible,
+  .gdp-app input:focus-visible,
+  .gdp-app select:focus-visible {
+    outline-width: 3.5px;
+    outline-color: var(--gdp-action);
+  }
+}
+

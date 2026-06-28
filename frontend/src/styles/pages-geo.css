@@ -282,7 +282,7 @@
   color: var(--gdp-soft);
 }
 
-@media (max-width: 639px) {
+@media (max-width: 640px) {
   .gdp-geo-control-row {
     flex-direction: column;
   }

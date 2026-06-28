@@ -376,7 +376,7 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 640px) {
   .gdp-api-banner {
     flex-direction: column;
     align-items: flex-start;

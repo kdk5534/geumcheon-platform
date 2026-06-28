@@ -70,6 +70,7 @@ class DatasetRegistryTest {
         assertThat(registry.getRequired("parks").sourceUrl()).contains("15012890");
         assertThat(registry.getRequired("traditional-markets").sourceUrl()).contains("15012894");
         assertThat(registry.getRequired("knowledge-industry-center").sourceUrl()).contains("15117154");
+        assertThat(registry.getRequired("apt-complexes").sourceUrl()).contains("RTMSDataSvcAptTrade");
     }
 
     @Test
@@ -175,5 +176,17 @@ class DatasetRegistryTest {
         assertThat(def.spatialType()).isEqualTo("POINT");
         assertThat(def.publicVisible()).isTrue();
         assertThat(def.apiStatus()).contains("odcloud");
+    }
+
+    @Test
+    void aptComplexIsResidentialDatasetWithCoords() {
+        var def = registry.getRequired("apt-complexes");
+        assertThat(def.datasetName()).isEqualTo("공동주택 단지");
+        assertThat(def.domain()).isEqualTo("주거");
+        assertThat(def.authKeyRequired()).isTrue();
+        assertThat(def.envVarName()).isEqualTo("DATA_GO_KR_API_KEY");
+        assertThat(def.spatialType()).isEqualTo("POINT");
+        assertThat(def.publicVisible()).isTrue();
+        assertThat(def.requiredFields()).contains("latitude", "longitude");
     }
 }

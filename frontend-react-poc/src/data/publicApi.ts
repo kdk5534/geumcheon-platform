@@ -113,6 +113,8 @@ async function loadAllFacilities(signal?: AbortSignal) {
     // Phase 1 신규 — G밸리 산업·상권
     "TRADITIONAL_MARKET",
     "KNOWLEDGE_INDUSTRY_CENTER",
+    // Phase 1 신규 — 주거·부동산
+    "APT_COMPLEX",
   ];
   const results = await Promise.allSettled(
     categories.map(async (category) => {

@@ -70,6 +70,8 @@ public final class DatasetPolicyRegistry {
         add(policies, policy("museums", "name+address", 1, 200, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("libraries", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("parks", "name+address", 1, 1000, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
+        // Phase 1 — 주거·부동산 신규
+        add(policies, policy("apt-complexes", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         // Phase 1 — 산업·상권(G밸리 특화) 신규
         add(policies, policy("traditional-markets", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));
         add(policies, policy("knowledge-industry-center", "name+address", 1, 500, Duration.ofDays(365), Duration.ofDays(1825), true, LOW));

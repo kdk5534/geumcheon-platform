@@ -507,6 +507,23 @@ public class DatasetRegistry {
                 "https://www.data.go.kr/data/15012894/standard.do",
                 "POINT", "DATA_GO_KR_API_KEY", "생활지도"
         ));
+        // Phase 1 — 주거·부동산 신규
+        items.put("apt-complexes", new DatasetDefinition(
+                "apt-complexes", "공동주택 단지", "주거", "국토교통부 아파트 매매 실거래가 자료 (단지 목록 추출)",
+                "연 1회", "data.go.kr 실거래 API + VWorld 지오코딩", true, "API", false, false, true,
+                List.of("name", "latitude", "longitude"),
+                List.of(
+                        new DatasetFieldDefinition("name", "아파트명"),
+                        new DatasetFieldDefinition("address", "소재지(동+지번)"),
+                        new DatasetFieldDefinition("umdNm", "행정동명"),
+                        new DatasetFieldDefinition("buildYear", "건축연도"),
+                        new DatasetFieldDefinition("latitude", "위도(VWorld 지오코딩)"),
+                        new DatasetFieldDefinition("longitude", "경도(VWorld 지오코딩)"),
+                        new DatasetFieldDefinition("source", "출처")
+                ),
+                "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade",
+                "POINT", "DATA_GO_KR_API_KEY", "생활지도"
+        ));
         items.put("knowledge-industry-center", new DatasetDefinition(
                 "knowledge-industry-center", "지식산업센터", "산업", "공공데이터포털 한국산업단지공단 전국지식산업센터현황",
                 "연 1회(6/30 기준)", "odcloud 전국집계 API + VWorld 지오코딩", true, "API", false, false, true,

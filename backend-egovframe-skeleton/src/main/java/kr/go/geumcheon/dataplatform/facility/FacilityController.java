@@ -89,6 +89,7 @@ public class FacilityController {
             case "PARK" -> "parks";
             case "TRADITIONAL_MARKET" -> "traditional-markets";
             case "KNOWLEDGE_INDUSTRY_CENTER" -> "knowledge-industry-center";
+            case "APT_COMPLEX" -> "apt-complexes";
             default -> "facilities";
         };
     }

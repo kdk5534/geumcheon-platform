@@ -81,6 +81,8 @@ function facilityCategory(item: RawFacility) {
       // Phase 1 신규 — G밸리 산업·상권
       TRADITIONAL_MARKET: "전통시장",
       KNOWLEDGE_INDUSTRY_CENTER: "지식산업센터",
+      // Phase 1 신규 — 주거·부동산
+      APT_COMPLEX: "공동주택 단지",
     } as Record<string, string>
   )[raw] || raw;
 }

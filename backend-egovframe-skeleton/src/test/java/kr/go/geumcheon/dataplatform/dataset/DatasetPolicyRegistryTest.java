@@ -144,6 +144,15 @@ class DatasetPolicyRegistryTest {
     }
 
     @Test
+    void aptComplexPolicyIsEnabledWithAnnualFreshness() {
+        DatasetOperationalPolicy policy = DatasetPolicyRegistry.getRequired("apt-complexes");
+        assertThat(policy.collectionEnabled()).isTrue();
+        assertThat(policy.naturalKey()).isEqualTo("name+address");
+        assertThat(policy.freshnessSla().toDays()).isEqualTo(365);
+        assertThat(policy.lastGoodRetention().toDays()).isGreaterThanOrEqualTo(365);
+    }
+
+    @Test
     void firstWaveLivingFacilitiesUseApprovedIsolatedRelayButKeepTermsReview() {
         assertThat(Set.of(
                 "welfare-facilities", "civil-defense-shelters", "hospitals",

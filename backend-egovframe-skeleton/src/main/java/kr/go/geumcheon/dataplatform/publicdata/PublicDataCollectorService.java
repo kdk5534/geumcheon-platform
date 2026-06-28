@@ -69,6 +69,7 @@ public class PublicDataCollectorService {
     // Phase 1 — 산업·상권(G밸리 특화) 신규
     private static final String TRADITIONAL_MARKET_KEY = "traditional-markets";
     private static final String KNOWLEDGE_INDUSTRY_CENTER_KEY = "knowledge-industry-center";
+    private static final String APT_COMPLEX_KEY = "apt-complexes";
     // odcloud 전국지식산업센터현황 API — 2025년 6/30 기준판
     // 매년 새 uddi 경로 추가됨: infuser.odcloud.kr/oas/docs?namespace=15117154/v1 에서 최신 uddi 확인 후 교체
     private static final String KNOWLEDGE_INDUSTRY_CENTER_URL =
@@ -328,6 +329,8 @@ public class PublicDataCollectorService {
                 // Phase 1 신규 — 산업·상권
                 , collectorSpec(TRADITIONAL_MARKET_KEY, hasValue(dataGoKrApiKey))
                 , collectorSpec(KNOWLEDGE_INDUSTRY_CENTER_KEY, hasValue(dataGoKrApiKey))
+                // Phase 1 신규 — 주거·부동산
+                , collectorSpec(APT_COMPLEX_KEY, hasValue(dataGoKrApiKey))
         );
     }
 
@@ -496,6 +499,8 @@ public class PublicDataCollectorService {
             // Phase 1 신규 — 산업·상권
             results.add(runSafely(TRADITIONAL_MARKET_KEY, triggeredBy, () -> syncTraditionalMarkets(triggeredBy)));
             results.add(runSafely(KNOWLEDGE_INDUSTRY_CENTER_KEY, triggeredBy, () -> syncKnowledgeIndustryCenters(triggeredBy)));
+            // Phase 1 신규 — 주거·부동산
+            results.add(runSafely(APT_COMPLEX_KEY, triggeredBy, () -> syncAptComplexes(triggeredBy)));
             return results;
         } finally {
             collectorRunning.set(false);
@@ -556,6 +561,8 @@ public class PublicDataCollectorService {
                 // Phase 1 신규 — 산업·상권
                 case TRADITIONAL_MARKET_KEY -> syncTraditionalMarkets(triggeredBy);
                 case KNOWLEDGE_INDUSTRY_CENTER_KEY -> syncKnowledgeIndustryCenters(triggeredBy);
+                // Phase 1 신규 — 주거·부동산
+                case APT_COMPLEX_KEY -> syncAptComplexes(triggeredBy);
                 default               -> missingRoutineResult(spec);
             };
         } finally {
@@ -1256,6 +1263,90 @@ public class PublicDataCollectorService {
     }
 
     // ─── 지식산업센터 (odcloud API + VWorld 지오코딩) ────────────────────────────
+
+    // ── 공동주택 단지 (실거래 API → 단지 중복 제거 → VWorld 지오코딩) ──────────────────
+
+    public CollectionRunResult syncAptComplexes(String triggeredBy) {
+        return runSyncPipeline(
+                APT_COMPLEX_KEY, dataGoKrApiKey, "DATA_GO_KR_API_KEY가 설정되지 않았습니다.",
+                // URL은 fetchAptComplexRows 내부에서 직접 구성하므로 더미 반환
+                () -> "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade",
+                this::fetchAptComplexRows,
+                (id, rows) -> repository.replaceFacilitySnapshot(id, "APT_COMPLEX", rows),
+                saved -> "공동주택 단지 " + saved + "건 저장 완료.",
+                triggeredBy);
+    }
+
+    /**
+     * 최근 12개월 아파트 매매 실거래에서 금천구 단지 목록을 수집한다.
+     * aptNm + umdNm + jibun 기준으로 중복을 제거하고 VWorld 지오코딩으로 좌표를 보완한다.
+     * requestUrl 파라미터는 runSyncPipeline 규약상 전달되나 내부에서 직접 URL을 구성한다.
+     */
+    private List<Map<String, String>> fetchAptComplexRows(String requestUrl, String datasetName) throws Exception {
+        // 최근 12개월 YYYYMM 목록 생성
+        List<String> months = new ArrayList<>();
+        java.time.YearMonth ym = java.time.YearMonth.now();
+        for (int i = 0; i < 12; i++) {
+            months.add(ym.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMM")));
+            ym = ym.minusMonths(1);
+        }
+
+        // 단지 키(aptNm+umdNm+jibun) → 대표 row
+        Map<String, Map<String, String>> complexMap = new LinkedHashMap<>();
+
+        for (String month : months) {
+            String url = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"
+                    + "?serviceKey=" + normalizeKeyValue(dataGoKrApiKey)
+                    + "&LAWD_CD=11545&DEAL_YMD=" + month
+                    + "&numOfRows=1000&_type=json";
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(timeoutSeconds))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .header("Accept", "application/json")
+                    .GET().build();
+            HttpResponse<String> response = httpClient().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() != 200) continue;
+
+            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode items = root.path("response").path("body").path("items").path("item");
+            if (items.isMissingNode() || items.isNull()) continue;
+            Iterable<JsonNode> iter = items.isArray() ? items : List.of(items);
+            for (JsonNode item : iter) {
+                String aptNm    = item.path("aptNm").asText("").trim();
+                String umdNm    = item.path("umdNm").asText("").trim();
+                String jibun    = item.path("jibun").asText("").trim();
+                String buildYear = item.path("buildYear").asText("").trim();
+                if (aptNm.isBlank()) continue;
+                String key = aptNm + "|" + umdNm + "|" + jibun;
+                if (!complexMap.containsKey(key)) {
+                    Map<String, String> row = new LinkedHashMap<>();
+                    row.put("STAT_NM",   aptNm);
+                    row.put("umdNm",     umdNm);
+                    row.put("buildYear", buildYear);
+                    row.put("source",    "국토교통부 아파트 매매 실거래가 자료");
+                    // 주소: "서울특별시 금천구 {동명} {지번}"
+                    String addr = "서울특별시 금천구 " + umdNm + " " + jibun;
+                    row.put("ADDR", addr);
+                    complexMap.put(key, row);
+                }
+            }
+        }
+
+        // VWorld 지오코딩
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Map<String, String> row : complexMap.values()) {
+            String addr = row.get("ADDR");
+            String[] coords = geocodeAddress(null, addr); // 지번 주소이므로 PARCEL 타입
+            if (coords != null) {
+                row.put("LAT", coords[0]);
+                row.put("LNG", coords[1]);
+            }
+            result.add(row);
+        }
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     public CollectionRunResult syncKnowledgeIndustryCenters(String triggeredBy) {
         return runSyncPipeline(

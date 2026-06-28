@@ -48,6 +48,14 @@ export function AdminShell() {
             업로드
           </NavLink>
           <NavLink
+            to="/health"
+            className={({ isActive }) =>
+              `gdp-admin-nav-link${isActive ? " is-active" : ""}`
+            }
+          >
+            현황
+          </NavLink>
+          <NavLink
             to="/governance"
             className={({ isActive }) =>
               `gdp-admin-nav-link${isActive ? " is-active" : ""}`

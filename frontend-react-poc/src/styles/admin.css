@@ -989,6 +989,189 @@
   }
 }
 
+/* ── 데이터 건강 패널 ─────────────────────────────────────── */
+.gdp-admin-health-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 4카드 요약 그리드 */
+.gdp-admin-health-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.gdp-admin-health-card {
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.625rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  box-shadow: 0 1px 4px rgba(0 0 0 / 0.04);
+}
+
+.gdp-admin-health-card-count {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #111827;
+}
+
+.gdp-admin-health-card-label {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.gdp-admin-health-card--ok {
+  border-color: #6ee7b7;
+  background: #f0fdf4;
+}
+
+.gdp-admin-health-card--ok .gdp-admin-health-card-count {
+  color: #065f46;
+}
+
+.gdp-admin-health-card--stale {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.gdp-admin-health-card--stale .gdp-admin-health-card-count {
+  color: #92400e;
+}
+
+.gdp-admin-health-card--fail {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.gdp-admin-health-card--fail .gdp-admin-health-card-count {
+  color: #991b1b;
+}
+
+.gdp-admin-health-card--total {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.gdp-admin-health-card--total .gdp-admin-health-card-count {
+  color: #1e40af;
+}
+
+/* 상세 표 */
+.gdp-admin-health-table-wrap {
+  overflow-x: auto;
+  border-radius: 0.625rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.gdp-admin-health-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.gdp-admin-health-table th {
+  padding: 0.625rem 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.gdp-admin-health-table td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.gdp-admin-health-row:last-child td {
+  border-bottom: none;
+}
+
+.gdp-admin-health-ds-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.gdp-admin-health-failure-type {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* dataStatus 배지 */
+.gdp-admin-health-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.gdp-admin-health-badge--ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.gdp-admin-health-badge--stale {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.gdp-admin-health-badge--expired {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.gdp-admin-health-badge--fail {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.gdp-admin-health-badge--unknown {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ── 반응형 (건강 패널) ───────────────────────────────────── */
+@media (max-width: 899px) {
+  .gdp-admin-health-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .gdp-admin-health-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+
+  .gdp-admin-health-card {
+    padding: 1rem 1.125rem;
+  }
+
+  .gdp-admin-health-card-count {
+    font-size: 1.625rem;
+  }
+
+  .gdp-admin-health-table th,
+  .gdp-admin-health-table td {
+    padding: 0.5rem 0.625rem;
+  }
+}
+
 /* ── 라우트 폴백 ─────────────────────────────────────────── */
 .gdp-admin-route-fallback {
   display: flex;

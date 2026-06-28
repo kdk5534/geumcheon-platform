@@ -7,6 +7,7 @@ import { AdminShell } from "./admin/AdminShell";
 import { AdminHomePage } from "./admin/pages/AdminHomePage";
 import { AdminUploadPage } from "./admin/pages/AdminUploadPage";
 import { AdminGovernancePage } from "./admin/pages/AdminGovernancePage";
+import { AdminHealthPage } from "./admin/pages/AdminHealthPage";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/admin.css";
@@ -34,6 +35,7 @@ createRoot(root).render(
             <Route element={<AdminShell />}>
               <Route path="/" element={<AdminHomePage />} />
               <Route path="/upload" element={<AdminUploadPage />} />
+              <Route path="/health" element={<AdminHealthPage />} />
               <Route path="/governance" element={<AdminGovernancePage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

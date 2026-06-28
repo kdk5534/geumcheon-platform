@@ -264,6 +264,72 @@ export async function rejectChangeRequest(
   return payload.data;
 }
 
+// ── 데이터셋 건강/신선도 관련 타입 ───────────────────────────
+
+/**
+ * 데이터셋 운영 상태 — GET /api/public/datasets/status 응답 항목.
+ * 최근 수집 시도(attempt*)와 마지막 정상 스냅샷(lastSuccess*)을 분리한 구조.
+ */
+export interface DatasetOperationalStatus {
+  datasetKey: string;
+  datasetName: string;
+  domain: string;
+  sourceName: string;
+  attemptStatus: string | null;
+  attemptedAt: string | null;
+  attemptSourceRecordCount: number | null;
+  attemptSavedRecordCount: number | null;
+  failureType: string | null;
+  /** AVAILABLE | STALE | EXPIRED | NO_SUCCESS */
+  dataStatus: string;
+  collectedAt: string | null;
+  lastSuccessSourceRecordCount: number | null;
+  lastSuccessSavedRecordCount: number | null;
+}
+
+/** 데이터셋 계약(SLA·품질·이용조건) — GET /api/public/datasets/contracts 응답 항목 */
+export interface DatasetContract {
+  datasetKey: string;
+  datasetName: string;
+  domain: string;
+  sourceName: string;
+  refreshCycle: string | null;
+  freshnessHours: number | null;
+  lastGoodRetentionDays: number | null;
+  minimumRows: number | null;
+  maximumRows: number | null;
+  collectionEnabled: boolean;
+  technicalStatus: string | null;
+  termsStatus: string | null;
+  privacyRisk: string | null;
+  accessMode: string | null;
+  licenseName: string | null;
+}
+
+// ── 데이터셋 건강/신선도 API 함수 ────────────────────────────
+
+/**
+ * 공개 데이터셋 운영 상태 목록 — GET /api/public/datasets/status.
+ * 인증 불필요(public). 신선도 상태(AVAILABLE/STALE/EXPIRED/NO_SUCCESS) 포함.
+ */
+export async function loadDatasetStatuses(): Promise<DatasetOperationalStatus[]> {
+  const payload = await fetchAdminJson<AdminApiPayload<DatasetOperationalStatus[]>>(
+    `${BACKEND_API_BASE}/api/public/datasets/status`,
+  );
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+/**
+ * 데이터셋 계약(SLA·품질·이용조건) 목록 — GET /api/public/datasets/contracts.
+ * 인증 불필요(public). 신선도 SLA·품질 기준·이용조건 포함.
+ */
+export async function loadDatasetContracts(): Promise<DatasetContract[]> {
+  const payload = await fetchAdminJson<AdminApiPayload<DatasetContract[]>>(
+    `${BACKEND_API_BASE}/api/public/datasets/contracts`,
+  );
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
 /** 내부 fetch 핵심 — credentials:"include" + 타임아웃 + ApiResponse 검증 */
 async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T> {
   const controller = new AbortController();

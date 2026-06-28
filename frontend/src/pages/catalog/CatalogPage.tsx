@@ -208,6 +208,12 @@ function datasetStatusFor(dataset: DatasetItem, statuses: DatasetStatus[]) {
   if (matched.dataStatus === "NO_SUCCESS") {
     return { tone: "blocked", label: "공개 제외", note: "정상 수집 이력 없음" };
   }
+  if (matched.dataStatus === "EXPIRED") {
+    return { tone: "blocked", label: "만료", note: "보존 기간 초과 · 재수집 필요" };
+  }
+  if (matched.dataStatus === "STALE") {
+    return { tone: "attention", label: "갱신 지연", note: "SLA 초과 · 마지막 정상값 유지" };
+  }
   if (matched.attemptStatus === "FAILED") {
     return { tone: "attention", label: "최근 실패", note: "마지막 정상값 유지" };
   }

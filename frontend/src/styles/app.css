@@ -4368,6 +4368,72 @@ body {
   line-height: 1.5;
 }
 
+/* 공개 신선도 요약 바 */
+.gdp-provenance-freshness {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--gdp-line);
+  font-size: 12px;
+  color: var(--gdp-body);
+}
+
+.gdp-provenance-freshness-time {
+  margin-left: auto;
+  color: var(--gdp-muted);
+  font-size: 11px;
+}
+
+/* 공개 신선도 배지 */
+.gdp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.01em;
+}
+
+.gdp-status-badge--ok {
+  background: #d1f2e6;
+  color: #0a7c4e;
+}
+
+.gdp-status-badge--stale {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.gdp-status-badge--expired {
+  background: #fde8e8;
+  color: #c0392b;
+}
+
+.gdp-status-badge--fail {
+  background: #fde8e8;
+  color: #c0392b;
+}
+
+.gdp-app[data-theme="dark"] .gdp-status-badge--ok {
+  background: #0a3d24;
+  color: #6ee7b7;
+}
+
+.gdp-app[data-theme="dark"] .gdp-status-badge--stale {
+  background: #3d2e00;
+  color: #fcd34d;
+}
+
+.gdp-app[data-theme="dark"] .gdp-status-badge--expired,
+.gdp-app[data-theme="dark"] .gdp-status-badge--fail {
+  background: #3d0a0a;
+  color: #fca5a5;
+}
+
 @media (max-width: 1040px) {
   .gdp-util-bar,
   .gdp-pulse-bar {

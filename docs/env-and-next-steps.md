@@ -12,7 +12,7 @@
 # Application
 APP_ENV=local
 APP_BASE_URL=http://localhost:8080
-FRONTEND_BASE_URL=http://localhost:3000
+FRONTEND_BASE_URL=http://localhost:3100
 
 # Database
 DB_HOST=localhost
@@ -34,7 +34,7 @@ ADMIN_INITIAL_LOGIN_ID=admin
 ADMIN_INITIAL_PASSWORD=replace-with-a-strong-password
 ADMIN_INITIAL_NAME=초기 관리자
 ADMIN_INITIAL_EMAIL=
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100
 
 # File upload
 # CSV originals are stored under UPLOAD_BASE_PATH/admin-csv/{datasetKey}/{yyyyMMdd}/
@@ -142,7 +142,7 @@ COLLECTOR_CRON=0 0 4 * * *
 - 상단 배너와 데이터 스탬프는 현재 모드를 보여준다.
 ## Verification loop
 
-- `Get-ChildItem -Path frontend-static\js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }; node --check frontend-static\serve-static.mjs`
+- `cd frontend && npm run test:e2e`
 - `.\scripts\check-admin-upload.ps1`
 - `.\scripts\check-admin-excel-upload.ps1`
 - `.\scripts\check-local-status.ps1`

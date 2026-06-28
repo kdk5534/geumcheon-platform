@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePublicData } from "../../data/PublicDataContext";
+import { Button } from "../../components/ui";
 import { copyShareUrl, downloadCsv } from "../../utils/export";
 import { OverviewBriefStrip } from "./components/OverviewBriefStrip";
 import { OverviewMapPanel } from "./components/OverviewMapPanel";
@@ -94,9 +95,9 @@ export function OverviewPage() {
           </p>
         </div>
         <div className="gdp-hero-actions" aria-label="화면 작업">
-          <button type="button" onClick={handleShare}>공유</button>
-          <button type="button" onClick={handleCsv}>CSV</button>
-          <button type="button" onClick={handlePrint}>PDF</button>
+          <Button variant="outline" size="sm" onClick={handleShare}>공유</Button>
+          <Button variant="outline" size="sm" onClick={handleCsv}>CSV</Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>PDF</Button>
         </div>
       </header>
 

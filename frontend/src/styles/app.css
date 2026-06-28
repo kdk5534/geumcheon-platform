@@ -5286,17 +5286,17 @@ body {
 
 .gdp-geo-page {
   display: grid;
-  gap: 20px;
+  gap: var(--gdp-space-5);
 }
 
 .gdp-geo-notice {
-  padding: 14px 20px;
+  padding: var(--gdp-space-4) var(--gdp-space-5);
   border: 1px solid var(--gdp-amber, #d49324);
   border-radius: var(--gdp-radius);
   background: color-mix(in srgb, var(--gdp-amber, #d49324) 8%, var(--gdp-panel));
   color: var(--gdp-muted);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--gdp-text-sm);
+  line-height: var(--gdp-leading-normal);
 }
 
 .gdp-geo-notice strong {
@@ -5411,20 +5411,21 @@ body {
   gap: 16px;
 }
 
-.gdp-geo-chart-card {
-  border: 1px solid var(--gdp-line);
-  border-radius: var(--gdp-radius);
-  background: var(--gdp-panel);
-  box-shadow: var(--gdp-shadow);
-  padding: 20px 20px 16px;
+.gdp-geo-map-card.gdp-ui-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.gdp-geo-chart-card.gdp-ui-card {
+  padding: var(--gdp-space-5) var(--gdp-space-5) var(--gdp-space-4);
 }
 
 .gdp-geo-chart-title {
-  font-size: 13px;
+  font-size: var(--gdp-text-sm);
   font-weight: 900;
   letter-spacing: -.01em;
   color: var(--gdp-text);
-  margin: 0 0 12px;
+  margin: 0 0 var(--gdp-space-3);
 }
 
 .gdp-geo-detail {
@@ -5491,19 +5492,15 @@ body {
   color: var(--gdp-muted);
 }
 
-.gdp-geo-table-section {
-  border: 1px solid var(--gdp-line);
-  border-radius: var(--gdp-radius);
-  background: var(--gdp-panel);
-  box-shadow: var(--gdp-shadow);
-  padding: 24px;
+.gdp-geo-table-section.gdp-ui-card {
+  padding: var(--gdp-space-6);
 }
 
 .gdp-geo-table-section h2 {
-  font-size: 15px;
+  font-size: var(--gdp-text-base);
   font-weight: 900;
   color: var(--gdp-text);
-  margin: 0 0 16px;
+  margin: 0 0 var(--gdp-space-4);
 }
 
 .gdp-geo-table-wrap {
@@ -5514,13 +5511,13 @@ body {
 .gdp-geo-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--gdp-text-sm);
 }
 
 .gdp-geo-table th {
-  padding: 10px 12px;
+  padding: 0.625rem var(--gdp-space-3);
   text-align: left;
-  font-size: 11px;
+  font-size: var(--gdp-text-xs);
   font-weight: 950;
   letter-spacing: .06em;
   color: var(--gdp-soft);
@@ -5530,7 +5527,7 @@ body {
 }
 
 .gdp-geo-table td {
-  padding: 10px 12px;
+  padding: 0.625rem var(--gdp-space-3);
   color: var(--gdp-text);
   border-bottom: 1px solid var(--gdp-line);
   white-space: nowrap;
@@ -5541,19 +5538,19 @@ body {
 }
 
 .gdp-geo-table tbody tr:hover td {
-  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 4%, transparent);
+  background: color-mix(in srgb, var(--gdp-action) 4%, transparent);
 }
 
 .gdp-geo-table tbody tr.is-selected td {
-  background: color-mix(in srgb, var(--gdp-cobalt, #3159d8) 8%, transparent);
+  background: color-mix(in srgb, var(--gdp-action) 8%, transparent);
 }
 
 .gdp-geo-table td button {
   background: none;
   border: none;
   padding: 0;
-  color: var(--gdp-cobalt, #3159d8);
-  font-size: 13px;
+  color: var(--gdp-action);
+  font-size: var(--gdp-text-sm);
   font-weight: 700;
   cursor: pointer;
   text-decoration: underline;
@@ -5561,8 +5558,8 @@ body {
 }
 
 .gdp-geo-table-note {
-  margin: 12px 0 0;
-  font-size: 11px;
+  margin: var(--gdp-space-3) 0 0;
+  font-size: var(--gdp-text-xs);
   color: var(--gdp-soft);
 }
 

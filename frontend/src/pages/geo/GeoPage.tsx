@@ -8,6 +8,7 @@ import { GridComponent, TooltipComponent } from "echarts/components";
 import { LegacyGridContainLabel } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
 import { Link } from "react-router-dom";
+import { Card } from "../../components/ui";
 import { usePublicData } from "../../data/PublicDataContext";
 import { useDongBoundaries } from "../../data/dongBoundaries";
 import { aggregateByDong } from "../../data/aggregateByDong";
@@ -188,6 +189,7 @@ export function GeoPage() {
                 <button
                   type="button"
                   className={metric === "population" ? "is-active" : ""}
+                  aria-pressed={metric === "population"}
                   onClick={() => setMetric("population")}
                 >
                   인구
@@ -197,6 +199,7 @@ export function GeoPage() {
                 <button
                   type="button"
                   className={metric === "facility" ? "is-active" : ""}
+                  aria-pressed={metric === "facility"}
                   onClick={() => setMetric("facility")}
                 >
                   시설 수
@@ -206,23 +209,23 @@ export function GeoPage() {
           </div>
 
           {/* choropleth 지도 */}
-          <div className="gdp-geo-map-card">
+          <Card className="gdp-geo-map-card">
             <VworldMap
               facilities={[]}
               choropleth={choropleth}
             />
-          </div>
+          </Card>
 
           {/* 막대 차트 */}
           {currentData.size > 0 && (
-            <div className="gdp-geo-chart-card">
+            <Card className="gdp-geo-chart-card">
               <h2 className="gdp-geo-chart-title">행정동별 {currentLabel} 비교</h2>
               <DongBarChart data={currentData} label={currentLabel} selectedDong={selectedDong} />
-            </div>
+            </Card>
           )}
 
           {/* 비교 표 */}
-          <section className="gdp-geo-table-section" aria-labelledby="geo-table-title">
+          <Card className="gdp-geo-table-section" aria-labelledby="geo-table-title">
             <h2 id="geo-table-title">행정동별 현황표</h2>
             <div className="gdp-geo-table-wrap">
               <table className="gdp-geo-table" aria-label="행정동별 인구·시설 수 현황">
@@ -262,7 +265,7 @@ export function GeoPage() {
             <p className="gdp-geo-table-note">
               인구: 주민등록 원값 · 시설: 공개데이터 누적 · 기준일 {model.asOf || "—"}
             </p>
-          </section>
+          </Card>
         </>
       )}
     </section>

@@ -5,6 +5,7 @@ import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AdminAuthProvider } from "./admin/AdminAuthContext";
 import { AdminShell } from "./admin/AdminShell";
 import { AdminHomePage } from "./admin/pages/AdminHomePage";
+import { AdminUploadPage } from "./admin/pages/AdminUploadPage";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/admin.css";
@@ -31,6 +32,7 @@ createRoot(root).render(
           <Routes>
             <Route element={<AdminShell />}>
               <Route path="/" element={<AdminHomePage />} />
+              <Route path="/upload" element={<AdminUploadPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

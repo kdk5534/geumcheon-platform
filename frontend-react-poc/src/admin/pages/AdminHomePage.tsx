@@ -1,9 +1,11 @@
 // 관리자 홈 대시보드 — 등록된 데이터셋 목록을 카드로 표시하며 인증 검증을 겸합니다
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchAdminJson } from "../adminApi";
 import type { AdminApiPayload } from "../adminApi";
 import { BACKEND_API_BASE } from "../../data/env";
 import { useAdminAuth } from "../AdminAuthContext";
+import { isUploadable } from "../uploadModel";
 
 interface AdminDatasetSummary {
   datasetKey: string;
@@ -86,6 +88,14 @@ export function AdminHomePage() {
                   <dd>{ds.supportsUploadCommit ? "가능" : "불가"}</dd>
                 </div>
               </dl>
+              {isUploadable(ds) ? (
+                <Link
+                  to={`/upload?dataset=${encodeURIComponent(ds.datasetKey)}`}
+                  className="gdp-admin-dataset-upload-link"
+                >
+                  업로드 →
+                </Link>
+              ) : null}
             </li>
           ))}
         </ul>

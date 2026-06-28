@@ -1,6 +1,65 @@
 // admin 콘솔 인증·API 호출 래퍼 — static admin-api.js를 TypeScript로 포팅
 import { BACKEND_API_BASE } from "../data/env";
 
+// ── 업로드 관련 타입 ──────────────────────────────────────────
+
+/** 백엔드 POST /api/admin/uploads/preview 응답 데이터 */
+export interface CsvUploadPreview {
+  datasetKey: string;
+  uploadId: string;
+  fileName: string;
+  /** 바이트 단위 파일 크기 */
+  fileSize: number;
+  rowCount: number;
+  columnCount: number;
+  headers: string[];
+  /** 헤더 제외 상위 5행 */
+  sampleRows: string[][];
+  warnings: string[];
+}
+
+/** 업로드 확정/스테이지 공통 요청 본문 */
+export interface UploadCommitRequest {
+  datasetKey: string;
+  uploadId: string;
+  fileName: string;
+  rowCount: number;
+  columnCount: number;
+  /** CSV 헤더 → 필드 키 매핑 (사용 안 함은 빈 문자열) */
+  columnMappings: Record<string, string>;
+}
+
+/** 업로드 확정 결과 / 수집 로그 항목 */
+export interface UploadLogSummary {
+  logId: string;
+  datasetKey: string;
+  datasetName: string;
+  fileName: string;
+  status: string;
+  rowCount: number;
+  columnCount: number;
+  savedRowCount: number;
+  skippedRowCount: number;
+  /** ISO 8601 문자열 */
+  createdAt: string;
+  message: string | null;
+}
+
+/** 스테이지(승인 요청) 결과 — HTTP 201 */
+export interface StagedUploadSummary {
+  stagedUploadId: string;
+  datasetKey: string;
+  fileName: string;
+  fileSize: number;
+  rowCount: number;
+  columnCount: number;
+  status: string;
+  changeRequestId: string;
+  stagedBy: string;
+  stagedAt: string;
+  expiresAt: string;
+}
+
 /** 업로드 대비 여유 있는 타임아웃 (15초) */
 const ADMIN_API_TIMEOUT_MS = 15_000;
 
@@ -83,6 +142,23 @@ export async function fetchAdminJson<T>(url: string, options: RequestInit = {}):
       ...(options.headers ?? {}),
     },
   });
+}
+
+/**
+ * CSV/Excel 파일을 백엔드에 전송해 미리보기 데이터를 가져온다.
+ * Content-Type은 설정하지 않는다 — FormData가 boundary를 자동으로 설정한다.
+ */
+export async function previewCsvOnBackend(
+  datasetKey: string,
+  file: File,
+): Promise<CsvUploadPreview> {
+  const form = new FormData();
+  form.append("file", file);
+  const payload = await fetchAdminJson<AdminApiPayload<CsvUploadPreview>>(
+    `${BACKEND_API_BASE}/api/admin/uploads/preview?datasetKey=${encodeURIComponent(datasetKey)}`,
+    { method: "POST", body: form },
+  );
+  return payload.data;
 }
 
 /** 내부 fetch 핵심 — credentials:"include" + 타임아웃 + ApiResponse 검증 */

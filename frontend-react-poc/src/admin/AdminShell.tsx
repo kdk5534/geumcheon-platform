@@ -1,5 +1,5 @@
 // 관리자 콘솔 전용 최소 셸 — 인증 상태에 따라 로그인 화면 또는 콘텐츠를 렌더링합니다
-import { Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { useAdminAuth } from "./AdminAuthContext";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
 
@@ -29,6 +29,25 @@ export function AdminShell() {
     <div className="gdp-app" data-theme="light">
       <header className="gdp-admin-header">
         <span className="gdp-admin-header-title">금천 데이터플랫폼 관리자</span>
+        <nav className="gdp-admin-header-nav" aria-label="관리자 메뉴">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `gdp-admin-nav-link${isActive ? " is-active" : ""}`
+            }
+          >
+            홈
+          </NavLink>
+          <NavLink
+            to="/upload"
+            className={({ isActive }) =>
+              `gdp-admin-nav-link${isActive ? " is-active" : ""}`
+            }
+          >
+            업로드
+          </NavLink>
+        </nav>
         <div className="gdp-admin-header-user">
           <span className="gdp-admin-header-loginid">{user?.loginId}</span>
           <span className="gdp-admin-header-roles">

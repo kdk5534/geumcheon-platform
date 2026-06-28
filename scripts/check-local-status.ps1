@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$FrontendRoot = Join-Path $ProjectRoot "frontend-static"
+$FrontendRoot = Join-Path $ProjectRoot "frontend"
 $BackendRoot = $ProjectRoot
 
 function Get-EnvValue {
@@ -92,7 +92,7 @@ function Write-HttpCheck {
     Write-Output "$Name=$Status ($(Get-StatusLabel -Status $Status))"
 }
 
-$FrontendStatus = Get-HttpStatus -Url "http://localhost:3000/"
+$FrontendStatus = Get-HttpStatus -Url "http://localhost:3100/"
 $BackendHealthStatus = Get-HttpStatus -Url "http://localhost:8080/actuator/health"
 $PublicDatasetsStatus = Get-HttpStatus -Url "http://localhost:8080/api/public/datasets"
 $AdminDatasetsStatus = "not-checked"
@@ -114,9 +114,9 @@ Write-Output "postgres_tcp_$DbPort=$PostgresTcp"
 Write-Output ""
 Write-Output "mock_mode_next="
 if ($FrontendStatus -ne "200") {
-    Write-Output "1. Frontend check needed: cd $FrontendRoot ; node serve-static.mjs"
+    Write-Output "1. Frontend check needed: cd $FrontendRoot ; npm run dev"
 } else {
-    Write-Output "1. Frontend is OK: http://localhost:3000/"
+    Write-Output "1. Frontend is OK: http://localhost:3100/"
 }
 
 if ($BackendHealthStatus -ne "200" -or $PublicDatasetsStatus -ne "200" -or ($AdminAuth -and $AdminDatasetsStatus -ne "200")) {

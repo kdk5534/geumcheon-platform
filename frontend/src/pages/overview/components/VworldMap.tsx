@@ -3,12 +3,22 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { BACKEND_API_BASE } from "../../../data/env";
 import type { FacilitySummary } from "../overviewTypes";
+import { normalizeDongName } from "../../../data/dongName";
+import { choroplethColor, legendRanges, quantileBreaks } from "./choropleth";
+
+/** choropleth(단계구분도) 모드 — 행정동별 값과 라벨 */
+export interface ChoroplethProps {
+  valuesByDong: Map<string, number>;
+  metricLabel: string;
+}
 
 interface Props {
   facilities: FacilitySummary[];
   onUnavailable?: () => void;
   onSelectFacility?: (facility: FacilitySummary) => void;
   selectedFacilityId?: string;
+  /** choropleth 모드 활성화 시 전달. 미전달이면 경계선만 표시. */
+  choropleth?: ChoroplethProps;
 }
 
 const GEUMCHEON_CENTER: L.LatLngExpression = [37.4565, 126.8954];
@@ -17,12 +27,14 @@ const GEUMCHEON_BOUNDS: L.LatLngBoundsExpression = [
   [37.515, 126.96],
 ];
 const MAX_VISIBLE_MARKERS = 500;
+const DONG_GEOJSON_URL = "./assets/data/geumcheon-dong.geojson";
 
-export function VworldMap({ facilities, onUnavailable, onSelectFacility, selectedFacilityId }: Props) {
+export function VworldMap({ facilities, onUnavailable, onSelectFacility, selectedFacilityId, choropleth }: Props) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
   const markerRefs = useRef<Map<string, L.CircleMarker>>(new Map());
+  const boundaryLayerRef = useRef<L.GeoJSON | null>(null);
   const [status, setStatus] = useState<"ready" | "checking" | "not-configured" | "no-backend" | "tile-error">(
     BACKEND_API_BASE ? "ready" : "no-backend",
   );
@@ -83,7 +95,9 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
 
     const markerLayer = L.layerGroup().addTo(map);
     markerLayerRef.current = markerLayer;
-    void addBoundaryLayer(map);
+    addBoundaryLayer(map, choropleth).then((layer) => {
+      if (!disposed) boundaryLayerRef.current = layer;
+    });
     const sizingTimer = window.setTimeout(() => map.invalidateSize(), 120);
 
     return () => {
@@ -92,8 +106,24 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
       map.remove();
       instanceRef.current = null;
       markerLayerRef.current = null;
+      boundaryLayerRef.current = null;
     };
+    // choropleth prop은 별도 effect에서 갱신 — 지도 재초기화 불필요
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onUnavailable]);
+
+  // choropleth prop 변경 시 경계 레이어 스타일·범례만 갱신
+  useEffect(() => {
+    const map = instanceRef.current;
+    const layer = boundaryLayerRef.current;
+    if (!map || !layer) return;
+    // 기존 레이어 제거 후 재렌더
+    layer.remove();
+    boundaryLayerRef.current = null;
+    addBoundaryLayer(map, choropleth).then((newLayer) => {
+      boundaryLayerRef.current = newLayer;
+    });
+  }, [choropleth]);
 
   useEffect(() => {
     const markerLayer = markerLayerRef.current;
@@ -142,6 +172,7 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
         <span><i className="is-safety" />안전·환경</span>
         <span><i className="is-other" />기타</span>
       </div>
+      {choropleth && <ChoroplethLegend choropleth={choropleth} />}
       {status !== "ready" ? (
         <div className="gdp-map-alert" role="status">
           {status === "checking"
@@ -153,33 +184,108 @@ export function VworldMap({ facilities, onUnavailable, onSelectFacility, selecte
   );
 }
 
-async function addBoundaryLayer(map: L.Map) {
-  if (!BACKEND_API_BASE) return;
+/** choropleth 범례 컴포넌트 */
+function ChoroplethLegend({ choropleth }: { choropleth: ChoroplethProps }) {
+  const values = [...choropleth.valuesByDong.values()];
+  if (values.length === 0) return null;
+  const breaks = quantileBreaks(values);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const ranges = legendRanges(breaks, minVal, maxVal);
+  return (
+    <div className="gdp-choropleth-legend" aria-label={`${choropleth.metricLabel} 단계구분도 범례`}>
+      <div className="gdp-choropleth-legend-title">{choropleth.metricLabel}</div>
+      <div className="gdp-choropleth-legend-items">
+        {ranges.map((r) => (
+          <div key={r.label} className="gdp-choropleth-legend-item">
+            <span className="gdp-choropleth-legend-swatch" style={{ background: r.color }} />
+            <span className="gdp-choropleth-legend-label">{r.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 행정동 경계 레이어를 지도에 추가하고 GeoJSON 레이어 인스턴스를 반환한다.
+ * choropleth prop이 있으면 값 기반 채색, 없으면 경계선만 표시.
+ * 경계 데이터는 정적 파일(public/assets/data/geumcheon-dong.geojson)을 우선 사용한다.
+ */
+async function addBoundaryLayer(map: L.Map, choropleth?: ChoroplethProps): Promise<L.GeoJSON | null> {
   try {
-    const response = await fetch(`${BACKEND_API_BASE}/api/public/boundaries?type=DONG`);
-    if (!response.ok) return;
-    const payload = (await response.json()) as {
-      success?: boolean;
-      data?: GeoJSON.FeatureCollection;
-    };
-    if (!payload.success || payload.data?.type !== "FeatureCollection") return;
-    L.geoJSON(payload.data, {
-      style: {
-        color: "#3159d8",
-        weight: 1.2,
-        opacity: 0.72,
-        fillColor: "#3159d8",
-        fillOpacity: 0.035,
-        dashArray: "4 4",
+    const response = await fetch(DONG_GEOJSON_URL);
+    if (!response.ok) return null;
+    const data = (await response.json()) as GeoJSON.FeatureCollection;
+    if (data?.type !== "FeatureCollection") return null;
+
+    // choropleth 값 구간 계산
+    const values = choropleth ? [...choropleth.valuesByDong.values()] : [];
+    const breaks = choropleth ? quantileBreaks(values) : [];
+
+    const layer = L.geoJSON(data, {
+      style: (feature) => {
+        if (!choropleth || !feature?.properties) {
+          return {
+            color: "#3159d8",
+            weight: 1.2,
+            opacity: 0.72,
+            fillColor: "#3159d8",
+            fillOpacity: 0.035,
+            dashArray: "4 4",
+          };
+        }
+        const dongName = normalizeDongName(
+          String(feature.properties.name || feature.properties.ADM_NM || feature.properties.adm_nm || ""),
+        );
+        const value = choropleth.valuesByDong.get(dongName);
+        const fillColor = choroplethColor(value, breaks);
+        return {
+          color: "#1a3a6b",
+          weight: 1.5,
+          opacity: 0.85,
+          fillColor,
+          fillOpacity: fillColor === "transparent" ? 0.05 : 0.62,
+          dashArray: undefined,
+        };
       },
-      onEachFeature: (feature, layer) => {
+      onEachFeature: (feature, featureLayer) => {
         const props = feature.properties as Record<string, unknown> | null;
-        const name = String(props?.name || props?.ADM_NM || props?.adm_nm || "").trim();
-        if (name) layer.bindTooltip(name, { sticky: true, direction: "top" });
+        const rawName = String(props?.name || props?.ADM_NM || props?.adm_nm || "").trim();
+        const dongName = normalizeDongName(rawName);
+
+        if (choropleth) {
+          const value = choropleth.valuesByDong.get(dongName);
+          const valueText = value !== undefined ? value.toLocaleString("ko-KR") : "데이터 없음";
+          featureLayer.bindTooltip(
+            `<strong>${escapeHtml(dongName)}</strong><br>${escapeHtml(choropleth.metricLabel)}: ${valueText}`,
+            { sticky: true, direction: "top" },
+          );
+          featureLayer.on({
+            mouseover(e) {
+              (e.target as L.Path).setStyle({ weight: 2.5, opacity: 1 });
+            },
+            mouseout(e) {
+              layer.resetStyle(e.target as L.Path);
+            },
+          });
+        } else if (dongName) {
+          featureLayer.bindTooltip(dongName, { sticky: true, direction: "top" });
+        }
+
+        // 폴리곤을 마커 아래로 내려 시설 마커가 가려지지 않게 한다
+        featureLayer.on("add", () => {
+          (featureLayer as L.Path).bringToBack();
+        });
       },
-    }).addTo(map);
+    });
+
+    layer.addTo(map);
+    layer.bringToBack();
+    return layer;
   } catch {
-    // Boundary layer is helpful but not required for task completion.
+    // 경계 레이어는 선택적 — 실패해도 지도 동작에 영향 없음
+    return null;
   }
 }
 

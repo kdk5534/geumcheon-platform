@@ -5,6 +5,7 @@ import type { FacilitySummary, OverviewTopic } from "../overview/overviewTypes";
 import { LinkedChart } from "../overview/components/LinkedChart";
 import { VworldMap } from "../overview/components/VworldMap";
 import { EmptyState, FacilityItemBody, FacilityStack } from "./AnalysisFacilityList";
+import { DataPolicyCard } from "./DataPolicyCard";
 
 interface Props {
   topic: OverviewTopic;
@@ -534,57 +535,15 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
           </strong>
           <small>좌표가 없는 데이터는 목록에서 근거 확인을 우선합니다.</small>
         </article>
-        <article>
-          <span>표현 방식</span>
-          <strong>원값 중심</strong>
-          <small>지역 순위·점수·우수/취약 표현을 쓰지 않습니다.</small>
-        </article>
       </section>
 
-      <section className="gdp-analysis-lens" aria-label="분석 관점">
-        {config.lens.map((item) => (
-          <article key={item.label}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-            <small>{item.note}</small>
-          </article>
-        ))}
-      </section>
-
-      <section className="gdp-analysis-evidence" aria-label="데이터 근거">
-        <header>
-          <span>DATA EVIDENCE</span>
-          <h2>데이터 근거와 표시 정책</h2>
-          <p>
-            {sourceModeLabel} · 기준 {model.asOf}. 수집 실패나 좌표 누락은 화면에서 숨기지 않고 목록·카탈로그 경로로 이어집니다.
-          </p>
-        </header>
-        <div>
-          {config.evidence.map((item) => (
-            <article key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-              <small>{item.note}</small>
-            </article>
-          ))}
-        </div>
-        <Link to={withQuery("/datasets", { q: title.replace("·", " ") })}>관련 데이터셋 확인</Link>
-      </section>
-
-      <section className="gdp-analysis-principles" aria-label="표현 원칙">
-        <div>
-          <span>기준</span>
-          <strong>{model.asOf}</strong>
-        </div>
-        <div>
-          <span>공개 범위</span>
-          <strong>금천구 GEUMCHEON</strong>
-        </div>
-        <div>
-          <span>표현 정책</span>
-          <strong>순위·점수·우수/취약 표현 없음</strong>
-        </div>
-      </section>
+      <DataPolicyCard
+        asOf={model.asOf}
+        sourceMode={sourceModeLabel}
+        evidence={config.evidence}
+        lens={config.lens}
+        datasetsLink={withQuery("/datasets", { q: title.replace("·", " ") })}
+      />
     </section>
   );
 }

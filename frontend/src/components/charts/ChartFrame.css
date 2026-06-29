@@ -1,0 +1,31 @@
+/* 차트 공통 프레임 스타일 */
+.gdp-chart-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-2);
+}
+
+.gdp-chart-frame__title {
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  color: var(--gdp-ink);
+  margin: 0;
+  letter-spacing: var(--gdp-tracking-tight);
+}
+
+.gdp-chart-frame__body {
+  position: relative;
+  width: 100%;
+}
+
+.gdp-chart-frame__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.gdp-chart-frame__caption {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-soft);
+  margin: 0;
+  line-height: var(--gdp-leading-relaxed);
+}

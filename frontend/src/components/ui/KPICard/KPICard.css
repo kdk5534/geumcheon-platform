@@ -108,8 +108,55 @@
   margin: 0;
 }
 
-/* 색 강조 라인 (좌측 border accent) */
-.gdp-ui-kpi--cobalt { border-left: 3px solid var(--gdp-cobalt); }
-.gdp-ui-kpi--mint   { border-left: 3px solid var(--gdp-mint); }
-.gdp-ui-kpi--coral  { border-left: 3px solid var(--gdp-coral); }
-.gdp-ui-kpi--amber  { border-left: 3px solid var(--gdp-amber); }
+/* 색 강조 라인 + 그라데이션 틴트 + 리프트 + 글로우 (Phase 5) */
+.gdp-ui-kpi--cobalt {
+  border-left: 3px solid var(--gdp-cobalt);
+  background: var(--gdp-tint-cobalt, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--cobalt:hover {
+  box-shadow: var(--gdp-glow-cobalt, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--mint {
+  border-left: 3px solid var(--gdp-mint);
+  background: var(--gdp-tint-mint, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--mint:hover {
+  box-shadow: var(--gdp-glow-mint, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--coral {
+  border-left: 3px solid var(--gdp-coral);
+  background: var(--gdp-tint-coral, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--coral:hover {
+  box-shadow: var(--gdp-glow-coral, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--amber {
+  border-left: 3px solid var(--gdp-amber);
+  background: var(--gdp-tint-amber, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--amber:hover {
+  box-shadow: var(--gdp-glow-amber, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+/* 원래 호버 오버라이드 (accent 있을 때는 위 글로우 사용) */
+.gdp-ui-kpi[class*="gdp-ui-kpi--"]:hover {
+  transition:
+    transform var(--gdp-dur-2) var(--gdp-ease-standard),
+    box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gdp-ui-kpi--cobalt:hover,
+  .gdp-ui-kpi--mint:hover,
+  .gdp-ui-kpi--coral:hover,
+  .gdp-ui-kpi--amber:hover {
+    transform: none;
+  }
+}

@@ -38,6 +38,11 @@ export interface RawPopulation {
   name?: string;
   total?: number | string;
   population?: number | string;
+  // 백엔드 PopulationSummary 추가 필드
+  male?: number | string;
+  female?: number | string;
+  observedAt?: string;
+  byAge?: Array<{ ageBand?: string; male?: number | string; female?: number | string }>;
 }
 
 export interface RawFacility {
@@ -53,6 +58,10 @@ export interface RawFacility {
   lat?: number | string;
   lng?: number | string;
   source?: string;
+  // 백엔드 FacilitySummary 추가 필드 (선언만)
+  phone?: string;
+  spatialScope?: string;
+  dataReferenceDate?: string;
 }
 
 export interface RawStore {
@@ -75,6 +84,16 @@ export interface RawAirQuality {
   observedAt?: string;
   stationName?: string;
   districtName?: string;
+  // 백엔드 AirQualitySummary 추가 필드
+  pollutant?: string;
+  maxIndex?: number | string;
+  nitrogen?: number | string;
+  ozone?: number | string;
+  carbon?: number | string;
+  sulfurous?: number | string;
+  pm25?: number | string;
+  districtCode?: string;
+  source?: string;
 }
 
 export interface PublicDataBundle {

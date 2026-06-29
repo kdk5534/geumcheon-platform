@@ -1,4 +1,5 @@
 // 공통 KPICard 컴포넌트 — 주요 지표 수치 카드 (gdp-ui-kpi 네임스페이스)
+import { CountUp } from "../../motion/CountUp";
 import "./KPICard.css";
 
 type KPIAccent = "cobalt" | "mint" | "coral" | "amber";
@@ -14,6 +15,8 @@ interface KPICardProps {
   accent?: KPIAccent;
   small?: boolean;
   className?: string;
+  /** true면 수치 카운트업 애니메이션 적용 (기본 true) */
+  animate?: boolean;
 }
 
 export function KPICard({
@@ -26,6 +29,7 @@ export function KPICard({
   accent,
   small = false,
   className = "",
+  animate = true,
 }: KPICardProps) {
   const cls = [
     "gdp-ui-kpi",
@@ -34,6 +38,8 @@ export function KPICard({
   ]
     .filter(Boolean)
     .join(" ");
+
+  const valueStr = String(value);
 
   return (
     <div className={cls}>
@@ -47,7 +53,7 @@ export function KPICard({
         ) : null}
       </div>
       <p className={`gdp-ui-kpi__value${small ? " gdp-ui-kpi__value--sm" : ""}`}>
-        {value}
+        {animate ? <CountUp value={valueStr} /> : valueStr}
         {unit ? <span className="gdp-ui-kpi__unit">{unit}</span> : null}
       </p>
       {sub ? <p className="gdp-ui-kpi__sub">{sub}</p> : null}

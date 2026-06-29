@@ -1,0 +1,237 @@
+/* 모션·글래스·그라데이션 효과 유틸리티 — "세련된 프리미엄" 강도 */
+
+/* ── 스크롤 등장 (useReveal 훅과 연동) ── */
+.gdp-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--gdp-dur-4) var(--gdp-ease-decelerate),
+    transform var(--gdp-dur-4) var(--gdp-ease-decelerate);
+}
+
+.gdp-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gdp-reveal--slide-right {
+  transform: translateX(-16px);
+}
+
+.gdp-reveal--slide-right.is-revealed {
+  transform: translateX(0);
+}
+
+/* ── 글래스모피즘 패널 ── */
+.gdp-glass {
+  background: var(--gdp-glass-bg);
+  backdrop-filter: blur(var(--gdp-glass-blur));
+  -webkit-backdrop-filter: blur(var(--gdp-glass-blur));
+  border: 1px solid var(--gdp-glass-border);
+}
+
+/* ── 히어로 그라데이션 배경 ── */
+.gdp-hero-gradient {
+  background: var(--gdp-gradient-hero);
+}
+
+/* ── KPI 카드 accent 틴트 ── */
+.gdp-kpi-tint-cobalt { background: var(--gdp-tint-cobalt); }
+.gdp-kpi-tint-mint   { background: var(--gdp-tint-mint); }
+.gdp-kpi-tint-coral  { background: var(--gdp-tint-coral); }
+.gdp-kpi-tint-amber  { background: var(--gdp-tint-amber); }
+
+/* ── 카드 호버 리프트 + 글로우 ── */
+.gdp-card-lift {
+  transition:
+    transform var(--gdp-dur-2) var(--gdp-ease-standard),
+    box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+  will-change: transform, box-shadow;
+}
+
+.gdp-card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--gdp-elev-4);
+}
+
+/* accent별 글로우 호버 */
+.gdp-card-glow-cobalt:hover { box-shadow: var(--gdp-glow-cobalt), var(--gdp-elev-3); }
+.gdp-card-glow-mint:hover   { box-shadow: var(--gdp-glow-mint),   var(--gdp-elev-3); }
+.gdp-card-glow-coral:hover  { box-shadow: var(--gdp-glow-coral),  var(--gdp-elev-3); }
+.gdp-card-glow-amber:hover  { box-shadow: var(--gdp-glow-amber),  var(--gdp-elev-3); }
+
+/* ── 그라데이션 강조선 (카드 상단 border) ── */
+.gdp-accent-bar-cobalt { border-top: 3px solid; border-image: var(--gdp-gradient-brand) 1; }
+.gdp-accent-bar-mint   { border-top: 3px solid var(--gdp-mint); }
+.gdp-accent-bar-coral  { border-top: 3px solid var(--gdp-coral); }
+.gdp-accent-bar-amber  { border-top: 3px solid var(--gdp-amber); }
+
+/* ── 대기질 등급 색 뱃지 ── */
+[data-grade="좋음"]     { color: var(--gdp-mint); }
+[data-grade="보통"]     { color: var(--gdp-cobalt); }
+[data-grade="나쁨"]     { color: var(--gdp-amber); }
+[data-grade="매우나쁨"] { color: var(--gdp-coral); }
+[data-grade="—"]        { color: var(--gdp-soft); }
+
+/* ── 부드러운 페이드인 (로딩/마운트) ── */
+@keyframes gdp-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.gdp-fadein {
+  animation: gdp-fadein var(--gdp-dur-3) var(--gdp-ease-decelerate) both;
+}
+
+/* ── 대기질·지표 페이지 레이아웃 ── */
+.gdp-operational-air {
+  background: var(--gdp-panel);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  padding: var(--gdp-space-6) var(--gdp-space-6) var(--gdp-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-4);
+  box-shadow: var(--gdp-elev-1);
+}
+
+.gdp-operational-air__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gdp-space-4);
+  flex-wrap: wrap;
+}
+
+.gdp-operational-air__eyebrow {
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  color: var(--gdp-amber);
+  margin: 0 0 var(--gdp-space-1);
+}
+
+.gdp-operational-air__title {
+  font-size: var(--gdp-text-lg);
+  font-weight: var(--gdp-weight-bold);
+  color: var(--gdp-ink);
+  margin: 0 0 var(--gdp-space-1);
+  letter-spacing: var(--gdp-tracking-tight);
+}
+
+.gdp-operational-air__time {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-muted);
+  margin: 0;
+}
+
+.gdp-operational-air__kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gdp-space-1);
+  flex-shrink: 0;
+}
+
+.gdp-operational-air__grade {
+  font-size: var(--gdp-text-2xl);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
+}
+
+.gdp-operational-air__index {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-muted);
+}
+
+/* ── 인디케이터 페이지 차트 그리드 ── */
+.gdp-indicators-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--gdp-space-5);
+}
+
+.gdp-indicator-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-2);
+  background: var(--gdp-panel);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  padding: var(--gdp-space-5);
+  box-shadow: var(--gdp-elev-1);
+  transition:
+    transform var(--gdp-dur-2) var(--gdp-ease-standard),
+    box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+.gdp-indicator-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--gdp-elev-3);
+}
+
+.gdp-indicator-card.is-cobalt { border-top: 3px solid var(--gdp-cobalt); background: var(--gdp-tint-cobalt), var(--gdp-panel); }
+.gdp-indicator-card.is-mint   { border-top: 3px solid var(--gdp-mint);   background: var(--gdp-tint-mint),   var(--gdp-panel); }
+.gdp-indicator-card.is-coral  { border-top: 3px solid var(--gdp-coral);  background: var(--gdp-tint-coral),  var(--gdp-panel); }
+.gdp-indicator-card.is-amber  { border-top: 3px solid var(--gdp-amber);  background: var(--gdp-tint-amber),  var(--gdp-panel); }
+
+.gdp-indicator-card__label {
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  color: var(--gdp-muted);
+  text-transform: uppercase;
+}
+
+.gdp-indicator-card__value {
+  font-size: var(--gdp-text-3xl);
+  font-weight: var(--gdp-weight-heavy);
+  letter-spacing: var(--gdp-tracking-tight);
+  color: var(--gdp-ink);
+  line-height: var(--gdp-leading-snug);
+}
+
+.gdp-indicator-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-1);
+  margin: 0;
+  padding: var(--gdp-space-3) 0 0;
+  border-top: 1px solid var(--gdp-line);
+}
+
+.gdp-indicator-card__meta div {
+  display: flex;
+  gap: var(--gdp-space-2);
+  font-size: var(--gdp-text-xs);
+}
+
+.gdp-indicator-card__meta dt {
+  color: var(--gdp-soft);
+  min-width: 3rem;
+}
+
+.gdp-indicator-card__meta dd {
+  color: var(--gdp-muted);
+  margin: 0;
+}
+
+/* ── 접근성: 모션 감소 ── */
+@media (prefers-reduced-motion: reduce) {
+  .gdp-reveal,
+  .gdp-fadein,
+  .gdp-card-lift,
+  .gdp-card-glow-cobalt,
+  .gdp-card-glow-mint,
+  .gdp-card-glow-coral,
+  .gdp-card-glow-amber,
+  .gdp-indicator-card {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+
+  .gdp-reveal {
+    opacity: 1;
+  }
+}

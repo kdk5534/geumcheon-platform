@@ -1,4 +1,4 @@
-import type { OverviewModel } from "../pages/overview/overviewTypes";
+import type { AirQualityDetail, AgeBandDatum, OverviewModel, PopulationStructure } from "../pages/overview/overviewTypes";
 import type { PublicDataBundle, RawAirQuality, RawFacility, RawPopulation, RawStore } from "./publicApi";
 
 function numberValue(value: unknown) {
@@ -23,10 +23,75 @@ function populationTotal(item: RawPopulation) {
   return numberValue(item.total || item.population);
 }
 
-function airStatus(items: RawAirQuality[]) {
+function adaptAirQuality(items: RawAirQuality[]): AirQualityDetail {
   const first = items[0];
-  if (!first) return "—";
-  return text(first.status || first.grade || first.value || first.pm10, "—");
+  if (!first) {
+    return { grade: "—", maxIndex: null, pollutants: [], measuredAt: "—", hasData: false };
+  }
+  const pm10Val = numberValue(first.pm10);
+  const pm25Val = numberValue(first.pm25);
+  const no2Val = numberValue(first.nitrogen);
+  const o3Val = numberValue(first.ozone);
+  const coVal = numberValue(first.carbon);
+  const so2Val = numberValue(first.sulfurous);
+  const pollutants = [
+    { key: "pm10" as const, label: "미세먼지(PM10)", value: pm10Val || null, unit: "㎍/㎥" },
+    { key: "pm25" as const, label: "초미세먼지(PM2.5)", value: pm25Val || null, unit: "㎍/㎥" },
+    { key: "no2" as const, label: "이산화질소(NO₂)", value: no2Val || null, unit: "ppm" },
+    { key: "o3" as const, label: "오존(O₃)", value: o3Val || null, unit: "ppm" },
+    { key: "co" as const, label: "일산화탄소(CO)", value: coVal || null, unit: "ppm" },
+    { key: "so2" as const, label: "아황산가스(SO₂)", value: so2Val || null, unit: "ppm" },
+  ];
+  const hasData = pollutants.some((p) => p.value !== null) || !!(first.grade && first.grade !== "—");
+  return {
+    grade: text(first.grade || first.status, "—"),
+    maxIndex: numberValue(first.maxIndex) || null,
+    pollutants,
+    measuredAt: text(first.measuredAt || first.observedAt, "—"),
+    hasData,
+  };
+}
+
+function adaptPopulationStructure(items: RawPopulation[]): PopulationStructure {
+  let total = 0;
+  let male = 0;
+  let female = 0;
+  const bandAccumulator = new Map<string, { male: number; female: number }>();
+
+  for (const item of items) {
+    const itemTotal = numberValue(item.total || item.population);
+    total += itemTotal;
+    male += numberValue(item.male);
+    female += numberValue(item.female);
+
+    if (Array.isArray(item.byAge)) {
+      for (const band of item.byAge) {
+        const key = text(band.ageBand, "미상");
+        const existing = bandAccumulator.get(key) ?? { male: 0, female: 0 };
+        existing.male += numberValue(band.male);
+        existing.female += numberValue(band.female);
+        bandAccumulator.set(key, existing);
+      }
+    }
+  }
+
+  // 연령대 라벨 숫자 추출로 정렬 (예: "0~9세" → 0, "10~19세" → 10)
+  const byAge: AgeBandDatum[] = [...bandAccumulator.entries()]
+    .map(([ageBand, counts]) => ({ ageBand, ...counts }))
+    .sort((a, b) => {
+      const numA = parseInt(a.ageBand.match(/\d+/)?.[0] ?? "999", 10);
+      const numB = parseInt(b.ageBand.match(/\d+/)?.[0] ?? "999", 10);
+      return numA - numB;
+    });
+
+  return {
+    total,
+    male,
+    female,
+    byAge,
+    hasGender: male + female > 0,
+    hasAgeBands: byAge.length > 0,
+  };
 }
 
 function facilityId(item: RawFacility, index: number) {
@@ -137,10 +202,15 @@ export function adaptOverviewModel(bundle: PublicDataBundle): OverviewModel {
     categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
   }
 
+  const airQualityDetail = adaptAirQuality(bundle.airQuality);
+  const populationStructure = adaptPopulationStructure(bundle.population);
+
   return {
     asOf,
     sourceMode,
     districts,
+    airQuality: airQualityDetail,
+    population: populationStructure,
     metrics: [
       {
         key: "population",
@@ -169,7 +239,7 @@ export function adaptOverviewModel(bundle: PublicDataBundle): OverviewModel {
       {
         key: "air",
         label: "대기질",
-        value: airStatus(bundle.airQuality),
+        value: airQualityDetail.grade,
         status: bundle.airQuality.length ? "항목별 기준" : "확인 대기",
         source: "환경 관측값",
         accent: "amber",

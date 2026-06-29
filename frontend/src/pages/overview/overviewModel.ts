@@ -4,6 +4,28 @@ export const overviewModel: OverviewModel = {
   asOf: "항목별 기준일",
   sourceMode: "공개 데이터 연결 대기",
   districts: ["가산동", "독산1동", "독산2동", "독산3동", "독산4동", "시흥1동", "시흥2동"],
+  airQuality: {
+    grade: "—",
+    maxIndex: null,
+    pollutants: [
+      { key: "pm10", label: "미세먼지(PM10)", value: null, unit: "㎍/㎥" },
+      { key: "pm25", label: "초미세먼지(PM2.5)", value: null, unit: "㎍/㎥" },
+      { key: "no2", label: "이산화질소(NO₂)", value: null, unit: "ppm" },
+      { key: "o3", label: "오존(O₃)", value: null, unit: "ppm" },
+      { key: "co", label: "일산화탄소(CO)", value: null, unit: "ppm" },
+      { key: "so2", label: "아황산가스(SO₂)", value: null, unit: "ppm" },
+    ],
+    measuredAt: "—",
+    hasData: false,
+  },
+  population: {
+    total: 150340,
+    male: 0,
+    female: 0,
+    byAge: [],
+    hasGender: false,
+    hasAgeBands: false,
+  },
   metrics: [
     {
       key: "population",

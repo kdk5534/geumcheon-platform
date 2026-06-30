@@ -1,189 +1,1201 @@
-{
-  "population": [
-    {
-      "areaName": "가산동", "total": 25518, "male": 13632, "female": 11886,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 292,  "female": 257  },
-        { "ageBand": "10~19세", "male": 281,  "female": 281  },
-        { "ageBand": "20~29세", "male": 2829, "female": 3565 },
-        { "ageBand": "30~39세", "male": 4448, "female": 3269 },
-        { "ageBand": "40~49세", "male": 1816, "female": 1128 },
-        { "ageBand": "50~59세", "male": 1530, "female": 1069 },
-        { "ageBand": "60~69세", "male": 1442, "female": 1183 },
-        { "ageBand": "70세 이상", "male": 994, "female": 1134 }
-      ]
-    },
-    {
-      "areaName": "독산제1동", "total": 47651, "male": 24099, "female": 23552,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 2181, "female": 2151 },
-        { "ageBand": "10~19세", "male": 2327, "female": 2194 },
-        { "ageBand": "20~29세", "male": 3563, "female": 3511 },
-        { "ageBand": "30~39세", "male": 4112, "female": 3958 },
-        { "ageBand": "40~49세", "male": 4248, "female": 4120 },
-        { "ageBand": "50~59세", "male": 3889, "female": 3715 },
-        { "ageBand": "60~69세", "male": 2374, "female": 2394 },
-        { "ageBand": "70세 이상", "male": 1405, "female": 1509 }
-      ]
-    },
-    {
-      "areaName": "독산제2동", "total": 17090, "male": 8568, "female": 8522,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 549,  "female": 527  },
-        { "ageBand": "10~19세", "male": 622,  "female": 577  },
-        { "ageBand": "20~29세", "male": 1243, "female": 1254 },
-        { "ageBand": "30~39세", "male": 1498, "female": 1425 },
-        { "ageBand": "40~49세", "male": 1554, "female": 1516 },
-        { "ageBand": "50~59세", "male": 1541, "female": 1565 },
-        { "ageBand": "60~69세", "male": 932,  "female": 1002 },
-        { "ageBand": "70세 이상", "male": 629, "female": 656 }
-      ]
-    },
-    {
-      "areaName": "독산제3동", "total": 22584, "male": 11349, "female": 11235,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 868,  "female": 830  },
-        { "ageBand": "10~19세", "male": 851,  "female": 803  },
-        { "ageBand": "20~29세", "male": 1731, "female": 1676 },
-        { "ageBand": "30~39세", "male": 2054, "female": 1951 },
-        { "ageBand": "40~49세", "male": 2139, "female": 2071 },
-        { "ageBand": "50~59세", "male": 1997, "female": 2005 },
-        { "ageBand": "60~69세", "male": 1066, "female": 1148 },
-        { "ageBand": "70세 이상", "male": 643, "female": 751 }
-      ]
-    },
-    {
-      "areaName": "독산제4동", "total": 13772, "male": 6904, "female": 6868,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 548,  "female": 531  },
-        { "ageBand": "10~19세", "male": 527,  "female": 510  },
-        { "ageBand": "20~29세", "male": 999,  "female": 1007 },
-        { "ageBand": "30~39세", "male": 1185, "female": 1124 },
-        { "ageBand": "40~49세", "male": 1291, "female": 1250 },
-        { "ageBand": "50~59세", "male": 1257, "female": 1261 },
-        { "ageBand": "60~69세", "male": 707,  "female": 769  },
-        { "ageBand": "70세 이상", "male": 390, "female": 416 }
-      ]
-    },
-    {
-      "areaName": "시흥제1동", "total": 30985, "male": 15327, "female": 15658,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 1209, "female": 1147 },
-        { "ageBand": "10~19세", "male": 1274, "female": 1224 },
-        { "ageBand": "20~29세", "male": 2236, "female": 2411 },
-        { "ageBand": "30~39세", "male": 2609, "female": 2671 },
-        { "ageBand": "40~49세", "male": 2784, "female": 2836 },
-        { "ageBand": "50~59세", "male": 2595, "female": 2700 },
-        { "ageBand": "60~69세", "male": 1571, "female": 1628 },
-        { "ageBand": "70세 이상", "male": 1049, "female": 1041 }
-      ]
-    },
-    {
-      "areaName": "시흥제2동", "total": 19707, "male": 9451, "female": 10256,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 605,  "female": 583  },
-        { "ageBand": "10~19세", "male": 688,  "female": 651  },
-        { "ageBand": "20~29세", "male": 1273, "female": 1461 },
-        { "ageBand": "30~39세", "male": 1488, "female": 1709 },
-        { "ageBand": "40~49세", "male": 1745, "female": 1956 },
-        { "ageBand": "50~59세", "male": 1712, "female": 1892 },
-        { "ageBand": "60~69세", "male": 1175, "female": 1281 },
-        { "ageBand": "70세 이상", "male": 765, "female": 723 }
-      ]
-    },
-    {
-      "areaName": "시흥제3동", "total": 9943, "male": 4914, "female": 5029,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 346,  "female": 328  },
-        { "ageBand": "10~19세", "male": 393,  "female": 362  },
-        { "ageBand": "20~29세", "male": 649,  "female": 711  },
-        { "ageBand": "30~39세", "male": 831,  "female": 878  },
-        { "ageBand": "40~49세", "male": 906,  "female": 940  },
-        { "ageBand": "50~59세", "male": 839,  "female": 883  },
-        { "ageBand": "60~69세", "male": 559,  "female": 583  },
-        { "ageBand": "70세 이상", "male": 391, "female": 344 }
-      ]
-    },
-    {
-      "areaName": "시흥제4동", "total": 18272, "male": 9036, "female": 9236,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 753,  "female": 738  },
-        { "ageBand": "10~19세", "male": 784,  "female": 759  },
-        { "ageBand": "20~29세", "male": 1257, "female": 1334 },
-        { "ageBand": "30~39세", "male": 1597, "female": 1612 },
-        { "ageBand": "40~49세", "male": 1683, "female": 1709 },
-        { "ageBand": "50~59세", "male": 1551, "female": 1603 },
-        { "ageBand": "60~69세", "male": 879,  "female": 895  },
-        { "ageBand": "70세 이상", "male": 532, "female": 586 }
-      ]
-    },
-    {
-      "areaName": "시흥제5동", "total": 17133, "male": 8478, "female": 8655,
-      "observedAt": "2026.06.30 21:27",
-      "byAge": [
-        { "ageBand": "0~9세",   "male": 645,  "female": 617  },
-        { "ageBand": "10~19세", "male": 690,  "female": 671  },
-        { "ageBand": "20~29세", "male": 1180, "female": 1259 },
-        { "ageBand": "30~39세", "male": 1487, "female": 1503 },
-        { "ageBand": "40~49세", "male": 1601, "female": 1611 },
-        { "ageBand": "50~59세", "male": 1487, "female": 1516 },
-        { "ageBand": "60~69세", "male": 884,  "female": 882  },
-        { "ageBand": "70세 이상", "male": 504, "female": 596 }
-      ]
-    }
-  ],
-  "facilities": [
-    {
-      "id": "sample-1",
-      "name": "금천구청",
-      "category": "공공",
-      "address": "서울특별시 금천구 시흥대로73길 70",
-      "latitude": 37.4569,
-      "longitude": 126.8955
-    },
-    {
-      "id": "sample-2",
-      "name": "가산도서관",
-      "category": "문화",
-      "address": "서울특별시 금천구 가산로5길 43",
-      "latitude": 37.4714,
-      "longitude": 126.8927
-    },
-    {
-      "id": "sample-3",
-      "name": "독산보건분소",
-      "category": "의료",
-      "address": "서울특별시 금천구 독산로",
-      "latitude": 37.4662,
-      "longitude": 126.9025
-    },
-    {
-      "id": "sample-4",
-      "name": "시흥행정복지센터",
-      "category": "행정",
-      "address": "서울특별시 금천구 시흥대로",
-      "latitude": 37.4507,
-      "longitude": 126.9084
-    }
-  ],
-  "stores": [
-    { "name": "가산 음식점 표본", "category": "음식", "address": "서울특별시 금천구 가산동" },
-    { "name": "독산 소매점 표본", "category": "소매", "address": "서울특별시 금천구 독산동" },
-    { "name": "시흥 서비스업 표본", "category": "서비스", "address": "서울특별시 금천구 시흥동" },
-    { "name": "금천 의료업 표본", "category": "의료", "address": "서울특별시 금천구" }
-  ],
-  "airQuality": [
-    { "status": "보통", "stationName": "금천구", "measuredAt": "항목별 기준일" }
-  ],
-  "apiSources": [],
-  "meta": {}
+﻿{
+    "population":  [
+                       {
+                           "areaName":  "가산동",
+                           "total":  25518,
+                           "male":  13632,
+                           "female":  11886,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  292,
+                                             "female":  257
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  281,
+                                             "female":  281
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  2829,
+                                             "female":  3565
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  4448,
+                                             "female":  3269
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1816,
+                                             "female":  1128
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1530,
+                                             "female":  1069
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  1442,
+                                             "female":  1183
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  994,
+                                             "female":  1134
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "독산제1동",
+                           "total":  47651,
+                           "male":  24099,
+                           "female":  23552,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  2181,
+                                             "female":  2151
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  2327,
+                                             "female":  2194
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  3563,
+                                             "female":  3511
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  4112,
+                                             "female":  3958
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  4248,
+                                             "female":  4120
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  3889,
+                                             "female":  3715
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  2374,
+                                             "female":  2394
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  1405,
+                                             "female":  1509
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "독산제2동",
+                           "total":  17090,
+                           "male":  8568,
+                           "female":  8522,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  549,
+                                             "female":  527
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  622,
+                                             "female":  577
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  1243,
+                                             "female":  1254
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  1498,
+                                             "female":  1425
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1554,
+                                             "female":  1516
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1541,
+                                             "female":  1565
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  932,
+                                             "female":  1002
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  629,
+                                             "female":  656
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "독산제3동",
+                           "total":  22584,
+                           "male":  11349,
+                           "female":  11235,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  868,
+                                             "female":  830
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  851,
+                                             "female":  803
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  1731,
+                                             "female":  1676
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  2054,
+                                             "female":  1951
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  2139,
+                                             "female":  2071
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1997,
+                                             "female":  2005
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  1066,
+                                             "female":  1148
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  643,
+                                             "female":  751
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "독산제4동",
+                           "total":  13772,
+                           "male":  6904,
+                           "female":  6868,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  548,
+                                             "female":  531
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  527,
+                                             "female":  510
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  999,
+                                             "female":  1007
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  1185,
+                                             "female":  1124
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1291,
+                                             "female":  1250
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1257,
+                                             "female":  1261
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  707,
+                                             "female":  769
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  390,
+                                             "female":  416
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "시흥제1동",
+                           "total":  30985,
+                           "male":  15327,
+                           "female":  15658,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  1209,
+                                             "female":  1147
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  1274,
+                                             "female":  1224
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  2236,
+                                             "female":  2411
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  2609,
+                                             "female":  2671
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  2784,
+                                             "female":  2836
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  2595,
+                                             "female":  2700
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  1571,
+                                             "female":  1628
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  1049,
+                                             "female":  1041
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "시흥제2동",
+                           "total":  19707,
+                           "male":  9451,
+                           "female":  10256,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  605,
+                                             "female":  583
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  688,
+                                             "female":  651
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  1273,
+                                             "female":  1461
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  1488,
+                                             "female":  1709
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1745,
+                                             "female":  1956
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1712,
+                                             "female":  1892
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  1175,
+                                             "female":  1281
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  765,
+                                             "female":  723
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "시흥제3동",
+                           "total":  9943,
+                           "male":  4914,
+                           "female":  5029,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  346,
+                                             "female":  328
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  393,
+                                             "female":  362
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  649,
+                                             "female":  711
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  831,
+                                             "female":  878
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  906,
+                                             "female":  940
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  839,
+                                             "female":  883
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  559,
+                                             "female":  583
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  391,
+                                             "female":  344
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "시흥제4동",
+                           "total":  18272,
+                           "male":  9036,
+                           "female":  9236,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  753,
+                                             "female":  738
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  784,
+                                             "female":  759
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  1257,
+                                             "female":  1334
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  1597,
+                                             "female":  1612
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1683,
+                                             "female":  1709
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1551,
+                                             "female":  1603
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  879,
+                                             "female":  895
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  532,
+                                             "female":  586
+                                         }
+                                     ]
+                       },
+                       {
+                           "areaName":  "시흥제5동",
+                           "total":  17133,
+                           "male":  8478,
+                           "female":  8655,
+                           "observedAt":  "2026.06.30 21:27",
+                           "byAge":  [
+                                         {
+                                             "ageBand":  "0~9세",
+                                             "male":  645,
+                                             "female":  617
+                                         },
+                                         {
+                                             "ageBand":  "10~19세",
+                                             "male":  690,
+                                             "female":  671
+                                         },
+                                         {
+                                             "ageBand":  "20~29세",
+                                             "male":  1180,
+                                             "female":  1259
+                                         },
+                                         {
+                                             "ageBand":  "30~39세",
+                                             "male":  1487,
+                                             "female":  1503
+                                         },
+                                         {
+                                             "ageBand":  "40~49세",
+                                             "male":  1601,
+                                             "female":  1611
+                                         },
+                                         {
+                                             "ageBand":  "50~59세",
+                                             "male":  1487,
+                                             "female":  1516
+                                         },
+                                         {
+                                             "ageBand":  "60~69세",
+                                             "male":  884,
+                                             "female":  882
+                                         },
+                                         {
+                                             "ageBand":  "70세 이상",
+                                             "male":  504,
+                                             "female":  596
+                                         }
+                                     ]
+                       }
+                   ],
+    "facilities":  [
+                       {
+                           "id":  "L3041",
+                           "category":  "WELFARE",
+                           "name":  "(A)가인 방문요양센터",
+                           "address":  "서울특별시 금천구 시흥대로73길 11, 211호 (시흥동, 무지개아파트)",
+                           "latitude":  37.456632030327896,
+                           "longitude":  126.89836628126903
+                       },
+                       {
+                           "id":  "L4510",
+                           "category":  "WELFARE",
+                           "name":  "(A)비지팅엔젤스 금천방문요양지점",
+                           "address":  "서울특별시 금천구 벚꽃로56길 182, 519호 (가산동, 램킨푸르지오시티)",
+                           "latitude":  37.47967716516402,
+                           "longitude":  126.88830153593989
+                       },
+                       {
+                           "id":  "G8193",
+                           "category":  "WELFARE",
+                           "name":  "(A)비지팅엔젤스 금천시흥방문요양지점",
+                           "address":  "서울특별시 금천구 은행나무로 6, 2층 202호 (시흥동)",
+                           "latitude":  37.449870556152796,
+                           "longitude":  126.90345100996575
+                       },
+                       {
+                           "id":  "C0609590234",
+                           "category":  "WELFARE",
+                           "name":  "(A)은혜재가노인복지센터",
+                           "address":  "서울특별시 금천구 한내로 69-15, 1316동 104호 (독산동)",
+                           "latitude":  37.4572967922648,
+                           "longitude":  126.88745535051879
+                       },
+                       {
+                           "id":  "J2145",
+                           "category":  "WELFARE",
+                           "name":  "(A)행복한 노인요양방문센터",
+                           "address":  "서울특별시 금천구 독산로14길 5, 2층 (시흥동)",
+                           "latitude":  37.45238683856207,
+                           "longitude":  126.9071343164772
+                       },
+                       {
+                           "id":  "PHMA219963170035021200001",
+                           "category":  "HOSPITAL",
+                           "name":  "구로한방병원",
+                           "address":  "서울특별시 금천구 남부순환로 1398 (독산동)",
+                           "latitude":  37.479940178484604,
+                           "longitude":  126.90613629819164
+                       },
+                       {
+                           "id":  "PHMA220123170035021200001",
+                           "category":  "HOSPITAL",
+                           "name":  "금천수병원",
+                           "address":  "서울특별시 금천구 남부순환로 1400, 1층~9층 (독산동)",
+                           "latitude":  37.479921229288465,
+                           "longitude":  126.9067889140539
+                       },
+                       {
+                           "id":  "PHMA220193170035021200002",
+                           "category":  "HOSPITAL",
+                           "name":  "금천한방병원",
+                           "address":  "서울특별시 금천구 시흥대로73길 67, 4,6층 (시흥동)",
+                           "latitude":  37.455940520916755,
+                           "longitude":  126.89567390561186
+                       },
+                       {
+                           "id":  "PHMA220113170035021200002",
+                           "category":  "HOSPITAL",
+                           "name":  "녹십자요양병원",
+                           "address":  "서울특별시 금천구 시흥대로 202, 3,4층 (시흥동, 대의빌딩)",
+                           "latitude":  37.45196946585373,
+                           "longitude":  126.90211184947992
+                       },
+                       {
+                           "id":  "PHMA220213170035021200001",
+                           "category":  "HOSPITAL",
+                           "name":  "리솜한방병원",
+                           "address":  "서울특별시 금천구 시흥대로79길 15, 리솜메디라이프 4~7층 (시흥동)",
+                           "latitude":  37.45889014016362,
+                           "longitude":  126.89769083462701
+                       },
+                       {
+                           "id":  "PHMD120213170035084000005",
+                           "category":  "PHARMACY",
+                           "name":  "1층메디컬약국",
+                           "address":  "서울특별시 금천구 시흥대로 214, 비즈메드빌딩 1층 102호 (시흥동)",
+                           "latitude":  37.45301778907252,
+                           "longitude":  126.90166933952511
+                       },
+                       {
+                           "id":  "PHMD120223170035084000004",
+                           "category":  "PHARMACY",
+                           "name":  "365그랜드약국",
+                           "address":  "서울특별시 금천구 시흥대로62길 29, 1층 (시흥동)",
+                           "latitude":  37.45589130968501,
+                           "longitude":  126.9017230873736
+                       },
+                       {
+                           "id":  "PHMD120223170035084000003",
+                           "category":  "PHARMACY",
+                           "name":  "가까운약국",
+                           "address":  "서울특별시 금천구 독산로 133, 1층 (시흥동)",
+                           "latitude":  37.45920468704552,
+                           "longitude":  126.90488792712947
+                       },
+                       {
+                           "id":  "PHMD120193170035084000003",
+                           "category":  "PHARMACY",
+                           "name":  "가디온누리약국",
+                           "address":  "서울특별시 금천구 가산디지털1로 171, 가산 에스케이 브이원 센터 1층 117호 (가산동)",
+                           "latitude":  37.480832093945864,
+                           "longitude":  126.88066198748068
+                       },
+                       {
+                           "id":  "PHMD120203170035084000005",
+                           "category":  "PHARMACY",
+                           "name":  "가람약국",
+                           "address":  "서울특별시 금천구 가산디지털1로 5, 대륭테크노타운 20차 107호 (가산동)",
+                           "latitude":  37.466769851269135,
+                           "longitude":  126.88667313849832
+                       },
+                       {
+                           "id":  "11545000185",
+                           "category":  "CHILDCARE",
+                           "name":  "LG전자 어린이집",
+                           "address":  "서울특별시 금천구 두산로 79 메이시티 1층 (독산동)",
+                           "latitude":  37.47006942,
+                           "longitude":  126.8967765
+                       },
+                       {
+                           "id":  "11545000349",
+                           "category":  "CHILDCARE",
+                           "name":  "LG전자가산어린이집",
+                           "address":  "서울특별시 금천구 가산디지털1로 45 103호",
+                           "latitude":  37.46988125940539,
+                           "longitude":  126.88549186524804
+                       },
+                       {
+                           "id":  "11545000067",
+                           "category":  "CHILDCARE",
+                           "name":  "가산종합사회복지관방과후교실",
+                           "address":  "서울 금천구 가산동 144-3",
+                           "latitude":  37.47685025488116,
+                           "longitude":  126.89177033982821
+                       },
+                       {
+                           "id":  "11545000022",
+                           "category":  "CHILDCARE",
+                           "name":  "가산중앙어린이집",
+                           "address":  "서울특별시 금천구 시흥대로145길 79 가산동",
+                           "latitude":  37.47582745,
+                           "longitude":  126.8936348
+                       },
+                       {
+                           "id":  "11545000176",
+                           "category":  "CHILDCARE",
+                           "name":  "공간어린이집",
+                           "address":  "서울특별시 금천구 독산로67길 19 (독산동)",
+                           "latitude":  37.46483354,
+                           "longitude":  126.9015254
+                       },
+                       {
+                           "id":  "202431700000800605",
+                           "category":  "CCTV",
+                           "name":  "교통단속 CCTV 202431700000800605",
+                           "address":  "서울특별시 금천구 가산로 77",
+                           "latitude":  37.473103,
+                           "longitude":  126.895142
+                       },
+                       {
+                           "id":  "202431700000800606",
+                           "category":  "CCTV",
+                           "name":  "교통단속 CCTV 202431700000800606",
+                           "address":  "서울특별시 금천구 가산로 122",
+                           "latitude":  37.476434,
+                           "longitude":  126.892442
+                       },
+                       {
+                           "id":  "202431700000800607",
+                           "category":  "CCTV",
+                           "name":  "교통단속 CCTV 202431700000800607",
+                           "address":  "서울특별시 금천구 가산로 144",
+                           "latitude":  37.478164,
+                           "longitude":  126.890928
+                       },
+                       {
+                           "id":  "202431700000800608",
+                           "category":  "CCTV",
+                           "name":  "교통단속 CCTV 202431700000800608",
+                           "address":  "서울특별시 금천구 가산로 20",
+                           "latitude":  37.471238,
+                           "longitude":  126.900617
+                       },
+                       {
+                           "id":  "202431700000800609",
+                           "category":  "CCTV",
+                           "name":  "교통단속 CCTV 202431700000800609",
+                           "address":  "서울특별시 금천구 범안로 1236",
+                           "latitude":  37.466434,
+                           "longitude":  126.899108
+                       },
+                       {
+                           "id":  "d6b11e40-11c5-4cc2-8d5f-a9192008f065",
+                           "category":  "SCHOOL_ZONE",
+                           "name":  "가산어린이집",
+                           "address":  "서울특별시 금천구 벚꽃로38길 35",
+                           "latitude":  37.48286945,
+                           "longitude":  126.884264
+                       },
+                       {
+                           "id":  "2c30a7aa-caf8-4916-9fdd-dc52752b04be",
+                           "category":  "SCHOOL_ZONE",
+                           "name":  "가산초등학교",
+                           "address":  "서울특별시 금천구 남부순환로 1304-11",
+                           "latitude":  37.478165,
+                           "longitude":  126.8963297
+                       },
+                       {
+                           "id":  "1dde0a5b-265a-44b9-adf7-cf95922c53c0",
+                           "category":  "SCHOOL_ZONE",
+                           "name":  "개미어린이집",
+                           "address":  "서울특별시 금천구 독산로54길 251",
+                           "latitude":  37.473043,
+                           "longitude":  126.905858
+                       },
+                       {
+                           "id":  "bb02b938-712a-43db-a57f-42e60b317bed",
+                           "category":  "SCHOOL_ZONE",
+                           "name":  "구립별마루어린이집",
+                           "address":  "서울특별시 금천구 독산로94길 17",
+                           "latitude":  37.47469762,
+                           "longitude":  126.9041282
+                       },
+                       {
+                           "id":  "3ca43323-d300-4223-a348-a66e894fff7b",
+                           "category":  "SCHOOL_ZONE",
+                           "name":  "금나래초등학교",
+                           "address":  "서울특별시 금천구 시흥대로79길 37",
+                           "latitude":  37.458229,
+                           "longitude":  126.896205
+                       },
+                       {
+                           "id":  "3170000-S199400004",
+                           "category":  "CIVIL_DEFENSE_SHELTER",
+                           "name":  "LG텔레콤 지하주차장",
+                           "address":  "서울특별시 금천구 시흥대로 479 (독산동, LG)",
+                           "latitude":  37.476387247924436,
+                           "longitude":  126.8983118028374
+                       },
+                       {
+                           "id":  "3170000-S202500002",
+                           "category":  "CIVIL_DEFENSE_SHELTER",
+                           "name":  "가산 유미어스 지하주차장",
+                           "address":  "서울특별시 금천구 가산디지털2로 169-37, 가산유미어스 (가산동)",
+                           "latitude":  37.4817195358072,
+                           "longitude":  126.875548564558
+                       },
+                       {
+                           "id":  "3170000-S202500005",
+                           "category":  "CIVIL_DEFENSE_SHELTER",
+                           "name":  "가산G밸리 하우스디어반 지하주차장",
+                           "address":  "서울특별시 금천구 서부샛길 714, G밸리 하우스디 어반 (가산동)",
+                           "latitude":  37.4839279569897,
+                           "longitude":  126.875077170624
+                       },
+                       {
+                           "id":  "3170000-S200500011",
+                           "category":  "CIVIL_DEFENSE_SHELTER",
+                           "name":  "가산동주민센터 지하1층",
+                           "address":  "서울특별시 금천구 가산로 129 (가산동, 가산동주민센터)",
+                           "latitude":  37.47699763184946,
+                           "longitude":  126.89178377100498
+                       },
+                       {
+                           "id":  "3170000-S201100013",
+                           "category":  "CIVIL_DEFENSE_SHELTER",
+                           "name":  "가산디지털단지역 지하1~3층",
+                           "address":  "서울특별시 금천구 벚꽃로 309 (가산동, 가산디지털단지역)",
+                           "latitude":  37.48200852111932,
+                           "longitude":  126.88259886507458
+                       }
+                   ],
+    "stores":  [
+                   {
+                       "id":  "MA010120220800976067",
+                       "name":  "\u0027辛\u0027종로빈대떡",
+                       "category":  "음식",
+                       "address":  "서울특별시 금천구 시흥대로122길 14",
+                       "latitude":  37.4693124316589,
+                       "longitude":  126.899007062168
+                   },
+                   {
+                       "id":  "MA0106202506A0419412",
+                       "name":  "(주)세린이에스",
+                       "category":  "음식",
+                       "address":  "서울특별시 구로구 디지털로32길 79",
+                       "latitude":  37.4835580280904,
+                       "longitude":  126.899756730981
+                   },
+                   {
+                       "id":  "MA0106202506A1997091",
+                       "name":  "(주)의령연구소 / 의령메밀 가산점",
+                       "category":  "음식",
+                       "address":  "서울특별시 금천구 벚꽃로 244",
+                       "latitude":  37.4767607813022,
+                       "longitude":  126.885814880351
+                   },
+                   {
+                       "id":  "MA0106202508A0695812",
+                       "name":  "(주)최우영고기야",
+                       "category":  "음식",
+                       "address":  "서울특별시 금천구 벚꽃로 298",
+                       "latitude":  37.4814441360817,
+                       "longitude":  126.883874400754
+                   },
+                   {
+                       "id":  "MA010120220812121336",
+                       "name":  "05식당",
+                       "category":  "음식",
+                       "address":  "서울특별시 구로구 디지털로 288",
+                       "latitude":  37.4835723648529,
+                       "longitude":  126.895505475009
+                   },
+                   {
+                       "id":  "MA0106202601A2388990",
+                       "name":  "(주)더에이치엠컴퍼니",
+                       "category":  "예술·스포츠",
+                       "address":  "경기도 광명시 오리로651번길 8",
+                       "latitude":  37.4591898827396,
+                       "longitude":  126.875702984281
+                   },
+                   {
+                       "id":  "MA0106202511A0070504",
+                       "name":  "012노래연습장",
+                       "category":  "예술·스포츠",
+                       "address":  "서울특별시 금천구 시흥대로52길 38",
+                       "latitude":  37.4530699268896,
+                       "longitude":  126.902261244865
+                   },
+                   {
+                       "id":  "MA010120220800725623",
+                       "name":  "1，2，3노래연습장",
+                       "category":  "예술·스포츠",
+                       "address":  "서울특별시 금천구 가산로 126",
+                       "latitude":  37.4767849767905,
+                       "longitude":  126.89239461977
+                   },
+                   {
+                       "id":  "MA010120220814317421",
+                       "name":  "101코인노래연습장",
+                       "category":  "예술·스포츠",
+                       "address":  "서울특별시 금천구 금하로 726",
+                       "latitude":  37.4503822549856,
+                       "longitude":  126.910277494224
+                   },
+                   {
+                       "id":  "MA0101202406A0565631",
+                       "name":  "1981골프앤휘트니스",
+                       "category":  "예술·스포츠",
+                       "address":  "서울특별시 금천구 시흥대로 399",
+                       "latitude":  37.469355745258,
+                       "longitude":  126.896994831491
+                   },
+                   {
+                       "id":  "MA0106202601A0288467",
+                       "name":  "(주)비엔피솔루션",
+                       "category":  "과학·기술",
+                       "address":  "서울특별시 금천구 서부샛길 534",
+                       "latitude":  37.4765552180296,
+                       "longitude":  126.878455363313
+                   },
+                   {
+                       "id":  "MA010120220806710557",
+                       "name":  "1004행정사사무소",
+                       "category":  "과학·기술",
+                       "address":  "경기도 광명시 범안로 1002",
+                       "latitude":  37.4596940197722,
+                       "longitude":  126.875295246077
+                   },
+                   {
+                       "id":  "MA010120220804266653",
+                       "name":  "100억샵아카데미",
+                       "category":  "과학·기술",
+                       "address":  "서울특별시 금천구 가산디지털1로 75-24",
+                       "latitude":  37.4728479093916,
+                       "longitude":  126.883265933841
+                   },
+                   {
+                       "id":  "MA0106202601A0377633",
+                       "name":  "129이엠에스주식회사",
+                       "category":  "과학·기술",
+                       "address":  "경기도 광명시 오리로651번길 8",
+                       "latitude":  37.4591898827396,
+                       "longitude":  126.875702984281
+                   },
+                   {
+                       "id":  "MA010120220812503149",
+                       "name":  "18%그레이필름",
+                       "category":  "과학·기술",
+                       "address":  "서울특별시 금천구 서부샛길 534",
+                       "latitude":  37.4765552180296,
+                       "longitude":  126.878455363313
+                   },
+                   {
+                       "id":  "MA0106202506A2110707",
+                       "name":  "(주)씨더블유 이엔지 금천지점",
+                       "category":  "소매",
+                       "address":  "서울특별시 금천구 독산로 147",
+                       "latitude":  37.4605050644851,
+                       "longitude":  126.904444351823
+                   },
+                   {
+                       "id":  "MA0106202601A0395852",
+                       "name":  "(주)에이젯씨푸드",
+                       "category":  "소매",
+                       "address":  "서울특별시 금천구 범안로21길 29",
+                       "latitude":  37.4677780874979,
+                       "longitude":  126.895979627015
+                   },
+                   {
+                       "id":  "MA0106202601A2432358",
+                       "name":  "(주)에이프로시스템",
+                       "category":  "소매",
+                       "address":  "서울특별시 금천구 두산로 70",
+                       "latitude":  37.4689671109965,
+                       "longitude":  126.895627546782
+                   },
+                   {
+                       "id":  "MA0106202506A0767587",
+                       "name":  "(주)파이모",
+                       "category":  "소매",
+                       "address":  "서울특별시 구로구 디지털로30길 31",
+                       "latitude":  37.482681104709,
+                       "longitude":  126.896343385869
+                   },
+                   {
+                       "id":  "MA0106202601A2040730",
+                       "name":  "(주)하나앤에프",
+                       "category":  "소매",
+                       "address":  "경기도 광명시 소하로 190",
+                       "latitude":  37.4458278489744,
+                       "longitude":  126.894201896532
+                   },
+                   {
+                       "id":  "MA010120220813352985",
+                       "name":  "07오토라이프",
+                       "category":  "수리·개인",
+                       "address":  "서울특별시 금천구 시흥대로 281",
+                       "latitude":  37.4585716525475,
+                       "longitude":  126.898162501768
+                   },
+                   {
+                       "id":  "MA010120220803422657",
+                       "name":  "169모터스",
+                       "category":  "수리·개인",
+                       "address":  "서울특별시 구로구 디지털로 233",
+                       "latitude":  37.481109132015,
+                       "longitude":  126.891642215926
+                   },
+                   {
+                       "id":  "MA0101202305A0170388",
+                       "name":  "179네일",
+                       "category":  "수리·개인",
+                       "address":  "서울특별시 금천구 시흥대로 179",
+                       "latitude":  37.4499160187938,
+                       "longitude":  126.901824593306
+                   },
+                   {
+                       "id":  "MA0101202406A0348812",
+                       "name":  "179에스테틱",
+                       "category":  "수리·개인",
+                       "address":  "서울특별시 금천구 시흥대로 179",
+                       "latitude":  37.4499160187938,
+                       "longitude":  126.901824593306
+                   },
+                   {
+                       "id":  "MA0101202406A0480746",
+                       "name":  "1980모터스",
+                       "category":  "수리·개인",
+                       "address":  "서울특별시 구로구 디지털로 230",
+                       "latitude":  37.4803610882407,
+                       "longitude":  126.89141717619
+                   },
+                   {
+                       "id":  "MA0101202410A0183956",
+                       "name":  "153수학교습소",
+                       "category":  "교육",
+                       "address":  "경기도 광명시 범안로 1039",
+                       "latitude":  37.4621118262158,
+                       "longitude":  126.87826398464
+                   },
+                   {
+                       "id":  "MA0101202410A0019939",
+                       "name":  "153캐드캠학원",
+                       "category":  "교육",
+                       "address":  "서울특별시 금천구 디지털로9길 47",
+                       "latitude":  37.4795719143055,
+                       "longitude":  126.885799297118
+                   },
+                   {
+                       "id":  "MA0101202409A0269457",
+                       "name":  "1등급영어학원",
+                       "category":  "교육",
+                       "address":  "경기도 광명시 소하로 77",
+                       "latitude":  37.4479176882539,
+                       "longitude":  126.884050555073
+                   },
+                   {
+                       "id":  "MA010120220808192997",
+                       "name":  "2WAY어학원투웨이",
+                       "category":  "교육",
+                       "address":  "경기도 광명시 소하로 77",
+                       "latitude":  37.4479176882539,
+                       "longitude":  126.884050555073
+                   },
+                   {
+                       "id":  "MA010120220813596260",
+                       "name":  "2WAY영어학원투웨이",
+                       "category":  "교육",
+                       "address":  "경기도 광명시 소하로 77",
+                       "latitude":  37.4479176882539,
+                       "longitude":  126.884050555073
+                   },
+                   {
+                       "id":  "MA0101202411A0074627",
+                       "name":  "24시싱크대막힘뚫음뚫는곳하수구막혔을때변기막힘뚫음냄새차단",
+                       "category":  "시설관리·임대",
+                       "address":  "서울특별시 금천구 디지털로9길 65",
+                       "latitude":  37.4802651532457,
+                       "longitude":  126.885244249018
+                   },
+                   {
+                       "id":  "MA010120220802637820",
+                       "name":  "2LS",
+                       "category":  "시설관리·임대",
+                       "address":  "서울특별시 금천구 가산로9길 17",
+                       "latitude":  37.4768017640972,
+                       "longitude":  126.891049245932
+                   },
+                   {
+                       "id":  "MA0101202406A0059860",
+                       "name":  "36524PRINT신독산역센터",
+                       "category":  "시설관리·임대",
+                       "address":  "서울특별시 금천구 시흥대로 392",
+                       "latitude":  37.4684558715839,
+                       "longitude":  126.898307353854
+                   },
+                   {
+                       "id":  "MA010120220800737352",
+                       "name":  "gloria",
+                       "category":  "시설관리·임대",
+                       "address":  "서울특별시 구로구 우마2나길 17",
+                       "latitude":  37.4834599591865,
+                       "longitude":  126.890768223334
+                   },
+                   {
+                       "id":  "MA010120220801006064",
+                       "name":  "IT미래TOWER입주자대표위원회",
+                       "category":  "시설관리·임대",
+                       "address":  "서울특별시 금천구 디지털로9길 33",
+                       "latitude":  37.4789234072308,
+                       "longitude":  126.886026399608
+                   },
+                   {
+                       "id":  "MA010120220810595161",
+                       "name":  "2층채움공인중개사사무소",
+                       "category":  "부동산",
+                       "address":  "서울특별시 금천구 금하로5길 7",
+                       "latitude":  37.4541841352434,
+                       "longitude":  126.898643137145
+                   },
+                   {
+                       "id":  "MA010120220808801929",
+                       "name":  "37공사산업개발",
+                       "category":  "부동산",
+                       "address":  "서울특별시 금천구 가산디지털1로 5",
+                       "latitude":  37.4667424136814,
+                       "longitude":  126.886711826909
+                   },
+                   {
+                       "id":  "MA0101202308A0068563",
+                       "name":  "3PRO공인중개사사무소",
+                       "category":  "부동산",
+                       "address":  "서울특별시 금천구 범안로17길 23",
+                       "latitude":  37.4675690973743,
+                       "longitude":  126.894001704328
+                   },
+                   {
+                       "id":  "MA010120220803281296",
+                       "name":  "88부동산공인중개사사무소",
+                       "category":  "부동산",
+                       "address":  "경기도 광명시 하안로 315",
+                       "latitude":  37.4634457972009,
+                       "longitude":  126.878725263254
+                   },
+                   {
+                       "id":  "MA010120220812736976",
+                       "name":  "HR부동산공인중개사사무소",
+                       "category":  "부동산",
+                       "address":  "서울특별시 금천구 시흥대로146길 36",
+                       "latitude":  37.4739179872426,
+                       "longitude":  126.900651399368
+                   },
+                   {
+                       "id":  "MA0101202501A0025576",
+                       "name":  "365백세드림정형외과의원",
+                       "category":  "보건의료",
+                       "address":  "서울특별시 금천구 시흥대로 411",
+                       "latitude":  37.4704284866406,
+                       "longitude":  126.897615107053
+                   },
+                   {
+                       "id":  "MA0101202410A0140403",
+                       "name":  "e-서울이비인후과",
+                       "category":  "보건의료",
+                       "address":  "서울특별시 구로구 디지털로 288",
+                       "latitude":  37.4835723648529,
+                       "longitude":  126.895505475009
+                   },
+                   {
+                       "id":  "MA010120220800953834",
+                       "name":  "가람정신건강의학과의원",
+                       "category":  "보건의료",
+                       "address":  "서울특별시 관악구 시흥대로 552",
+                       "latitude":  37.4821178052498,
+                       "longitude":  126.901409369344
+                   },
+                   {
+                       "id":  "MA010120220804742949",
+                       "name":  "가산경희한의원",
+                       "category":  "보건의료",
+                       "address":  "서울특별시 금천구 가산디지털2로 70",
+                       "latitude":  37.4747030781747,
+                       "longitude":  126.882347331925
+                   },
+                   {
+                       "id":  "MA0101202410A0534314",
+                       "name":  "가산곧바로의원",
+                       "category":  "보건의료",
+                       "address":  "서울특별시 금천구 가산디지털1로 171",
+                       "latitude":  37.4807651927289,
+                       "longitude":  126.880675837505
+                   },
+                   {
+                       "id":  "MA010120220812938614",
+                       "name":  "3에스호텔",
+                       "category":  "숙박",
+                       "address":  "서울특별시 금천구 시흥대로 353",
+                       "latitude":  37.465247288851,
+                       "longitude":  126.897170024079
+                   },
+                   {
+                       "id":  "MA0106202201A0143098",
+                       "name":  "GOLDRIVERHOTEL",
+                       "category":  "숙박",
+                       "address":  "서울특별시 금천구 서부샛길 584",
+                       "latitude":  37.4783558297007,
+                       "longitude":  126.877095763905
+                   },
+                   {
+                       "id":  "MA0106202306A0137263",
+                       "name":  "MIND관광호텔",
+                       "category":  "숙박",
+                       "address":  "서울특별시 금천구 남부순환로 1262",
+                       "latitude":  37.4788830088638,
+                       "longitude":  126.890955778187
+                   },
+                   {
+                       "id":  "MA010120220808698932",
+                       "name":  "가리봉호텔",
+                       "category":  "숙박",
+                       "address":  "서울특별시 구로구 디지털로19길 9",
+                       "latitude":  37.4801612220159,
+                       "longitude":  126.889642428699
+                   },
+                   {
+                       "id":  "MA0101202505A0073023",
+                       "name":  "가인고시텔",
+                       "category":  "숙박",
+                       "address":  "서울특별시 금천구 범안로 1207",
+                       "latitude":  37.4666786963847,
+                       "longitude":  126.895800287289
+                   }
+               ],
+    "airQuality":  [
+                       {
+                           "districtCode":  null,
+                           "districtName":  "금천구",
+                           "measuredAt":  "2026.06.30 21:00",
+                           "grade":  "2",
+                           "pollutant":  "2",
+                           "maxIndex":  65.0,
+                           "nitrogen":  0.015,
+                           "ozone":  0.048,
+                           "carbon":  0.3,
+                           "sulfurous":  0.002,
+                           "pm10":  17.0,
+                           "pm25":  14.0,
+                           "source":  "서울 열린데이터광장"
+                       }
+                   ],
+    "apiSources":  [
+
+                   ],
+    "meta":  {
+
+             }
 }

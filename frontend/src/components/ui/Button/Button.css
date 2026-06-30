@@ -1,0 +1,134 @@
+/* 공통 Button 컴포넌트 — 공공기관 정제형 버튼 시스템 */
+
+.gdp-ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gdp-space-2);
+  border: none;
+  border-radius: var(--gdp-radius-sm);
+  font: inherit;
+  font-weight: var(--gdp-weight-semibold);
+  font-size: var(--gdp-text-sm);
+  letter-spacing: var(--gdp-tracking-wide);
+  line-height: var(--gdp-leading-tight);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--gdp-dur-2) var(--gdp-ease-standard),
+    box-shadow      var(--gdp-dur-2) var(--gdp-ease-standard),
+    opacity         var(--gdp-dur-2) var(--gdp-ease-standard);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.gdp-ui-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gdp-action) 72%, #fff);
+  outline-offset: 3px;
+}
+
+/* ── 크기 ── */
+.gdp-ui-btn--sm {
+  height: 28px;
+  padding: 0 var(--gdp-space-3);
+  font-size: var(--gdp-text-xs);
+  border-radius: var(--gdp-radius-xs);
+}
+
+.gdp-ui-btn--md {
+  height: 36px;
+  padding: 0 var(--gdp-space-4);
+}
+
+.gdp-ui-btn--lg {
+  height: 44px;
+  padding: 0 var(--gdp-space-6);
+  font-size: var(--gdp-text-base);
+  border-radius: var(--gdp-radius-md);
+}
+
+/* ── 변형(variant) ── */
+
+/* 채워진 버튼 (Primary) */
+.gdp-ui-btn--filled {
+  background: var(--gdp-action);
+  color: var(--gdp-action-fg);
+  box-shadow: 0 1px 2px rgba(16, 36, 58, .08), 0 3px 8px rgba(49, 89, 216, .22);
+}
+.gdp-ui-btn--filled:hover {
+  background: var(--gdp-action-hover);
+  box-shadow: 0 2px 4px rgba(16, 36, 58, .10), 0 6px 16px rgba(49, 89, 216, .28);
+}
+.gdp-ui-btn--filled:active {
+  background: var(--gdp-action-hover);
+  box-shadow: 0 1px 2px rgba(16, 36, 58, .10);
+  transform: translateY(1px);
+}
+
+/* 외곽선 버튼 (Outline) */
+.gdp-ui-btn--outline {
+  background: transparent;
+  color: var(--gdp-action);
+  box-shadow: inset 0 0 0 1.5px var(--gdp-action);
+}
+.gdp-ui-btn--outline:hover {
+  background: var(--gdp-action-subtle);
+}
+.gdp-ui-btn--outline:active {
+  background: color-mix(in srgb, var(--gdp-action) 14%, transparent);
+}
+
+/* 유령 버튼 (Ghost) */
+.gdp-ui-btn--ghost {
+  background: transparent;
+  color: var(--gdp-muted);
+}
+.gdp-ui-btn--ghost:hover {
+  background: color-mix(in srgb, var(--gdp-ink) 6%, transparent);
+  color: var(--gdp-ink);
+}
+.gdp-ui-btn--ghost:active {
+  background: color-mix(in srgb, var(--gdp-ink) 10%, transparent);
+}
+
+/* 미묘한 버튼 (Subtle) */
+.gdp-ui-btn--subtle {
+  background: var(--gdp-panel-alt);
+  color: var(--gdp-ink);
+  box-shadow: inset 0 0 0 1px var(--gdp-line);
+}
+.gdp-ui-btn--subtle:hover {
+  background: var(--gdp-line);
+}
+.gdp-ui-btn--subtle:active {
+  background: var(--gdp-line-strong);
+  transform: translateY(1px);
+}
+
+/* 위험 버튼 (Danger) */
+.gdp-ui-btn--danger {
+  background: transparent;
+  color: var(--gdp-coral);
+  box-shadow: inset 0 0 0 1.5px var(--gdp-coral);
+}
+.gdp-ui-btn--danger:hover {
+  background: rgba(239, 107, 91, .08);
+}
+
+/* ── 상태 ── */
+.gdp-ui-btn:disabled,
+.gdp-ui-btn--loading {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── 아이콘만 버튼 ── */
+.gdp-ui-btn--icon {
+  width: 36px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.gdp-ui-btn--icon.gdp-ui-btn--sm { width: 28px; }
+.gdp-ui-btn--icon.gdp-ui-btn--lg { width: 44px; }

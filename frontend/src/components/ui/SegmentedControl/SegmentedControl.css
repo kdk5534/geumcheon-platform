@@ -1,0 +1,79 @@
+/* 공통 SegmentedControl 컴포넌트 — choropleth 세그먼트·GeoPage 필터 등 재사용 */
+
+.gdp-ui-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--gdp-panel-alt);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius-sm);
+  box-shadow: var(--gdp-elev-1);
+}
+
+.gdp-ui-seg__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gdp-space-1);
+  height: 28px;
+  padding: 0 var(--gdp-space-3);
+  border: none;
+  border-radius: calc(var(--gdp-radius-sm) - 3px);
+  background: transparent;
+  color: var(--gdp-muted);
+  font: inherit;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--gdp-dur-1) var(--gdp-ease-standard),
+    color      var(--gdp-dur-1) var(--gdp-ease-standard),
+    box-shadow var(--gdp-dur-1) var(--gdp-ease-standard);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.gdp-ui-seg__item:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gdp-action) 72%, #fff);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.gdp-ui-seg__item:hover:not([aria-checked="true"]) {
+  background: color-mix(in srgb, var(--gdp-ink) 6%, transparent);
+  color: var(--gdp-ink);
+}
+
+.gdp-ui-seg__item[aria-checked="true"] {
+  background: var(--gdp-panel);
+  color: var(--gdp-action);
+  box-shadow: var(--gdp-elev-2);
+}
+
+/* 아이콘 동반 아이템 */
+.gdp-ui-seg__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: .7;
+}
+.gdp-ui-seg__item[aria-checked="true"] .gdp-ui-seg__icon {
+  opacity: 1;
+}
+
+/* 크기 변형 */
+.gdp-ui-seg--sm .gdp-ui-seg__item {
+  height: 24px;
+  padding: 0 var(--gdp-space-2);
+  font-size: var(--gdp-text-xs);
+}
+
+.gdp-ui-seg--lg .gdp-ui-seg__item {
+  height: 36px;
+  padding: 0 var(--gdp-space-4);
+  font-size: var(--gdp-text-sm);
+}

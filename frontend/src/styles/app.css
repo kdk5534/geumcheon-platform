@@ -1,0 +1,6 @@
+/* gdp 전역 스타일 매니페스트 — 분할 파일을 캐스케이드 순서대로 결합 */
+@import "./base-shell.css";
+@import "./pages.css";
+@import "./pages-geo.css";
+@import "./pages-api.css";
+@import "./effects.css";

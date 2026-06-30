@@ -4,7 +4,7 @@
 
 ## 현재 구현
 
-- 위치: `frontend-static` 관리자 영역
+- 위치: `frontend/admin.html` 관리자 콘솔
 - 방식: 백엔드 preview API를 먼저 호출하고, 백엔드 연결 실패 시 CSV는 브라우저에서 로컬 미리보기로 전환
 - 파일 형식: CSV와 Excel은 백엔드 미리보기/매핑이 가능하고, 시설 데이터셋만 확정 저장 가능. Excel은 백엔드가 실행 중일 때만 미리보기 가능
 - 데이터셋 관리: 관리자 영역에서 데이터명, 분야, 출처, 갱신주기, 업로드 방식, 공개 여부, 매핑 필요 여부를 mock으로 편집
@@ -23,7 +23,7 @@
 - API 로그: 최근 수집 실행 내역을 mock 데이터로 필터/검색 가능하게 표시
 - 확정 후 갱신: 시설 데이터셋 업로드 확정 성공 시 생활시설 목록과 지도를 다시 불러옴
 - 오류 안내: 백엔드 검증 실패, 인증 실패, 로컬 미리보기를 구분해 화면에 표시
-- 샘플 파일: `frontend-static/assets/data/sample-facilities.csv`
+- 샘플 파일: `scripts/fixtures/sample-facilities.csv`
 - 백엔드 코드: `backend-egovframe-skeleton/src/main/java/kr/go/geumcheon/dataplatform/admin`
 
 ## 1차 사용자 흐름
@@ -102,7 +102,7 @@ cd <repo-root>
 
 Use these for a quick safety pass when you want to validate the upload flow without waiting on a full Maven test run:
 
-- `Get-ChildItem -Path frontend-static\js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }; node --check frontend-static\serve-static.mjs`
+- `cd frontend && npm run test:e2e` (Playwright E2E 전체)
 - `.\scripts\check-admin-upload.ps1`
 - `.\scripts\check-admin-excel-upload.ps1`
 - `.\scripts\check-local-status.ps1`

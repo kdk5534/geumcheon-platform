@@ -10,7 +10,9 @@ $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $DatabaseRoot = Join-Path $ProjectRoot "database"
 $MigrationFiles = @(
     (Join-Path $DatabaseRoot "migration-20260602-admin-upload.sql"),
-    (Join-Path $DatabaseRoot "migration-20260611-collection-log-index.sql")
+    (Join-Path $DatabaseRoot "migration-20260611-collection-log-index.sql"),
+    (Join-Path $DatabaseRoot "migration-20260620-spatial-scope.sql"),
+    (Join-Path $DatabaseRoot "migration-20260620-parking-grain-split.sql")
 )
 
 function Resolve-PsqlPath {

@@ -1,0 +1,96 @@
+/* 공통 Section/PageHeader 컴포넌트 — 페이지 섹션 헤더 레이아웃 */
+
+.gdp-ui-page {
+  padding: var(--gdp-space-8) clamp(var(--gdp-space-5), 5vw, var(--gdp-space-16));
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.gdp-ui-page-header {
+  margin-bottom: var(--gdp-space-8);
+}
+
+/* 눈썹(eyebrow) 레이블 */
+.gdp-ui-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gdp-space-2);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  color: var(--gdp-action);
+  text-transform: uppercase;
+  margin: 0 0 var(--gdp-space-2);
+}
+
+.gdp-ui-page-title {
+  font-size: var(--gdp-text-3xl);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
+  line-height: var(--gdp-leading-tight);
+  color: var(--gdp-ink);
+  margin: 0 0 var(--gdp-space-3);
+}
+
+.gdp-ui-page-description {
+  font-size: var(--gdp-text-base);
+  color: var(--gdp-muted);
+  line-height: var(--gdp-leading-normal);
+  max-width: 640px;
+  margin: 0;
+}
+
+/* ── 섹션 구분 ── */
+.gdp-ui-section {
+  margin-bottom: var(--gdp-space-10);
+}
+
+.gdp-ui-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gdp-space-4);
+  margin-bottom: var(--gdp-space-5);
+  padding-bottom: var(--gdp-space-3);
+  border-bottom: 1px solid var(--gdp-line);
+}
+
+.gdp-ui-section-title {
+  font-size: var(--gdp-text-lg);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-tight);
+  color: var(--gdp-ink);
+  margin: 0;
+  line-height: var(--gdp-leading-tight);
+}
+
+.gdp-ui-section-action {
+  font-size: var(--gdp-text-sm);
+  color: var(--gdp-action);
+  font-weight: var(--gdp-weight-medium);
+  flex-shrink: 0;
+}
+
+/* ── 그리드 레이아웃 헬퍼 ── */
+.gdp-ui-grid {
+  display: grid;
+  gap: var(--gdp-space-5);
+}
+.gdp-ui-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.gdp-ui-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.gdp-ui-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.gdp-ui-grid--auto { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+@media (max-width: 900px) {
+  .gdp-ui-grid--4 { grid-template-columns: repeat(2, 1fr); }
+  .gdp-ui-grid--3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .gdp-ui-grid--2,
+  .gdp-ui-grid--3,
+  .gdp-ui-grid--4 { grid-template-columns: 1fr; }
+  .gdp-ui-page {
+    padding: var(--gdp-space-6) var(--gdp-space-5);
+  }
+}

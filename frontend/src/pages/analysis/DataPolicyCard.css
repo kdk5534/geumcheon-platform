@@ -1,0 +1,140 @@
+/* DataPolicyCard — 데이터 기준·표시 정책 접이식 컴포넌트 */
+.gdp-policy-card {
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius-md);
+  background: var(--gdp-panel-alt);
+  overflow: hidden;
+}
+
+.gdp-policy-card__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--gdp-space-3);
+  padding: var(--gdp-space-4) var(--gdp-space-5);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+.gdp-policy-card__summary::-webkit-details-marker { display: none; }
+.gdp-policy-card__summary::marker { display: none; }
+
+.gdp-policy-card__summary:hover {
+  background: var(--gdp-gray-100);
+}
+
+.gdp-policy-card__label {
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  color: var(--gdp-ink);
+  flex-shrink: 0;
+}
+
+.gdp-policy-card__meta {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-muted);
+  flex: 1;
+}
+
+.gdp-policy-card__chevron {
+  font-size: var(--gdp-text-base);
+  color: var(--gdp-soft);
+  transition: transform var(--gdp-dur-2) var(--gdp-ease-standard);
+  flex-shrink: 0;
+}
+
+.gdp-policy-card[open] .gdp-policy-card__chevron {
+  transform: rotate(90deg);
+}
+
+.gdp-policy-card__body {
+  padding: var(--gdp-space-4) var(--gdp-space-5) var(--gdp-space-5);
+  border-top: 1px solid var(--gdp-line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-4);
+}
+
+.gdp-policy-card__section-title {
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  color: var(--gdp-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--gdp-tracking-caps);
+  margin: 0 0 var(--gdp-space-2);
+}
+
+.gdp-policy-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-2);
+}
+
+.gdp-policy-card__list li {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--gdp-space-1) var(--gdp-space-3);
+  align-items: baseline;
+}
+
+.gdp-policy-card__list li span {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-soft);
+  padding-top: 2px;
+}
+
+.gdp-policy-card__list li strong {
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-semibold);
+  color: var(--gdp-ink);
+}
+
+.gdp-policy-card__list li small {
+  grid-column: 2;
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-muted);
+  line-height: var(--gdp-leading-relaxed);
+}
+
+.gdp-policy-card__principles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gdp-space-2) var(--gdp-space-4);
+}
+
+.gdp-policy-card__principles span {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-muted);
+}
+
+.gdp-policy-card__principles span::before {
+  content: "·";
+  margin-right: var(--gdp-space-1);
+  color: var(--gdp-soft);
+}
+
+.gdp-policy-card__link {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-medium);
+  color: var(--gdp-action);
+  text-decoration: none;
+  transition: color var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+.gdp-policy-card__link:hover {
+  color: var(--gdp-action-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gdp-policy-card__summary,
+  .gdp-policy-card__chevron,
+  .gdp-policy-card__link {
+    transition: none;
+  }
+}

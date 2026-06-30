@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$SampleFacilitiesCsv = Join-Path $ProjectRoot "frontend-static\assets\data\sample-facilities.csv"
+$SampleFacilitiesCsv = Join-Path $ProjectRoot "scripts\fixtures\sample-facilities.csv"
 
 function Get-EnvValue {
     param([string]$Name, [string]$Default)

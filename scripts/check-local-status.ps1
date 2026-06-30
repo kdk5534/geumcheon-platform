@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$FrontendRoot = Join-Path $ProjectRoot "frontend-static"
+$FrontendRoot = Join-Path $ProjectRoot "frontend"
 $BackendRoot = $ProjectRoot
 
 function Get-EnvValue {
@@ -17,9 +17,12 @@ function Get-EnvValue {
 $DbPortText = Get-EnvValue "DB_PORT" "5432"
 [int]$DbPort = $DbPortText
 
-$AdminLoginId = Get-EnvValue "ADMIN_INITIAL_LOGIN_ID" "admin"
-$AdminPassword = Get-EnvValue "ADMIN_INITIAL_PASSWORD" "admin1234"
-$AdminAuth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$AdminLoginId`:$AdminPassword"))
+$AdminLoginId = [Environment]::GetEnvironmentVariable("ADMIN_INITIAL_LOGIN_ID")
+$AdminPassword = [Environment]::GetEnvironmentVariable("ADMIN_INITIAL_PASSWORD")
+$AdminAuth = $null
+if (-not [string]::IsNullOrWhiteSpace($AdminLoginId) -and -not [string]::IsNullOrWhiteSpace($AdminPassword)) {
+    $AdminAuth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$AdminLoginId`:$AdminPassword"))
+}
 
 function Test-TcpPort {
     param(
@@ -89,27 +92,34 @@ function Write-HttpCheck {
     Write-Output "$Name=$Status ($(Get-StatusLabel -Status $Status))"
 }
 
-$FrontendStatus = Get-HttpStatus -Url "http://localhost:3000/"
+$FrontendStatus = Get-HttpStatus -Url "http://localhost:3100/"
 $BackendHealthStatus = Get-HttpStatus -Url "http://localhost:8080/actuator/health"
 $PublicDatasetsStatus = Get-HttpStatus -Url "http://localhost:8080/api/public/datasets"
-$AdminDatasetsStatus = Get-HttpStatus -Url "http://localhost:8080/api/admin/datasets" -Headers @{ Authorization = "Basic $AdminAuth" }
+$AdminDatasetsStatus = "not-checked"
+if ($AdminAuth) {
+    $AdminDatasetsStatus = Get-HttpStatus -Url "http://localhost:8080/api/admin/datasets" -Headers @{ Authorization = "Basic $AdminAuth" }
+}
 $PostgresTcp = Test-TcpPort -Port $DbPort
 
 Write-Output "frontend=$FrontendStatus ($(Get-StatusLabel -Status $FrontendStatus))"
 Write-Output "backend_health=$BackendHealthStatus ($(Get-StatusLabel -Status $BackendHealthStatus))"
 Write-Output "public_datasets=$PublicDatasetsStatus ($(Get-StatusLabel -Status $PublicDatasetsStatus))"
-Write-Output "admin_datasets=$AdminDatasetsStatus ($(Get-StatusLabel -Status $AdminDatasetsStatus))"
+if ($AdminAuth) {
+    Write-Output "admin_datasets=$AdminDatasetsStatus ($(Get-StatusLabel -Status $AdminDatasetsStatus))"
+} else {
+    Write-Output "admin_datasets=not-checked (ADMIN_INITIAL_* not provided)"
+}
 Write-Output "postgres_tcp_$DbPort=$PostgresTcp"
 
 Write-Output ""
 Write-Output "mock_mode_next="
 if ($FrontendStatus -ne "200") {
-    Write-Output "1. Frontend check needed: cd $FrontendRoot ; node serve-static.mjs"
+    Write-Output "1. Frontend check needed: cd $FrontendRoot ; npm run dev"
 } else {
-    Write-Output "1. Frontend is OK: http://localhost:3000/"
+    Write-Output "1. Frontend is OK: http://localhost:3100/"
 }
 
-if ($BackendHealthStatus -ne "200" -or $PublicDatasetsStatus -ne "200" -or $AdminDatasetsStatus -ne "200") {
+if ($BackendHealthStatus -ne "200" -or $PublicDatasetsStatus -ne "200" -or ($AdminAuth -and $AdminDatasetsStatus -ne "200")) {
     Write-Output "2. Backend check needed: cd $BackendRoot ; .\scripts\run-backend-mock.ps1"
 } else {
     Write-Output "2. Backend mock API is OK: http://localhost:8080/"

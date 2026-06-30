@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
 import kr.go.geumcheon.dataplatform.dataset.DatasetSummary;
+import kr.go.geumcheon.dataplatform.dataset.DatasetOperationalStatusSummary;
 import kr.go.geumcheon.dataplatform.facility.FacilitySummary;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository.CollectorSpec;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository.DatasetRegistryEntry;
@@ -62,13 +63,24 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                     COALESCE(f.phone, '-') AS phone,
                     ST_Y(f.geom) AS latitude,
                     ST_X(f.geom) AS longitude,
-                    COALESCE(d.source_name, COALESCE(f.properties ->> 'source', 'DB')) AS source
+                    COALESCE(d.source_name, COALESCE(f.properties ->> 'source', 'DB')) AS source,
+                    f.spatial_scope,
+                    COALESCE(
+                        f.properties ->> 'REFERENCE_DATE',
+                        f.properties ->> 'referenceDate',
+                        f.properties ->> '데이터기준일자',
+                        TO_CHAR(f.data_base_time, 'YYYY-MM-DD')
+                    ) AS data_reference_date
                 FROM facility f
                 LEFT JOIN dataset d ON d.dataset_id = f.dataset_id
                 WHERE f.is_active = TRUE
                 """);
+        if (query.category() == null || query.category().isBlank() || "전체".equals(query.category())) {
+            sql.append(" AND f.facility_category <> 'PARKING_SPACE_REFERENCE'\n");
+        }
         // && 연산자는 GIST 인덱스를 사용하는 bbox 겹침 검사 (ST_Within보다 빠름)
         appendBboxAndCategory(sql, params, query, "f.geom", "f.facility_category");
+        appendSpatialScope(sql, params, query, "f.spatial_scope");
         sql.append("ORDER BY COALESCE(f.data_base_time, f.created_at) DESC, f.facility_name ASC\n");
         appendPaging(sql, params, query);
 
@@ -80,7 +92,9 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 rs.getString("phone"),
                 rs.getObject("latitude", Double.class),
                 rs.getObject("longitude", Double.class),
-                rs.getString("source")
+                rs.getString("source"),
+                rs.getString("spatial_scope"),
+                rs.getString("data_reference_date")
         ), params.toArray());
     }
 
@@ -95,12 +109,14 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                     COALESCE(s.address_road, s.address_jibun, '-') AS address,
                     COALESCE(ST_Y(s.geom), 0.0) AS latitude,
                     COALESCE(ST_X(s.geom), 0.0) AS longitude,
-                    COALESCE(d.source_name, COALESCE(s.properties ->> 'source', 'API')) AS source
+                    COALESCE(d.source_name, COALESCE(s.properties ->> 'source', 'API')) AS source,
+                    s.spatial_scope
                 FROM store_business s
                 LEFT JOIN dataset d ON d.dataset_id = s.dataset_id
                 WHERE s.is_active = TRUE
                 """);
         appendBboxAndCategory(sql, params, query, "s.geom", "s.industry_large_name");
+        appendSpatialScope(sql, params, query, "s.spatial_scope");
         sql.append("ORDER BY COALESCE(s.data_base_time, s.created_at) DESC, s.store_name ASC\n");
         appendPaging(sql, params, query);
 
@@ -111,8 +127,97 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 rs.getString("address"),
                 rs.getDouble("latitude"),
                 rs.getDouble("longitude"),
-                rs.getString("source")
+                rs.getString("source"),
+                rs.getString("spatial_scope")
         ), params.toArray());
+    }
+
+    @Override
+    public long countFacilities(MapQuery query) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+                SELECT COUNT(*)
+                FROM facility f
+                WHERE f.is_active = TRUE
+                """);
+        if (query.category() == null || query.category().isBlank() || "전체".equals(query.category())) {
+            sql.append(" AND f.facility_category <> 'PARKING_SPACE_REFERENCE'\n");
+        }
+        appendBboxAndCategory(sql, params, query, "f.geom", "f.facility_category");
+        appendSpatialScope(sql, params, query, "f.spatial_scope");
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public List<DatasetOperationalStatusSummary> listDatasetOperationalStatuses() {
+        return jdbcTemplate.query("""
+                SELECT
+                    dataset.dataset_key,
+                    dataset.dataset_name,
+                    dataset.domain,
+                    dataset.source_name,
+                    latest.status AS attempt_status,
+                    latest.finished_at AS attempted_at,
+                    COALESCE(latest.source_record_count, 0) AS attempt_source_count,
+                    COALESCE(latest.saved_record_count, 0) AS attempt_saved_count,
+                    COALESCE(latest.error_message, '') AS attempt_error,
+                    successful.finished_at AS collected_at,
+                    COALESCE(successful.source_record_count, 0) AS success_source_count,
+                    COALESCE(successful.saved_record_count, 0) AS success_saved_count
+                FROM dataset
+                LEFT JOIN LATERAL (
+                    SELECT log.*
+                    FROM dataset_collection_log log
+                    WHERE log.dataset_id = dataset.dataset_id
+                    ORDER BY log.started_at DESC
+                    LIMIT 1
+                ) latest ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT log.*
+                    FROM dataset_collection_log log
+                    WHERE log.dataset_id = dataset.dataset_id
+                      AND log.status = 'SUCCESS'
+                    ORDER BY log.finished_at DESC NULLS LAST, log.started_at DESC
+                    LIMIT 1
+                ) successful ON TRUE
+                WHERE dataset.is_public = TRUE
+                  AND dataset.is_active = TRUE
+                ORDER BY dataset.domain, dataset.dataset_name
+                """, (rs, rowNum) -> {
+            String attemptStatus = normalizeOperationalStatus(rs.getString("attempt_status"));
+            Instant attemptedAt = timestampToInstant(rs.getTimestamp("attempted_at"));
+            Instant collectedAt = timestampToInstant(rs.getTimestamp("collected_at"));
+            return new DatasetOperationalStatusSummary(
+                    rs.getString("dataset_key"),
+                    rs.getString("dataset_name"),
+                    rs.getString("domain"),
+                    rs.getString("source_name"),
+                    attemptStatus,
+                    isoInstant(attemptedAt),
+                    rs.getInt("attempt_source_count"),
+                    rs.getInt("attempt_saved_count"),
+                    failureType(attemptStatus, rs.getString("attempt_error")),
+                    collectedAt == null ? "NO_SUCCESS" : "AVAILABLE",
+                    isoInstant(collectedAt),
+                    rs.getInt("success_source_count"),
+                    rs.getInt("success_saved_count")
+            );
+        });
+    }
+
+    @Override
+    public long countStores(MapQuery query) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+                SELECT COUNT(*)
+                FROM store_business s
+                WHERE s.is_active = TRUE
+                """);
+        appendBboxAndCategory(sql, params, query, "s.geom", "s.industry_large_name");
+        appendSpatialScope(sql, params, query, "s.spatial_scope");
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
+        return count == null ? 0L : count;
     }
 
     /**
@@ -128,7 +233,9 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
             params.add(query.maxLng()); params.add(query.maxLat());
         }
         if (query.category() != null && !query.category().isBlank() && !"전체".equals(query.category())) {
-            sql.append(" AND ").append(categoryCol).append(" = ?\n");
+            // 초기 시드의 소문자 코드(hospital/pharmacy)와 수집 데이터의 대문자 코드가
+            // 함께 존재하므로 공개 필터는 대소문자를 구분하지 않는다.
+            sql.append(" AND UPPER(").append(categoryCol).append(") = UPPER(?)\n");
             params.add(query.category());
         }
     }
@@ -138,6 +245,19 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         sql.append("LIMIT ? OFFSET ?\n");
         params.add(query.size());
         params.add((long) query.page() * query.size());
+    }
+
+    private void appendSpatialScope(StringBuilder sql, List<Object> params, MapQuery query, String scopeCol) {
+        List<String> scopes = query.spatialScopes();
+        sql.append(" AND ").append(scopeCol).append(" IN (");
+        for (int index = 0; index < scopes.size(); index += 1) {
+            if (index > 0) {
+                sql.append(", ");
+            }
+            sql.append("?");
+            params.add(scopes.get(index));
+        }
+        sql.append(")\n");
     }
 
     @Override
@@ -342,6 +462,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
+        CollectionQualityGate.requireValidRowRatio("stores", rows.size(), batchRows.size());
         // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
         if (batchRows.isEmpty()) {
             return 0;
@@ -370,6 +491,14 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN CAST(? AS double precision) IS NULL OR CAST(? AS double precision) IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint(CAST(? AS double precision), CAST(? AS double precision)), 4326) END, CAST(? AS jsonb), CURRENT_TIMESTAMP, TRUE)
                 """, batchRows);
+        jdbcTemplate.update("""
+                UPDATE store_business
+                SET spatial_scope = classify_geumcheon_spatial_scope(
+                    COALESCE(address_road, address_jibun),
+                    geom
+                )
+                WHERE dataset_id = ?
+                """, datasetId);
         return batchRows.size();
     }
 
@@ -392,6 +521,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
+        CollectionQualityGate.requireValidRowRatio("air-quality", rows.size(), batchRows.size());
         // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
         if (batchRows.isEmpty()) {
             return 0;
@@ -425,6 +555,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 batchRows.add(params);
             }
         }
+        CollectionQualityGate.requireValidRowRatio("facility:" + category, rows.size(), batchRows.size());
         // 유효 행이 없으면 DELETE를 실행하지 않아 기존 스냅샷을 보존한다.
         if (batchRows.isEmpty()) {
             return 0;
@@ -450,6 +581,17 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                     CAST(? AS jsonb),
                     CURRENT_TIMESTAMP)
                 """, batchRows);
+        jdbcTemplate.update("""
+                UPDATE facility
+                SET spatial_scope = CASE
+                    WHEN properties ->> 'district' = '금천구' THEN 'GEUMCHEON'
+                    ELSE classify_geumcheon_spatial_scope(
+                        COALESCE(address_road, address_jibun),
+                        geom
+                    )
+                END
+                WHERE dataset_id = ? AND facility_category = ?
+                """, datasetId, category);
         return batchRows.size();
     }
 
@@ -551,19 +693,39 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
+    public Integer latestSuccessfulSourceCount(UUID datasetId) {
+        List<Integer> counts = jdbcTemplate.query(
+                """
+                SELECT source_record_count
+                FROM dataset_collection_log
+                WHERE dataset_id = ?
+                  AND collection_type = 'API'
+                  AND status = 'SUCCESS'
+                ORDER BY finished_at DESC NULLS LAST, started_at DESC
+                LIMIT 1
+                """,
+                (rs, rowNum) -> rs.getInt("source_record_count"),
+                datasetId
+        );
+        return counts.isEmpty() ? null : counts.get(0);
+    }
+
+    @Override
     public List<PopulationSummary> listPopulation() {
         return jdbcTemplate.query("""
                 WITH latest AS (
                     SELECT DISTINCT ON (v.area_name)
                         v.area_name,
                         v.value_numeric,
-                        v.value_json
+                        v.value_json,
+                        v.observed_at,
+                        v.data_base_time
                     FROM indicator_value v
                     JOIN indicator i ON i.indicator_id = v.indicator_id
                     WHERE i.indicator_key = 'resident-population'
                     ORDER BY v.area_name, v.data_base_time DESC NULLS LAST
                 )
-                SELECT area_name, value_numeric, value_json
+                SELECT area_name, value_numeric, value_json, observed_at, data_base_time
                 FROM latest
                 ORDER BY area_name ASC
                 """, (rs, rowNum) -> mapPopulation(rs));
@@ -572,6 +734,11 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     private PopulationSummary mapPopulation(ResultSet rs) throws SQLException {
         String areaName = rs.getString("area_name");
         long total = rs.getLong("value_numeric");
+        Instant observedAt = timestampToInstant(rs.getTimestamp("observed_at"));
+        if (observedAt == null) {
+            observedAt = timestampToInstant(rs.getTimestamp("data_base_time"));
+        }
+        String observedAtText = formatInstant(observedAt);
         try {
             JsonNode json = objectMapper.readTree(rs.getString("value_json"));
             long male = json.path("male").asLong(0);
@@ -587,9 +754,9 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                     ));
                 }
             }
-            return new PopulationSummary(areaName, total, male, female, byAge);
+            return new PopulationSummary(areaName, total, male, female, byAge, observedAtText);
         } catch (JsonProcessingException e) {
-            return new PopulationSummary(areaName, total, 0, 0, List.of());
+            return new PopulationSummary(areaName, total, 0, 0, List.of(), observedAtText);
         }
     }
 
@@ -674,20 +841,23 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     private Object[] buildFacilityRowParams(UUID datasetId, String category, Map<String, String> row) {
         Map<String, String> n = normalizeRow(row);
         String name = firstValue(n,
-                "stationName", "cctv_nm", "pklt_nm", "시설명", "name",
+                "stationName", "cctv_nm", "pklt_nm", "prkplceNm", "시설명", "name",
                 // P4 신규: 공공와이파이(X_SWIFI_MAIN_NM), 무더위쉼터(SHTER_NM), 어린이보호구역(ZONE_NM), 전기차충전소(STAT_NM)
-                "X_SWIFI_MAIN_NM", "SHTER_NM", "ZONE_NM", "STAT_NM");
+                // Phase 1 신규: 전통시장(mrktNm), 도시공원(PARK_NM), 도서관(LBRRY_NM), 박물관미술관(fcltyNm),
+                //   소방용수시설(fcltyNo), 보안등(lmpLcNm), AED(org), 어린이놀이시설(pfctNm)
+                "X_SWIFI_MAIN_NM", "SHTER_NM", "ZONE_NM", "STAT_NM", "TRGET_FCLTY_NM",
+                "mrktNm", "PARK_NM", "LBRRY_NM", "fcltyNm", "fcltyNo", "lmpLcNm", "org", "pfctNm");
         if (name == null || name.isBlank()) {
             return null;
         }
         String originalId = firstValue(n,
-                "stationId", "cctv_manage_no", "pklt_cd", "id",
-                "X_SWIFI_WRDNFC_NO", "SHTER_MANAGE_NO", "STAT_ID");
+                "stationId", "cctv_manage_no", "pklt_cd", "prkplceNo", "id",
+                "X_SWIFI_WRDNFC_NO", "SHTER_MANAGE_NO", "STAT_ID", "sourceOriginalId");
         String description = firstValue(n,
-                "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "description",
-                "INSTL_FLOR_INFO", "SHTER_SE_NM", "CHARGER_TYPE_NM");
+                "rackTotCnt", "cctv_resol", "pklt_knd_nm", "pklt_se_nm", "prkplceType", "prkplceSe", "description",
+                "INSTL_FLOR_INFO", "SHTER_SE_NM", "CHARGER_TYPE_NM", "PRTCAREA_RW");
         String address = firstValue(n,
-                "addr", "daddr", "crd_addr", "도로명주소", "지번주소", "rdnmadr", "address",
+                "addr", "daddr", "crd_addr", "도로명주소", "지번주소", "rdnmadr", "lnmadr", "address",
                 "REFINE_ROADNM_ADDR", "ADDR");
         String lat = firstValue(n,
                 "stationLatitude", "la", "lat", "위도", "latitude", "y_dnts",
@@ -845,6 +1015,41 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
         return "check-required";
     }
 
+    private String normalizeOperationalStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "NO_ATTEMPT";
+        }
+        return status.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String failureType(String status, String errorMessage) {
+        if ("SUCCESS".equals(status) || "NO_ATTEMPT".equals(status)) {
+            return "NONE";
+        }
+        if ("SKIPPED".equals(status)) {
+            return "POLICY_SKIPPED";
+        }
+        String error = safeLower(errorMessage);
+        if (error.contains("quality gate") || error.contains("outside allowed") || error.contains("count change")) {
+            return "QUALITY_GATE";
+        }
+        if (error.contains("timeout") || error.contains("timed out")) {
+            return "TIMEOUT";
+        }
+        if (error.contains("service key") || error.contains("unauthorized") || error.contains("forbidden")
+                || error.contains(" 401") || error.contains(" 403")) {
+            return "AUTHORIZATION";
+        }
+        if (error.contains("ssl") || error.contains("connection") || error.contains("http")) {
+            return "TRANSPORT";
+        }
+        return "COLLECTION_FAILED";
+    }
+
+    private String isoInstant(Instant instant) {
+        return instant == null ? null : instant.toString();
+    }
+
     private String noteFor(CollectorSpec spec, ApiLogSummary latest, String status) {
         if (spec.authKeyRequired() && !spec.apiKeyPresent()) {
             return "API key is missing.";
@@ -924,23 +1129,23 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
 
     private Object[] buildAirQualityRowParams(UUID indicatorId, Map<String, String> row) {
         Map<String, String> normalized = normalizeRow(row);
-        String districtName = firstValue(normalized, "msrstn_nm", "msrstename", "측정소명", "district_name");
+        String districtName = firstValue(normalized, "msrstn_nm", "msrstename", "stationname", "측정소명", "district_name");
         if (districtName == null || districtName.isBlank()) {
             return null;
         }
 
         String districtCode = firstValue(normalized, "msrstn_pbadms_cd", "msradmcode", "측정소 행정코드", "district_code");
-        String measuredAtText = firstValue(normalized, "msrmt_ymd", "msrdate", "측정날짜", "measured_at");
+        String measuredAtText = firstValue(normalized, "msrmt_ymd", "msrdate", "datatime", "측정날짜", "measured_at");
         Instant observedAt = parseObservedAt(measuredAtText);
-        Double maxIndex = parseDouble(firstValue(normalized, "cai", "maxindex", "통합대기환경지수", "index"));
-        String grade = firstValue(normalized, "cai_grd", "grade", "등급");
+        Double maxIndex = parseDouble(firstValue(normalized, "cai", "maxindex", "khaivalue", "통합대기환경지수", "index"));
+        String grade = firstValue(normalized, "cai_grd", "khaigrade", "grade", "등급");
         String pollutant = firstValue(normalized, "crst_sbstn", "pollutant", "지수결정물질");
-        Double nitrogen = parseDouble(firstValue(normalized, "ntdx", "nitrogen", "이산화질소"));
-        Double ozone = parseDouble(firstValue(normalized, "ozon", "ozone", "오존"));
-        Double carbon = parseDouble(firstValue(normalized, "cbmx", "carbon", "일산화탄소"));
-        Double sulfurous = parseDouble(firstValue(normalized, "spdx", "slfrdxd", "sulfurous", "아황산가스"));
-        Double pm10 = parseDouble(firstValue(normalized, "pm", "pm10", "미세먼지"));
-        Double pm25 = parseDouble(firstValue(normalized, "fpm", "pm25", "초미세먼지"));
+        Double nitrogen = parseDouble(firstValue(normalized, "ntdx", "no2value", "nitrogen", "이산화질소"));
+        Double ozone = parseDouble(firstValue(normalized, "ozon", "o3value", "ozone", "오존"));
+        Double carbon = parseDouble(firstValue(normalized, "cbmx", "covalue", "carbon", "일산화탄소"));
+        Double sulfurous = parseDouble(firstValue(normalized, "spdx", "so2value", "slfrdxd", "sulfurous", "아황산가스"));
+        Double pm10 = parseDouble(firstValue(normalized, "pm", "pm10", "pm10value", "미세먼지"));
+        Double pm25 = parseDouble(firstValue(normalized, "fpm", "pm25", "pm25value", "초미세먼지"));
         String properties = toJson(row);
         String basePeriod = measuredAtText == null ? null : measuredAtText.replaceAll("[^0-9]", "");
         return new Object[] {
@@ -958,7 +1163,7 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
     private AirQualitySummary mapAirQuality(ResultSet rs, int rowNum) throws SQLException {
         Instant observedAt = timestampToInstant(rs.getTimestamp("observed_at"));
         Map<String, String> normalized = normalizeJsonRow(rs.getString("value_json"));
-        String grade = firstValue(normalized, "cai_grd", "grade", "등급");
+        String grade = firstValue(normalized, "cai_grd", "khaigrade", "grade", "등급");
         String pollutant = firstValue(normalized, "crst_sbstn", "pollutant", "지수결정물질");
         if (grade == null || grade.isBlank()) {
             grade = rs.getString("value_text");
@@ -973,12 +1178,12 @@ public class JdbcPublicDataRepository implements PublicDataRepository {
                 grade,
                 pollutant,
                 rs.getObject("value_numeric") == null ? null : rs.getDouble("value_numeric"),
-                parseDouble(firstValue(normalized, "ntdx", "nitrogen", "이산화질소")),
-                parseDouble(firstValue(normalized, "ozon", "ozone", "오존")),
-                parseDouble(firstValue(normalized, "cbmx", "carbon", "일산화탄소")),
-                parseDouble(firstValue(normalized, "spdx", "slfrdxd", "sulfurous", "아황산가스")),
-                parseDouble(firstValue(normalized, "pm", "pm10", "미세먼지")),
-                parseDouble(firstValue(normalized, "fpm", "pm25", "초미세먼지")),
+              parseDouble(firstValue(normalized, "ntdx", "no2value", "nitrogen", "이산화질소")),
+              parseDouble(firstValue(normalized, "ozon", "o3value", "ozone", "오존")),
+              parseDouble(firstValue(normalized, "cbmx", "covalue", "carbon", "일산화탄소")),
+              parseDouble(firstValue(normalized, "spdx", "so2value", "slfrdxd", "sulfurous", "아황산가스")),
+              parseDouble(firstValue(normalized, "pm", "pm10", "pm10value", "미세먼지")),
+              parseDouble(firstValue(normalized, "fpm", "pm25", "pm25value", "초미세먼지")),
                 "서울 열린데이터광장"
         );
     }

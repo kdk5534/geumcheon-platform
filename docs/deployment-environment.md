@@ -4,7 +4,7 @@
 
 ## 1. 배포 구성
 
-- `frontend-static/`: 정적 프론트엔드
+- `frontend/`: React 19+Vite+TypeScript 정식 메인 프론트엔드 (포트 3100)
 - `backend-egovframe-skeleton/`: Spring Boot/eGovFrame 백엔드
 - `database/`: PostgreSQL + PostGIS 스키마 초안
 - `docs/`: 운영 절차와 데이터 정책 문서
@@ -36,7 +36,7 @@ WORKNET_API_KEY=
 
 ADMIN_INITIAL_LOGIN_ID=admin
 ADMIN_INITIAL_PASSWORD=replace-with-a-strong-password
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+CORS_ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100
 
 UPLOAD_BASE_PATH=./uploads
 MAX_UPLOAD_SIZE_MB=50
@@ -51,8 +51,9 @@ MAX_UPLOAD_SIZE_MB=50
 ### 프론트만 실행
 
 ```powershell
-cd <repo-root>\frontend-static
-node serve-static.mjs
+cd <repo-root>\frontend
+npm run dev
+# http://localhost:3100 에서 실행됩니다.
 ```
 
 ### 백엔드 mock 실행
@@ -74,7 +75,7 @@ cd <repo-root>
 ### 프론트엔드
 
 - 정적 파일을 CDN, 웹 서버, 또는 정적 호스팅에 올립니다.
-- `frontend-static`은 백엔드 주소만 바꾸면 재빌드 없이도 읽기 쉬운 구조를 유지합니다.
+- `frontend/`는 Vite 빌드 산출물(`npm run build`)을 CDN·웹 서버·정적 호스팅에 올립니다. 백엔드 경로는 `public/env-config.js`의 `BACKEND_API_BASE`로 주입합니다.
 
 ### 백엔드
 

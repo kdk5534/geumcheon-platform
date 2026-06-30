@@ -1,0 +1,162 @@
+/* 공통 KPICard 컴포넌트 — 주요 지표 수치 표시 카드 (공공기관 정제형) */
+
+.gdp-ui-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-2);
+  background: var(--gdp-panel);
+  border: 1px solid var(--gdp-line);
+  border-radius: var(--gdp-radius);
+  padding: var(--gdp-space-5) var(--gdp-space-6);
+  box-shadow: var(--gdp-elev-1);
+  min-width: 0;
+  transition: box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+.gdp-ui-kpi:hover {
+  box-shadow: var(--gdp-elev-2);
+}
+
+/* 상단: 라벨 + 배지/변동값 행 */
+.gdp-ui-kpi__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gdp-space-2);
+}
+
+/* 라벨 */
+.gdp-ui-kpi__label {
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-caps);
+  color: var(--gdp-muted);
+  text-transform: uppercase;
+  line-height: var(--gdp-leading-tight);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 주요 수치 */
+.gdp-ui-kpi__value {
+  font-size: var(--gdp-text-2xl);
+  font-weight: var(--gdp-weight-bold);
+  letter-spacing: var(--gdp-tracking-tight);
+  line-height: var(--gdp-leading-tight);
+  color: var(--gdp-ink);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.gdp-ui-kpi__value--sm {
+  font-size: var(--gdp-text-xl);
+}
+
+/* 단위 */
+.gdp-ui-kpi__unit {
+  font-size: var(--gdp-text-sm);
+  font-weight: var(--gdp-weight-medium);
+  color: var(--gdp-muted);
+  margin-left: var(--gdp-space-1);
+  vertical-align: baseline;
+}
+
+/* 변동값 (증감) */
+.gdp-ui-kpi__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
+  padding: 2px var(--gdp-space-2);
+  border-radius: var(--gdp-radius-pill);
+}
+.gdp-ui-kpi__delta--up {
+  background: color-mix(in srgb, var(--gdp-mint) 12%, transparent);
+  color: color-mix(in srgb, var(--gdp-mint) 80%, #000);
+}
+.gdp-ui-kpi__delta--down {
+  background: color-mix(in srgb, var(--gdp-coral) 12%, transparent);
+  color: color-mix(in srgb, var(--gdp-coral) 80%, #000);
+}
+.gdp-ui-kpi__delta--neutral {
+  background: var(--gdp-gray-100);
+  color: var(--gdp-muted);
+}
+
+/* 다크모드 */
+.gdp-app[data-theme="dark"] .gdp-ui-kpi__delta--up {
+  background: color-mix(in srgb, var(--gdp-mint) 20%, transparent);
+  color: var(--gdp-mint);
+}
+.gdp-app[data-theme="dark"] .gdp-ui-kpi__delta--down {
+  background: color-mix(in srgb, var(--gdp-coral) 20%, transparent);
+  color: var(--gdp-coral);
+}
+.gdp-app[data-theme="dark"] .gdp-ui-kpi__delta--neutral {
+  background: var(--gdp-gray-200);
+}
+
+/* 보조 텍스트 */
+.gdp-ui-kpi__sub {
+  font-size: var(--gdp-text-xs);
+  color: var(--gdp-soft);
+  line-height: var(--gdp-leading-snug);
+  margin: 0;
+}
+
+/* 색 강조 라인 + 그라데이션 틴트 + 리프트 + 글로우 (Phase 5) */
+.gdp-ui-kpi--cobalt {
+  border-left: 3px solid var(--gdp-cobalt);
+  background: var(--gdp-tint-cobalt, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--cobalt:hover {
+  box-shadow: var(--gdp-glow-cobalt, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--mint {
+  border-left: 3px solid var(--gdp-mint);
+  background: var(--gdp-tint-mint, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--mint:hover {
+  box-shadow: var(--gdp-glow-mint, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--coral {
+  border-left: 3px solid var(--gdp-coral);
+  background: var(--gdp-tint-coral, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--coral:hover {
+  box-shadow: var(--gdp-glow-coral, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+.gdp-ui-kpi--amber {
+  border-left: 3px solid var(--gdp-amber);
+  background: var(--gdp-tint-amber, var(--gdp-panel)), var(--gdp-panel);
+}
+.gdp-ui-kpi--amber:hover {
+  box-shadow: var(--gdp-glow-amber, var(--gdp-elev-2));
+  transform: translateY(-2px);
+}
+
+/* 원래 호버 오버라이드 (accent 있을 때는 위 글로우 사용) */
+.gdp-ui-kpi[class*="gdp-ui-kpi--"]:hover {
+  transition:
+    transform var(--gdp-dur-2) var(--gdp-ease-standard),
+    box-shadow var(--gdp-dur-2) var(--gdp-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gdp-ui-kpi--cobalt:hover,
+  .gdp-ui-kpi--mint:hover,
+  .gdp-ui-kpi--coral:hover,
+  .gdp-ui-kpi--amber:hover {
+    transform: none;
+  }
+}

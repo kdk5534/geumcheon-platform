@@ -1,0 +1,70 @@
+/* 공통 Badge/StatusBadge 컴포넌트 — 데이터셋 상태 및 일반 배지 */
+
+.gdp-ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gdp-space-1);
+  padding: 0 var(--gdp-space-2);
+  height: 20px;
+  border-radius: var(--gdp-radius-pill);
+  font-size: var(--gdp-text-xs);
+  font-weight: var(--gdp-weight-semibold);
+  letter-spacing: var(--gdp-tracking-wide);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ── 색 변형 ── */
+.gdp-ui-badge--neutral {
+  background: var(--gdp-gray-100);
+  color: var(--gdp-gray-600);
+}
+.gdp-ui-badge--cobalt {
+  background: color-mix(in srgb, var(--gdp-cobalt) 12%, transparent);
+  color: var(--gdp-cobalt);
+}
+.gdp-ui-badge--green {
+  background: color-mix(in srgb, var(--gdp-mint) 12%, transparent);
+  color: color-mix(in srgb, var(--gdp-mint) 80%, #000);
+}
+.gdp-ui-badge--amber {
+  background: color-mix(in srgb, var(--gdp-amber) 14%, transparent);
+  color: color-mix(in srgb, var(--gdp-amber) 80%, #000);
+}
+.gdp-ui-badge--red {
+  background: color-mix(in srgb, var(--gdp-coral) 12%, transparent);
+  color: color-mix(in srgb, var(--gdp-coral) 80%, #000);
+}
+
+/* 다크모드 오버라이드 */
+.gdp-app[data-theme="dark"] .gdp-ui-badge--neutral {
+  background: var(--gdp-gray-200);
+  color: var(--gdp-gray-700);
+}
+.gdp-app[data-theme="dark"] .gdp-ui-badge--green {
+  background: color-mix(in srgb, var(--gdp-mint) 20%, transparent);
+  color: var(--gdp-mint);
+}
+.gdp-app[data-theme="dark"] .gdp-ui-badge--amber {
+  background: color-mix(in srgb, var(--gdp-amber) 20%, transparent);
+  color: var(--gdp-amber);
+}
+.gdp-app[data-theme="dark"] .gdp-ui-badge--red {
+  background: color-mix(in srgb, var(--gdp-coral) 20%, transparent);
+  color: var(--gdp-coral);
+}
+
+/* ── 상태 배지 (기존 gdp-status-badge--* 클래스명 유지 — E2E 의존) ── */
+/* 아래 클래스는 기존 app.css의 gdp-status-badge--* 와 동일한 출력을 내되
+   토큰 기반으로 구현. 기존 클래스명은 절대 변경하지 않음. */
+.gdp-ui-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gdp-ui-status-dot--green  { background: var(--gdp-mint); }
+.gdp-ui-status-dot--amber  { background: var(--gdp-amber); }
+.gdp-ui-status-dot--red    { background: var(--gdp-coral); }
+.gdp-ui-status-dot--gray   { background: var(--gdp-soft); }

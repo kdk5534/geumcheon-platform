@@ -8,7 +8,12 @@ public record PopulationSummary(
         long total,
         long male,
         long female,
-        List<AgeBand> byAge
+        List<AgeBand> byAge,
+        String observedAt
 ) {
+    public PopulationSummary(String areaName, long total, long male, long female, List<AgeBand> byAge) {
+        this(areaName, total, male, female, byAge, null);
+    }
+
     public record AgeBand(String ageBand, long male, long female) {}
 }

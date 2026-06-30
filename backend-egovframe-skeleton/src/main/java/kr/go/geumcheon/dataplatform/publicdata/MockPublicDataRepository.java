@@ -1,6 +1,7 @@
 package kr.go.geumcheon.dataplatform.publicdata;
 
 import kr.go.geumcheon.dataplatform.dataset.DatasetRegistry;
+import kr.go.geumcheon.dataplatform.dataset.DatasetOperationalStatusSummary;
 import kr.go.geumcheon.dataplatform.dataset.DatasetSummary;
 import kr.go.geumcheon.dataplatform.facility.FacilitySummary;
 import kr.go.geumcheon.dataplatform.publicdata.PublicDataRepository.CollectorSpec;
@@ -47,11 +48,38 @@ public class MockPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
+    public List<DatasetOperationalStatusSummary> listDatasetOperationalStatuses() {
+        return datasetRegistry.listDatasetSummaries().stream()
+                .map(dataset -> {
+                    CollectionLogEntry latest = latestLogAny(dataset.datasetKey(), false);
+                    CollectionLogEntry successful = latestLogAny(dataset.datasetKey(), true);
+                    String attemptStatus = latest == null ? "NO_ATTEMPT" : latest.status().toUpperCase(Locale.ROOT);
+                    return new DatasetOperationalStatusSummary(
+                            dataset.datasetKey(),
+                            dataset.datasetName(),
+                            dataset.domain(),
+                            dataset.sourceName(),
+                            attemptStatus,
+                            latest == null ? null : latest.finishedAt().toString(),
+                            latest == null ? 0 : latest.sourceRecordCount(),
+                            latest == null ? 0 : latest.savedRecordCount(),
+                            mockFailureType(attemptStatus, latest == null ? null : latest.errorMessage()),
+                            successful == null ? "NO_SUCCESS" : "AVAILABLE",
+                            successful == null ? null : successful.finishedAt().toString(),
+                            successful == null ? 0 : successful.sourceRecordCount(),
+                            successful == null ? 0 : successful.savedRecordCount()
+                    );
+                })
+                .toList();
+    }
+
+    @Override
     public List<FacilitySummary> listFacilities(MapQuery query) {
         return defaultFacilities().stream()
                 .filter(f -> !query.hasBbox() || isInBbox(f.latitude(), f.longitude(), query))
                 .filter(f -> query.category() == null || query.category().isBlank()
-                        || "전체".equals(query.category()) || query.category().equals(f.category()))
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(f.category()))
+                .filter(f -> query.spatialScopes().contains(f.spatialScope()))
                 .skip((long) query.page() * query.size())
                 .limit(query.size())
                 .toList();
@@ -62,10 +90,35 @@ public class MockPublicDataRepository implements PublicDataRepository {
         return defaultStores().stream()
                 .filter(s -> !query.hasBbox() || isInBbox(s.latitude(), s.longitude(), query))
                 .filter(s -> query.category() == null || query.category().isBlank()
-                        || "전체".equals(query.category()) || query.category().equals(s.category()))
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(s.category()))
+                .filter(s -> query.spatialScopes().contains(s.spatialScope()))
                 .skip((long) query.page() * query.size())
                 .limit(query.size())
                 .toList();
+    }
+
+    @Override
+    public long countFacilities(MapQuery query) {
+        return defaultFacilities().stream()
+                .filter(f -> !query.hasBbox() || isInBbox(f.latitude(), f.longitude(), query))
+                .filter(f -> query.category() == null || query.category().isBlank()
+                        || "전체".equals(query.category()) || query.category().equalsIgnoreCase(f.category()))
+                .filter(f -> query.spatialScopes().contains(f.spatialScope()))
+                .count();
+    }
+
+    @Override
+    public long countStores(MapQuery query) {
+        return listStores(new MapQuery(
+                query.minLat(),
+                query.minLng(),
+                query.maxLat(),
+                query.maxLng(),
+                query.category(),
+                query.scope(),
+                0,
+                MapQuery.MAX_SIZE
+        )).size();
     }
 
     private boolean isInBbox(Double lat, Double lng, MapQuery q) {
@@ -178,6 +231,19 @@ public class MockPublicDataRepository implements PublicDataRepository {
     }
 
     @Override
+    public Integer latestSuccessfulSourceCount(UUID datasetId) {
+        String datasetKey = datasetKeysById.get(datasetId);
+        return collectionLogs.stream()
+                .filter(log -> java.util.Objects.equals(datasetKey, log.datasetKey()))
+                .filter(log -> "API".equalsIgnoreCase(log.collectionType()))
+                .filter(log -> "SUCCESS".equalsIgnoreCase(log.status()))
+                .sorted(java.util.Comparator.comparing(CollectionLogEntry::finishedAt).reversed())
+                .map(CollectionLogEntry::sourceRecordCount)
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
     public List<PopulationSummary> listPopulation() {
         return List.of();
     }
@@ -280,6 +346,23 @@ public class MockPublicDataRepository implements PublicDataRepository {
                 .filter(entry -> entry.collectionType().equalsIgnoreCase(collectionType))
                 .max(Comparator.comparing(CollectionLogEntry::finishedAt))
                 .orElse(null);
+    }
+
+    private CollectionLogEntry latestLogAny(String datasetKey, boolean successOnly) {
+        return collectionLogs.stream()
+                .filter(entry -> entry.datasetKey().equals(datasetKey))
+                .filter(entry -> !successOnly || "SUCCESS".equalsIgnoreCase(entry.status()))
+                .max(Comparator.comparing(CollectionLogEntry::finishedAt))
+                .orElse(null);
+    }
+
+    private String mockFailureType(String status, String errorMessage) {
+        if ("SUCCESS".equals(status) || "NO_ATTEMPT".equals(status)) return "NONE";
+        if ("SKIPPED".equals(status)) return "POLICY_SKIPPED";
+        String error = errorMessage == null ? "" : errorMessage.toLowerCase(Locale.ROOT);
+        if (error.contains("quality gate") || error.contains("count change")) return "QUALITY_GATE";
+        if (error.contains("timeout")) return "TIMEOUT";
+        return "COLLECTION_FAILED";
     }
 
     private ApiLogSummary toApiLogSummary(CollectionLogEntry entry, CollectorSpec spec) {

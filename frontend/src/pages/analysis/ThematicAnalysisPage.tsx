@@ -6,6 +6,7 @@ import { LinkedChart } from "../overview/components/LinkedChart";
 import { VworldMap } from "../overview/components/VworldMap";
 import { EmptyState, FacilityItemBody, FacilityStack } from "./AnalysisFacilityList";
 import { DataPolicyCard } from "./DataPolicyCard";
+import { PopulationInsightPanel } from "./PopulationInsightPanel";
 
 interface Props {
   topic: OverviewTopic;
@@ -470,6 +471,8 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
                 </Link>
               </div>
             </div>
+          ) : topic === "population" && model.population.total > 0 ? (
+            <PopulationInsightPanel model={model} district={district} onSelectDong={setDistrict} />
           ) : showFacilityMap && relatedFacilities.length ? (
             <FacilityStack
               facilities={relatedFacilities}

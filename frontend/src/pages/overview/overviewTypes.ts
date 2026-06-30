@@ -52,6 +52,7 @@ export interface PopulationStructure {
   byAge: AgeBandDatum[];
   hasGender: boolean;
   hasAgeBands: boolean;
+  observedAt?: string;
 }
 
 export interface OverviewModel {

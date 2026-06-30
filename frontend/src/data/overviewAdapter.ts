@@ -56,6 +56,7 @@ function adaptPopulationStructure(items: RawPopulation[]): PopulationStructure {
   let total = 0;
   let male = 0;
   let female = 0;
+  let observedAt: string | undefined;
   const bandAccumulator = new Map<string, { male: number; female: number }>();
 
   for (const item of items) {
@@ -63,6 +64,7 @@ function adaptPopulationStructure(items: RawPopulation[]): PopulationStructure {
     total += itemTotal;
     male += numberValue(item.male);
     female += numberValue(item.female);
+    if (!observedAt && item.observedAt) observedAt = item.observedAt;
 
     if (Array.isArray(item.byAge)) {
       for (const band of item.byAge) {
@@ -91,6 +93,7 @@ function adaptPopulationStructure(items: RawPopulation[]): PopulationStructure {
     byAge,
     hasGender: male + female > 0,
     hasAgeBands: byAge.length > 0,
+    observedAt,
   };
 }
 

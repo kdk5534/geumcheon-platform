@@ -1,0 +1,90 @@
+/* 인구 페이지 전용 패널 레이아웃 스타일 */
+.gdp-pop-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-6, 1.5rem);
+}
+
+.gdp-pop-panel .gdp-ui-section {
+  background: var(--gdp-surface-2, #f8f9fa);
+  border-radius: var(--gdp-radius-lg, 0.75rem);
+  padding: var(--gdp-space-4, 1rem) var(--gdp-space-5, 1.25rem);
+}
+
+.gdp-pop-panel .gdp-ui-section-title {
+  font-size: var(--gdp-text-sm, 0.8125rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gdp-text-muted, #6b7280);
+  margin-block-end: var(--gdp-space-3, 0.75rem);
+}
+
+/* KPI 그리드 */
+.gdp-pop-panel .gdp-ui-grid--2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gdp-space-3, 0.75rem);
+}
+
+/* 행정동 필터 노트 */
+.gdp-pop-panel__district-note {
+  display: flex;
+  align-items: center;
+  gap: var(--gdp-space-2, 0.5rem);
+  margin-block-start: var(--gdp-space-2, 0.5rem);
+  font-size: var(--gdp-text-sm, 0.8125rem);
+  color: var(--gdp-text-muted, #6b7280);
+}
+
+.gdp-pop-panel__district-note button {
+  background: none;
+  border: 1px solid var(--gdp-border, #e5e7eb);
+  border-radius: var(--gdp-radius-sm, 0.25rem);
+  padding: 0.125rem 0.5rem;
+  font-size: var(--gdp-text-xs, 0.75rem);
+  cursor: pointer;
+  color: var(--gdp-text-muted, #6b7280);
+}
+
+.gdp-pop-panel__district-note button:hover {
+  background: var(--gdp-surface-3, #e9ecef);
+}
+
+/* 출처 섹션 */
+.gdp-pop-panel__provenance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gdp-space-2, 0.5rem);
+  font-size: var(--gdp-text-sm, 0.8125rem);
+  color: var(--gdp-text-muted, #6b7280);
+}
+
+.gdp-pop-panel__provenance p {
+  display: flex;
+  gap: var(--gdp-space-2, 0.5rem);
+}
+
+.gdp-pop-panel__provenance span {
+  font-weight: 600;
+  color: var(--gdp-text-base, #374151);
+  min-width: 2.5rem;
+}
+
+.gdp-pop-panel__provenance a {
+  color: var(--gdp-action, #2563eb);
+  text-decoration: underline;
+  font-size: var(--gdp-text-xs, 0.75rem);
+}
+
+/* 다크모드 */
+.gdp-app.is-dark .gdp-pop-panel .gdp-ui-section {
+  background: var(--gdp-surface-2);
+}
+
+/* 모바일 */
+@media (max-width: 640px) {
+  .gdp-pop-panel .gdp-ui-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}

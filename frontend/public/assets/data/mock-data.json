@@ -1,12 +1,145 @@
 {
   "population": [
-    { "areaName": "가산동", "total": 24800 },
-    { "areaName": "독산1동", "total": 31100 },
-    { "areaName": "독산2동", "total": 18700 },
-    { "areaName": "독산3동", "total": 22150 },
-    { "areaName": "독산4동", "total": 19650 },
-    { "areaName": "시흥1동", "total": 29200 },
-    { "areaName": "시흥2동", "total": 20340 }
+    {
+      "areaName": "가산동", "total": 25518, "male": 13632, "female": 11886,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 292,  "female": 257  },
+        { "ageBand": "10~19세", "male": 281,  "female": 281  },
+        { "ageBand": "20~29세", "male": 2829, "female": 3565 },
+        { "ageBand": "30~39세", "male": 4448, "female": 3269 },
+        { "ageBand": "40~49세", "male": 1816, "female": 1128 },
+        { "ageBand": "50~59세", "male": 1530, "female": 1069 },
+        { "ageBand": "60~69세", "male": 1442, "female": 1183 },
+        { "ageBand": "70세 이상", "male": 994, "female": 1134 }
+      ]
+    },
+    {
+      "areaName": "독산제1동", "total": 47651, "male": 24099, "female": 23552,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 2181, "female": 2151 },
+        { "ageBand": "10~19세", "male": 2327, "female": 2194 },
+        { "ageBand": "20~29세", "male": 3563, "female": 3511 },
+        { "ageBand": "30~39세", "male": 4112, "female": 3958 },
+        { "ageBand": "40~49세", "male": 4248, "female": 4120 },
+        { "ageBand": "50~59세", "male": 3889, "female": 3715 },
+        { "ageBand": "60~69세", "male": 2374, "female": 2394 },
+        { "ageBand": "70세 이상", "male": 1405, "female": 1509 }
+      ]
+    },
+    {
+      "areaName": "독산제2동", "total": 17090, "male": 8568, "female": 8522,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 549,  "female": 527  },
+        { "ageBand": "10~19세", "male": 622,  "female": 577  },
+        { "ageBand": "20~29세", "male": 1243, "female": 1254 },
+        { "ageBand": "30~39세", "male": 1498, "female": 1425 },
+        { "ageBand": "40~49세", "male": 1554, "female": 1516 },
+        { "ageBand": "50~59세", "male": 1541, "female": 1565 },
+        { "ageBand": "60~69세", "male": 932,  "female": 1002 },
+        { "ageBand": "70세 이상", "male": 629, "female": 656 }
+      ]
+    },
+    {
+      "areaName": "독산제3동", "total": 22584, "male": 11349, "female": 11235,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 868,  "female": 830  },
+        { "ageBand": "10~19세", "male": 851,  "female": 803  },
+        { "ageBand": "20~29세", "male": 1731, "female": 1676 },
+        { "ageBand": "30~39세", "male": 2054, "female": 1951 },
+        { "ageBand": "40~49세", "male": 2139, "female": 2071 },
+        { "ageBand": "50~59세", "male": 1997, "female": 2005 },
+        { "ageBand": "60~69세", "male": 1066, "female": 1148 },
+        { "ageBand": "70세 이상", "male": 643, "female": 751 }
+      ]
+    },
+    {
+      "areaName": "독산제4동", "total": 13772, "male": 6904, "female": 6868,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 548,  "female": 531  },
+        { "ageBand": "10~19세", "male": 527,  "female": 510  },
+        { "ageBand": "20~29세", "male": 999,  "female": 1007 },
+        { "ageBand": "30~39세", "male": 1185, "female": 1124 },
+        { "ageBand": "40~49세", "male": 1291, "female": 1250 },
+        { "ageBand": "50~59세", "male": 1257, "female": 1261 },
+        { "ageBand": "60~69세", "male": 707,  "female": 769  },
+        { "ageBand": "70세 이상", "male": 390, "female": 416 }
+      ]
+    },
+    {
+      "areaName": "시흥제1동", "total": 30985, "male": 15327, "female": 15658,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 1209, "female": 1147 },
+        { "ageBand": "10~19세", "male": 1274, "female": 1224 },
+        { "ageBand": "20~29세", "male": 2236, "female": 2411 },
+        { "ageBand": "30~39세", "male": 2609, "female": 2671 },
+        { "ageBand": "40~49세", "male": 2784, "female": 2836 },
+        { "ageBand": "50~59세", "male": 2595, "female": 2700 },
+        { "ageBand": "60~69세", "male": 1571, "female": 1628 },
+        { "ageBand": "70세 이상", "male": 1049, "female": 1041 }
+      ]
+    },
+    {
+      "areaName": "시흥제2동", "total": 19707, "male": 9451, "female": 10256,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 605,  "female": 583  },
+        { "ageBand": "10~19세", "male": 688,  "female": 651  },
+        { "ageBand": "20~29세", "male": 1273, "female": 1461 },
+        { "ageBand": "30~39세", "male": 1488, "female": 1709 },
+        { "ageBand": "40~49세", "male": 1745, "female": 1956 },
+        { "ageBand": "50~59세", "male": 1712, "female": 1892 },
+        { "ageBand": "60~69세", "male": 1175, "female": 1281 },
+        { "ageBand": "70세 이상", "male": 765, "female": 723 }
+      ]
+    },
+    {
+      "areaName": "시흥제3동", "total": 9943, "male": 4914, "female": 5029,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 346,  "female": 328  },
+        { "ageBand": "10~19세", "male": 393,  "female": 362  },
+        { "ageBand": "20~29세", "male": 649,  "female": 711  },
+        { "ageBand": "30~39세", "male": 831,  "female": 878  },
+        { "ageBand": "40~49세", "male": 906,  "female": 940  },
+        { "ageBand": "50~59세", "male": 839,  "female": 883  },
+        { "ageBand": "60~69세", "male": 559,  "female": 583  },
+        { "ageBand": "70세 이상", "male": 391, "female": 344 }
+      ]
+    },
+    {
+      "areaName": "시흥제4동", "total": 18272, "male": 9036, "female": 9236,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 753,  "female": 738  },
+        { "ageBand": "10~19세", "male": 784,  "female": 759  },
+        { "ageBand": "20~29세", "male": 1257, "female": 1334 },
+        { "ageBand": "30~39세", "male": 1597, "female": 1612 },
+        { "ageBand": "40~49세", "male": 1683, "female": 1709 },
+        { "ageBand": "50~59세", "male": 1551, "female": 1603 },
+        { "ageBand": "60~69세", "male": 879,  "female": 895  },
+        { "ageBand": "70세 이상", "male": 532, "female": 586 }
+      ]
+    },
+    {
+      "areaName": "시흥제5동", "total": 17133, "male": 8478, "female": 8655,
+      "observedAt": "2026.06.30 21:27",
+      "byAge": [
+        { "ageBand": "0~9세",   "male": 645,  "female": 617  },
+        { "ageBand": "10~19세", "male": 690,  "female": 671  },
+        { "ageBand": "20~29세", "male": 1180, "female": 1259 },
+        { "ageBand": "30~39세", "male": 1487, "female": 1503 },
+        { "ageBand": "40~49세", "male": 1601, "female": 1611 },
+        { "ageBand": "50~59세", "male": 1487, "female": 1516 },
+        { "ageBand": "60~69세", "male": 884,  "female": 882  },
+        { "ageBand": "70세 이상", "male": 504, "female": 596 }
+      ]
+    }
   ],
   "facilities": [
     {

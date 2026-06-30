@@ -7,6 +7,9 @@ import { VworldMap } from "../overview/components/VworldMap";
 import { EmptyState, FacilityItemBody, FacilityStack } from "./AnalysisFacilityList";
 import { DataPolicyCard } from "./DataPolicyCard";
 import { PopulationInsightPanel } from "./PopulationInsightPanel";
+import { CommercialInsightPanel } from "./CommercialInsightPanel";
+import { WelfareInsightPanel } from "./WelfareInsightPanel";
+import { SafetyInsightPanel } from "./SafetyInsightPanel";
 
 interface Props {
   topic: OverviewTopic;
@@ -294,7 +297,13 @@ export function ThematicAnalysisPage({ topic, eyebrow, title, description, prima
             <span>{topic === "commercial" ? "BUSINESS MIX" : "RELATED FACILITIES"}</span>
             <h2>{topic === "commercial" ? "업종 구성 요약" : "관련 시설"}</h2>
           </header>
-          {topic === "commercial" && commercialMix.length ? (
+          {topic === "commercial" && model.storeCategorySeries.length > 0 ? (
+            <CommercialInsightPanel model={model} district={district} onSelectDong={setDistrict} />
+          ) : topic === "welfare" && model.facilities.some((f) => ["복지", "병원", "약국", "어린이집", "의료", "보건"].some((c) => f.category.includes(c))) ? (
+            <WelfareInsightPanel model={model} district={district} onSelectDong={setDistrict} />
+          ) : topic === "safety" && (model.facilities.some((f) => ["CCTV", "스쿨존", "민방위대피소"].includes(f.category)) || model.airQuality.hasData) ? (
+            <SafetyInsightPanel model={model} district={district} onSelectDong={setDistrict} />
+          ) : topic === "commercial" && commercialMix.length ? (
             <div className="gdp-commerce-panel">
               <section className="gdp-commerce-focus" aria-label="선택 업종 요약">
                 <span>SELECTED CATEGORY</span>
